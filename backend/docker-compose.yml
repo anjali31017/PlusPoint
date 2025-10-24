@@ -1,11 +1,11 @@
-version: "3.8"
+version: "3.9"
 
 services:
   fastapi_pluspoint:
     build: .
     container_name: fastapi_pluspoint
     ports:
-      - "5000:5500"
+      - "5000:5500"  # host:container
     depends_on:
       - mysql_pluspoint
     env_file:
@@ -17,10 +17,10 @@ services:
     container_name: mysql_pluspoint
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: testdb
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
     ports:
-      - "3306:3308"
+      - "3308:3306"  # host:container (avoids conflict with host MySQL)
     volumes:
       - mysql_data:/var/lib/mysql
 
