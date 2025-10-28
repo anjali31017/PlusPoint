@@ -7,22 +7,24 @@ services:
     ports:
       - "5000:5500"  # host:container
     depends_on:
-      - mysql_pluspoint
+      - mongodb_pluspoint
     env_file:
       - .env
     restart: always
 
-  mysql_pluspoint:
-    image: mysql:8
-    container_name: mysql_pluspoint
+  mongodb_pluspoint:
+    image: mongo:6
+    container_name: mongodb_pluspoint
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DB}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DB}
     ports:
-      - "3308:3306"  # host:container (avoids conflict with host MySQL)
+      - "27018:27017"  # host:container
     volumes:
-      - mysql_data:/var/lib/mysql
+      - mongo_data:/data/db
 
 volumes:
-  mysql_data:
+  mongo_data:
+   
