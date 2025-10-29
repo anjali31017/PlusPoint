@@ -1,0 +1,60 @@
+from typing import ClassVar, Optional, List
+from beanie import Document, Indexed, Link
+from pydantic import Field
+from datetime import datetime
+from enum import Enum
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
+
+class UserRole(str, Enum):
+    founder = "founder"
+    builder = "builder"
+    explorer = "explorer"
+
+
+class UserModel(Document):
+    # user_id: Optional[str] = Field(None, alias="_id")
+    # user_ref_if: str = = Field(default_factory=lambda: secrets.token_hex(8))
+    username: str = Indexed(str, unique=True)
+    email: str = Indexed(str, unique=True)
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    password_hash: Optional[str] = None
+    role: List[UserRole] = Field(default_factory=list) #['founder','builder','explorer']
+    profile_picture_url: Optional[str] = None
+    bio: Optional[str] = None
+    otp: Optional[int] = None
+    is_verified: bool = False
+    is_active: bool = True
+    is_deleted: bool = False
+    created_at: datetime = Field(default_factory=datetime.now)
+
+    class Settings:
+        name = "users"  
+
+
+    # def __init__(self, password_hash: str = None):
+    #     self.password_hash = password_hash
+
+    ph: ClassVar[PasswordHasher] = PasswordHasher()  # <--- annotate as ClassVar
+    
+    @staticmethod
+    def hash_password(password: str) -> str:
+        print("10")
+        hash_pwd = UserModel.ph.hash(password)
+        print(hash_pwd)
+        return hash_pwd
+
+    def verify_password(self, password: str) -> bool:
+        try:
+            return UserModel.ph.verify(self.password_hash, password)
+        except VerifyMismatchError:
+            return False
+
+
+    # @staticmethod
+    # def hash_password(password: str) -> str:
+    #     return bcrypt.hash(password)
+
+    # def verify_password(self, password: str) -> bool:
+    #     return bcrypt.verify(password, self.password_hash)
