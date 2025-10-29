@@ -2,7 +2,6 @@ from typing import Optional, List
 from beanie import Document, Indexed, Link
 from pydantic import BaseModel, Field
 from datetime import datetime
-
 from backend.app.models.firm import FirmModel
 from backend.app.models.users import UserModel
 
@@ -22,4 +21,4 @@ class ArticleModel(Document):
         name = "articles"  
 
 
-#views
+#view counts, comments, shares can be added later
