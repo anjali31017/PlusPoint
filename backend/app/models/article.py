@@ -1,11 +1,11 @@
 from typing import Optional, List
-from beanie import Document, Indexed
+from beanie import Document, Indexed, Link
 from pydantic import BaseModel, Field
 from datetime import datetime
 from passlib.hash import bcrypt  
 
 class Article(Document):
-    firm_id = Link["Firm"]
+    firm_id : Link["Firm"]
     publisher_id: Link["User"]
     title: str
     content: str

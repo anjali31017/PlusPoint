@@ -1,8 +1,15 @@
 from typing import Optional, List
-from beanie import Document, Indexed
-from pydantic import BaseModel, Field
+from beanie import Document, Indexed, Link
+from pydantic import Field
 from datetime import datetime
 from passlib.hash import bcrypt  
+from enum import Enum
+
+class UserRole(str, Enum):
+    founder = "founder"
+    builder = "builder"
+    explorer = "explorer"
+
 
 class User(Document):
     # user_id: Optional[str] = Field(None, alias="_id")
@@ -11,8 +18,8 @@ class User(Document):
     email: Indexed(str, unique=True)
     first_name: str
     last_name: str
-    password_hash: str
-    role: List[str] = Field(default_factory=list) #['founder','builder','explorer']
+    password_hash: Optional[str] = None
+    role: List[UserRole] = Field(default_factory=list) #['founder','builder','explorer']
     profile_picture_url: Optional[str] = None
     bio: Optional[str] = None
     otp: Optional[int] = None

@@ -1,11 +1,10 @@
-from typing import Optional, List
-from beanie import Document, Indexed
-from pydantic import BaseModel, Field
+from typing import Optional
+from beanie import Document, Link
+from pydantic import Field
 from datetime import datetime
-from passlib.hash import bcrypt  
 
 class Comment(Document):
-    article_id = Link["Article"]
+    article_id : Link["Article"]
     user_id: Link["User"]
     content: str
     parent_comment_id: Optional[Link["Comment"]] = None

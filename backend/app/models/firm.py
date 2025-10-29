@@ -1,16 +1,11 @@
 from typing import Optional, List
-from beanie import Document, Indexed, Link
+from beanie import Document, Link
 from pydantic import BaseModel, Field
 from datetime import datetime
-from passlib.hash import bcrypt  
-from pydantic import BaseModel
-from datetime import datetime
-from typing import Optional
-from bson import ObjectId
 
 class PublisherInfo(BaseModel):
     publisher_user_id: Link["User"]  # store MongoDB ObjectId of the user
-    invited_at: datetime = default_factory=datetime.now # default to current time
+    invited_at: datetime = Field(default_factory=datetime.now)
 
 
 class Firm(Document):
@@ -27,10 +22,3 @@ class Firm(Document):
         name = "firms"  
 
 
-class Subscription(Document):
-    firm_id: Link["Firm"]
-    subscriber_id: Link["User"]
-    created_at: datetime = Field(default_factory=datetime.now)
-
-    class Settings:
-        name = "subscriptions"  

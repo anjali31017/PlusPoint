@@ -1,7 +1,11 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
-from app.config.settings import settings
-from app.models.camera import Camera  # import your Beanie models here
+from app.config import settings
+from app.models.users import User  
+from app.models.firm import Firm
+from app.models.subscription import Subscription
+from app.models.comment import Comment
+from app.models.article import Article
 
 client: AsyncIOMotorClient | None = None
 
@@ -12,9 +16,9 @@ async def connect_to_mongo():
     global client
     try:
         if client is None:
-            client = AsyncIOMotorClient(settings.MONGO_URI)
+            client = AsyncIOMotorClient(settings.MONGODB_URI)
             db = client[settings.MONGO_DB_NAME]
-            await init_beanie(database=db, document_models=[Camera])
+            await init_beanie(database=db, document_models=[User, Firm, Subscription, Comment, Article])
             print("Connected to MongoDB with Beanie")
     except Exception as e:
         print(f"Could not connect to MongoDB: {e}")

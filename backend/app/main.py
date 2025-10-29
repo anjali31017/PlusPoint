@@ -2,9 +2,10 @@ from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.database.mysql import connect_to_mysql, close_mysql_connection, get_session
 from app.config import settings
-from api.oauth import router as oauth_router
+# from router.oauth import router as oauth_router
+from app.api.user_api import router as user_router
+from app.database.connection import connect_to_mongo, close_mongo_connection, get_db
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -31,7 +32,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    print(f"📡 API Call: {request.method} {request.url.path}")
+    print(f"API Call: {request.method} {request.url.path}")
     return await call_next(request)
 
 @app.middleware("http")
@@ -42,7 +43,7 @@ async def db_session_middleware(request: Request, call_next):
         response = await call_next(request)
         return response
     except ConnectionError:
-        print("⚠️ Database connection lost, reconnecting...")
+        print("Database connection lost, reconnecting...")
         await connect_to_mongo()
         try:
             db = get_db()
@@ -53,6 +54,15 @@ async def db_session_middleware(request: Request, call_next):
                 status_code=503,
                 content={"detail": "Database connection error"}
             )
+
+
+app.include_router(
+    user_router, 
+    prefix=f"{settings.API_PREFIX}", 
+    tags=["users"],
+
+)
+
 
 # @app.middleware("http")
 # async def db_session_middleware(request: Request, call_next):
@@ -74,9 +84,9 @@ async def db_session_middleware(request: Request, call_next):
 
 
 
-app.include_router(
-    oauth_router, 
-    prefix=f"{settings.API_PREFIX}", 
-    tags=["oauth"],
+# app.include_router(
+#     oauth_router, 
+#     prefix=f"{settings.API_PREFIX}", 
+#     tags=["oauth"],
 
-)
+# )

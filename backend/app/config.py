@@ -7,12 +7,18 @@ class Settings(BaseSettings):
     # MYSQL_PORT: int
     # MYSQL_DB: str
 
-    MONGO_HOST: str
-    MONGO_PORT: str
+    # MONGO_HOST: str
+    # MONGO_PORT: str
+    # MONGO_USER: str
+    # MONGO_PASSWORD: str
+    # MONGO_DB_NAME: str
+
     MONGO_USER: str
     MONGO_PASSWORD: str
     MONGO_DB_NAME: str
-
+    MONGO_PORT: str
+    MONGODB_URI: str
+    
     APP_NAME: str 
     DEBUG: bool 
 
@@ -30,12 +36,6 @@ class Settings(BaseSettings):
 
     
     API_PREFIX: str
-    @property
-    def MYSQL_URI(self):
-        return (
-            f"mysql+aiomysql://{self.MYSQL_USER}:{self.MYSQL_PASSWORD}"
-            f"@{self.MYSQL_HOST}:{self.MYSQL_PORT}/{self.MYSQL_DB}"
-        )
 
     class Config:
         env_file = ".env"
