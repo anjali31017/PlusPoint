@@ -9,7 +9,8 @@ services:
     env_file:
       - .env
     restart: always
-
+    volumes:
+      - ./app:/app/app 
   mongodb_pluspoint:
     image: mongo:6
     container_name: mongodb_pluspoint

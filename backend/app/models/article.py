@@ -2,19 +2,21 @@ from typing import Optional, List
 from beanie import Document, Indexed, Link
 from pydantic import BaseModel, Field
 from datetime import datetime
-from passlib.hash import bcrypt  
 
-class Article(Document):
-    firm_id : Link["Firm"]
-    publisher_id: Link["User"]
+class ArticleModel(Document):
+    firm_id : Link["FirmModel"]
+    publisher_id: Link["UserModel"]
     title: str
     content: str
     category: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
-    liked_by: List[Link["User"]] = Field(default_factory=list)
+    liked_by: List[Link["UserModel"]] = Field(default_factory=list)
     hot_topic: bool = False
     is_deleted: bool = False
     published_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "articles"  
+
+
+#views

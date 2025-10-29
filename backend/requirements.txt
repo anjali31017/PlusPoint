@@ -5,4 +5,4 @@ motor
 pydantic>=2.6
 pydantic-settings
 beanie
-passlib[bcrypt]
+argon2-cffi

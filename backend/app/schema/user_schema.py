@@ -2,15 +2,13 @@ from pydantic import BaseModel, EmailStr, Field
 from beanie import PydanticObjectId
 from datetime import datetime
 
-class UserCreate(BaseModel):
+class UserCreateSchema(BaseModel):
     username: str = Field(..., min_length=3, max_length=50)
     email: EmailStr
-    first_name: str
-    last_name: str
     password: str = Field(..., min_length=6)
+    role = str | None = None
 
-
-class UserResponse(BaseModel):
+class UserResponseSchema(BaseModel):
     id: PydanticObjectId
     username: str
     email: str
