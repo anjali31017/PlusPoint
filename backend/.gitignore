@@ -1,0 +1,5 @@
+/env
+.env
+help.txt
+*.pyc
+__pycache__/
