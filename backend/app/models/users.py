@@ -43,15 +43,21 @@ class UserModel(Document):
     def hash_detail(detail: str) -> str:
         return UserModel.ph.hash(detail)
 
-    def verify_detail(self, detail: str, detail_type: str) -> bool:
+    def verify_password(self, password: str) -> bool:
         try:
-            if detail_type == "password":
-                return UserModel.ph.verify(self.password_hash, detail)
-            elif detail_type == "otp":
-                return UserModel.ph.verify(self.otp, detail)
+            return UserModel.ph.verify(self.password_hash, password)
         except VerifyMismatchError:
             return False
 
+    def verify_otp(self, otp: str) -> bool:
+        try:
+            return UserModel.ph.verify(self.otp, otp)
+        except VerifyMismatchError:
+            return False
+        
+        
+        
+        
 
     # @staticmethod
     # def hash_password(password: str) -> str:
