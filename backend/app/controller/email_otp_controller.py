@@ -1,0 +1,63 @@
+import smtplib
+import random
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from typing import Set
+from app.config import settings
+from datetime import datetime, timedelta
+from app.models.users import UserModel
+
+async def generate_otp(length: int = 6) -> dict[str, str | datetime]:
+    """Generate a numeric OTP."""
+    otp = ''.join([str(random.randint(0, 9)) for _ in range(length)])
+    otp_expiry = datetime.now() + timedelta(minutes=5)
+    return {
+        "otp": otp,
+        "expires_at": otp_expiry
+    }
+
+async def otp_email(to_email: str, otp: str) -> bool:
+    """Send OTP email using SMTP."""
+    subject = "PlusPoint OTP Verification"
+    body = f"Your OTP code is: {otp}\n\nThis code expires in 5 minutes."
+
+    message = MIMEMultipart()
+    message["From"] = settings.SMTP_FROM_EMAIL
+    message["To"] = to_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "plain"))
+
+    try:
+        with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
+            server.starttls()
+            server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+            server.sendmail(settings.SMTP_FROM_EMAIL, to_email, message.as_string())
+        return True
+    except Exception as e:
+        print("Error sending email:", e)
+        return False
+
+async def send_otp_email(email: str) -> bool:
+    """Wrapper function to send OTP email."""
+    try:
+        otp_details = await generate_otp()
+        email_sent = await otp_email(email, otp_details["otp"])
+        if email_sent:
+    
+            user = await UserModel.find_one(UserModel.email == email, 
+                                            UserModel.is_verified == False, 
+                                            UserModel.is_deleted == False
+                                        )
+            if not user:
+                print("User not found for email:", email)
+                return False
+            hashed_otp = UserModel.hash_detail(otp_details["otp"])
+            await user.set({
+                UserModel.otp: hashed_otp,
+                UserModel.otp_expires_at: otp_details["expires_at"]
+            })
+
+        return True
+    except Exception as e:
+        print("Failed to send OTP email:", e)
+        return False

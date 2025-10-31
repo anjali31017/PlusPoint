@@ -6,7 +6,7 @@ from app.config import settings
 # from router.oauth import router as oauth_router
 from app.api.user_api import router as user_router
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_db
-
+# from app.api.email_otp_api import router as email_otp_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting application...")
@@ -62,7 +62,12 @@ app.include_router(
     tags=["users"],
 
 )
+# app.include_router(
+#     email_otp_router, 
+#     prefix=f"{settings.API_PREFIX}", 
+#     tags=["email-otp"],
 
+# )
 
 # @app.middleware("http")
 # async def db_session_middleware(request: Request, call_next):

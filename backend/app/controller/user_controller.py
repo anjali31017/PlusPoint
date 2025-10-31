@@ -5,13 +5,9 @@ class UserController:
 
     async def create(self, user_data:dict) -> UserModel | None:
         try:
-            print("4")
             user = UserModel(**user_data)
-            print("5")
-            user.password_hash = UserModel.hash_password(user_data['password'])
-            print("6")
+            user.password_hash = UserModel.hash_detail(user_data['password'])
             await user.insert()
-            print("7")
             return user
         except Exception as e:
             print(str(e))

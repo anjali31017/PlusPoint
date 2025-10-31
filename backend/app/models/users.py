@@ -7,8 +7,8 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
 class UserRole(str, Enum):
-    founder = "founder"
-    builder = "builder"
+    founder = "firm_founder"
+    builder = "publisher"
     explorer = "explorer"
 
 
@@ -23,7 +23,8 @@ class UserModel(Document):
     role: List[UserRole] = Field(default_factory=list) #['founder','builder','explorer']
     profile_picture_url: Optional[str] = None
     bio: Optional[str] = None
-    otp: Optional[int] = None
+    otp: Optional[str] = None
+    otp_expires_at: Optional[datetime] = None
     is_verified: bool = False
     is_active: bool = True
     is_deleted: bool = False
@@ -39,15 +40,15 @@ class UserModel(Document):
     ph: ClassVar[PasswordHasher] = PasswordHasher()  # <--- annotate as ClassVar
     
     @staticmethod
-    def hash_password(password: str) -> str:
-        print("10")
-        hash_pwd = UserModel.ph.hash(password)
-        print(hash_pwd)
-        return hash_pwd
+    def hash_detail(detail: str) -> str:
+        return UserModel.ph.hash(detail)
 
-    def verify_password(self, password: str) -> bool:
+    def verify_detail(self, detail: str, detail_type: str) -> bool:
         try:
-            return UserModel.ph.verify(self.password_hash, password)
+            if detail_type == "password":
+                return UserModel.ph.verify(self.password_hash, detail)
+            elif detail_type == "otp":
+                return UserModel.ph.verify(self.otp, detail)
         except VerifyMismatchError:
             return False
 
