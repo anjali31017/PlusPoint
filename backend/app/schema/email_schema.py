@@ -1,5 +1,7 @@
-from pydantic import BaseModel, EmailStr
+from beanie import PydanticObjectId
+from pydantic import BaseModel
 
-class OTPRequest(BaseModel):
-    email: EmailStr
+class OTPVerifySchema(BaseModel):
+    id: PydanticObjectId
+    otp : str
 
