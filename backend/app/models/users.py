@@ -7,9 +7,9 @@ from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 
 class UserRole(str, Enum):
-    founder = "firm_founder"
-    builder = "publisher"
-    explorer = "explorer"
+    founder = "F" #"firm_founder"
+    publisher = "P" #"publisher"
+    explorer = "E" #"explorer"
 
 
 class UserModel(Document):
@@ -26,7 +26,7 @@ class UserModel(Document):
     otp: Optional[str] = None
     otp_expires_at: Optional[datetime] = None
     is_verified: bool = False
-    is_active: bool = True
+    is_active: bool = False
     is_deleted: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
 

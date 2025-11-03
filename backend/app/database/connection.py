@@ -6,6 +6,7 @@ from app.models.firm import FirmModel
 from app.models.subscription import SubscriptionModel
 from app.models.comment import CommentModel
 from app.models.article import ArticleModel
+from app.models.token import RefreshTokenModel
 
 client: AsyncIOMotorClient | None = None
 
@@ -18,7 +19,7 @@ async def connect_to_mongo():
         if client is None:
             client = AsyncIOMotorClient(settings.MONGODB_URI)
             db = client[settings.MONGO_DB_NAME]
-            await init_beanie(database=db, document_models=[UserModel, FirmModel, SubscriptionModel, CommentModel, ArticleModel])
+            await init_beanie(database=db, document_models=[UserModel, FirmModel, SubscriptionModel, CommentModel, ArticleModel, RefreshTokenModel])
             print("Connected to MongoDB with Beanie")
     except Exception as e:
         print(f"Could not connect to MongoDB: {e}")

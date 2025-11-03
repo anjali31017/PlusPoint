@@ -9,19 +9,14 @@ class UserCreateSchema(BaseModel):
     password: str = Field(..., min_length=6)
     role: Optional[list[str]] = None
 
-class UserResponseSchema(BaseModel):
-    id: PydanticObjectId
-    # username: str
-    # email: str
-    # first_name: str
-    # last_name: str
-    role: list[str] = []
-    # is_verified: bool
-    # created_at: datetime
 
-    class Config:
-        orm_mode = True
+class LoginSchema(BaseModel):
+    email: str
+    password: str
+    
 
-
-
-#hash id
+class RefreshSchema(BaseModel):
+    refresh_token: str
+    
+class LogoutSchema(BaseModel):
+    refresh_token: str

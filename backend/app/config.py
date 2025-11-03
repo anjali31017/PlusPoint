@@ -23,9 +23,11 @@ class Settings(BaseSettings):
     DEBUG: bool 
 
     #jwt
-    JWT_SECRET_KEY: str
-    JWT_ALGORITHM: str
-
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
+    REFRESH_TOKEN_EXPIRE_DAYS: int
+    
     #Oauth
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str

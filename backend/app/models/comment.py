@@ -3,6 +3,9 @@ from beanie import Document, Link
 from pydantic import Field
 from datetime import datetime
 
+from app.models.article import ArticleModel
+from app.models.users import UserModel
+
 class CommentModel(Document):
     article_id : Link["ArticleModel"]
     user_id: Link["UserModel"]

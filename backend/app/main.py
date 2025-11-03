@@ -6,7 +6,8 @@ from app.config import settings
 # from router.oauth import router as oauth_router
 from app.api.user_api import router as user_router
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_db
-# from app.api.email_otp_api import router as email_otp_router
+from app.api.refresh_api import router as token_router
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting application...")
@@ -60,6 +61,13 @@ app.include_router(
     user_router, 
     prefix=f"{settings.API_PREFIX}", 
     tags=["users"],
+
+)
+
+app.include_router(
+    token_router, 
+    prefix=f"{settings.API_PREFIX}", 
+    tags=["token"],
 
 )
 # app.include_router(
