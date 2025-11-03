@@ -1,9 +1,7 @@
-import smtplib
+
 import random
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from typing import Set
-
 import aiosmtplib
 from app.config import settings
 from datetime import datetime, timedelta
@@ -74,4 +72,17 @@ async def send_otp_email(user: dict) -> bool:
         return True
     except Exception as e:
         print("Failed to send OTP email:", e)
+        return False
+
+
+async def verify_otp(user: dict, otp: str) -> bool:
+    """Verify the provided OTP against the stored hashed OTP."""
+    try:
+        if user.otp_expires_at < datetime.now():
+            return False  # OTP expired
+
+        is_valid = UserModel.verify_otp(otp, user.otp)
+        return is_valid
+    except Exception as e:
+        print("OTP verification failed:", e)
         return False

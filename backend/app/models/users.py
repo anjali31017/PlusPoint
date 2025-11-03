@@ -48,15 +48,18 @@ class UserModel(Document):
             return UserModel.ph.verify(self.password_hash, password)
         except VerifyMismatchError:
             return False
-
+        
+  
     def verify_otp(self, otp: str) -> bool:
+        """Verify the OTP and ensure it is not expired."""
         try:
+            if self.otp_expires_at < datetime.now():
+                print("OTP expired")
+                return False
             return UserModel.ph.verify(self.otp, otp)
-        except VerifyMismatchError:
+        except Exception as e:
+            print("Error verifying OTP:", e)
             return False
-        
-        
-        
         
 
     # @staticmethod
