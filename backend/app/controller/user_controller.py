@@ -13,12 +13,9 @@ class UserController:
             print(str(e))
             return None
     
-    async def get_by_username_or_email(self, username: str, email: str) -> UserModel | None:
+    async def get_by_username(self, username: str) -> UserModel | None:
         try:
-            user = await UserModel.find_one(
-                Or(Eq(UserModel.username, username), Eq(UserModel.email, email)),
-                Eq(UserModel.is_deleted, False)
-            )
+            user = await UserModel.find_one(UserModel.username == username, UserModel.is_deleted == False)
             return user
         except Exception as e:
             print(str(e))

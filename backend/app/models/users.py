@@ -16,7 +16,7 @@ class UserModel(Document):
     # user_id: Optional[str] = Field(None, alias="_id")
     # user_ref_if: str = = Field(default_factory=lambda: secrets.token_hex(8))
     username: str = Indexed(str, unique=True)
-    email: str = Indexed(str, unique=True)
+    email: str = Indexed(str)
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     password_hash: Optional[str] = None
