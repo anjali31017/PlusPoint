@@ -14,13 +14,24 @@ router = APIRouter(prefix="/user", tags=["User"])
 
 user_controller = UserController()
 
+
+@router.get("/check-username")
+async def check_username(username: str):
+    try:
+        user = await user_controller.get_by_username(username)
+        return {"available": user is None}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
 @router.post("/register", response_model=BaseResponse)
 async def create_user(user_data: UserCreateSchema, background_tasks: BackgroundTasks):
     try:
-        user = await user_controller.get_by_username_or_email(user_data.username, user_data.email)
+        user = await user_controller.get_by_username(user_data.username)
         if user:  
             if user.is_verified == True:
-                raise HTTPException(status_code=400, detail="Username or email already exists")
+                raise HTTPException(status_code=400, detail="Username already exists")
             
         else:
             user = await user_controller.create(user_data.dict())
@@ -33,7 +44,7 @@ async def create_user(user_data: UserCreateSchema, background_tasks: BackgroundT
             "status": 1,
             "message": "User created, OTP sent to email",
             "data": {
-                "email": user.email
+                "email": user.username
             }
         }
         return response_data
