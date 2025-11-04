@@ -9,7 +9,16 @@ class UserCreateSchema(BaseModel):
     password: str = Field(..., min_length=6)
     role: Optional[list[str]] = None
 
-
+class UserProfileSchema(BaseModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    bio: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    bio: Optional[str] = None
+    created_at: datetime
+    
 class LoginSchema(BaseModel):
     email: str
     password: str

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 
 from app.controller.user_controller import UserController
 from app.models.users import UserModel
-from app.schema.user_schema import LogoutSchema, UserCreateSchema, LoginSchema
+from app.schema.user_schema import LogoutSchema, UserCreateSchema, LoginSchema, UserProfileSchema
 from app.controller.token_controller import create_token_pair, get_current_user
 from app.models.token import RefreshTokenModel
 from app.schema.base_schema import BaseResponse
@@ -104,6 +104,80 @@ async def login(data: LoginSchema):
         }
     }
 
+
+
+
+@router.get("/profile", response_model=BaseResponse)
+async def get_profile(current_user: dict = Depends(get_current_user)):
+    try:
+        user = await user_controller.get_user(current_user['user_id'])
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        data = UserProfileSchema(
+            **user.dict()
+        )
+        return {
+            "status": 1,
+            "message": "User profile fetched successfully",
+            "data": data
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+  
+@router.put("/profile", response_model=BaseResponse)
+async def update_profile(
+    payload: UserProfileSchema,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        update_data = payload.dict()
+
+        # Remove keys where value is None (optional step)
+        # update_data = {k: v for k, v in update_data.items() if v is not None}
+
+        updated_user = await user_controller.update_user(current_user['user_id'], update_data)
+
+        if not updated_user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        data = UserProfileSchema(**updated_user.dict())
+        return {
+            "status": 1,
+            "message": "Profile updated successfully",
+            "data": data
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+  
+# @router.post("/profile", response_model=BaseResponse)
+# async def update_profile(current_user: dict = Depends(get_current_user)):
+#     try:
+#         user = await user_controller.get_user(current_user['user_id'])
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+        
+#         update_data = await router.current_request.json()
+#         updated_user = await user_controller.update_profile(user, update_data)
+#         if not updated_user:
+#             raise HTTPException(status_code=500, detail="Profile update failed")
+        
+#         data = UserProfileSchema(
+#             **updated_user.dict()
+#         )
+#         return {
+#             "status": 1,
+#             "message": "User profile updated successfully",
+#             "data": data
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/logout", response_model=BaseResponse)
