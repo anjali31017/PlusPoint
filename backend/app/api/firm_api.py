@@ -15,13 +15,22 @@ from app.schema.firm_schema import AddPublisherSchema, FirmRegisterSchema
 router = APIRouter(prefix="/firm", tags=["Firm"])
 
 firm_controller = FirmController()
+user_controller = UserController()
 
 @router.post("/register", response_model=BaseResponse)
-async def register_firm(firm_data: FirmRegisterSchema):
+async def register_firm(firm_data: FirmRegisterSchema, current_user: dict = Depends(get_current_user)):
     try:
-        success = await firm_controller.register_firm(firm_data)
-        if not success:
-            raise HTTPException(status_code=400, detail="Firm registration failed")
+        user = await user_controller.check_username_exists(firm_data.firm_username)
+        if user:  
+            if user.is_verified == True:
+                raise HTTPException(status_code=400, detail="Username already exists")
+        
+        else:
+            # firm_data["firm_user_id"] = current_user["user_id"]
+            
+            user = await firm_controller.register_firm(firm_data, user_id=current_user["user_id"])
+            if not user:
+                raise HTTPException(status_code=400, detail="Firm registration failed")
         
         response_data = {
             "status": 1,
@@ -34,7 +43,7 @@ async def register_firm(firm_data: FirmRegisterSchema):
     
     
 @router.post("/add-publisher", response_model=BaseResponse)
-async def add_publisher(data: AddPublisherSchema):
+async def add_publisher(data: AddPublisherSchema, current_user: dict = Depends(get_current_user)):
     try:
         new_publisher = await firm_controller.add_publisher(data)
         response_data = {
