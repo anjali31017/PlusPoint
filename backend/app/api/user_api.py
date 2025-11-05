@@ -18,7 +18,7 @@ user_controller = UserController()
 @router.get("/check-username")
 async def check_username(username: str):
     try:
-        user = await user_controller.get_by_username(username)
+        user = await user_controller.check_username_exists(username)
         return {"available": user is None}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -28,7 +28,7 @@ async def check_username(username: str):
 @router.post("/register", response_model=BaseResponse)
 async def create_user(user_data: UserCreateSchema, background_tasks: BackgroundTasks):
     try:
-        user = await user_controller.get_by_username(user_data.username)
+        user = await user_controller.check_username_exists(user_data.username)
         if user:  
             if user.is_verified == True:
                 raise HTTPException(status_code=400, detail="Username already exists")

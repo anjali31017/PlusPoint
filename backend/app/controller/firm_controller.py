@@ -2,20 +2,49 @@ from datetime import datetime
 from beanie import PydanticObjectId
 from fastapi import HTTPException
 from app.models.firm import FirmModel, PublisherInfo
-from app.schema.firm_schema import AddPublisherSchema
-from app.models.users import UserModel
+from app.schema.firm_schema import AddPublisherSchema, FirmRegisterSchema
+from app.models.users import UserModel, UserRole
 
 class FirmController:
     
-    async def register_firm(self, firm_data) -> bool:
+    # async def register_firm(self, firm_data) -> bool:
+    #     try:
+    #         firm = FirmModel(**firm_data.dict())
+    #         await firm.insert()
+    #         ###############  add role as F in user model    ######################
+    #         return True
+    #     except Exception as e:
+    #         print("Error registering firm:", e)
+    #         return False
+    
+    async def register_firm(self, firm_data:FirmRegisterSchema, user_id:str) -> bool:
         try:
-            firm = FirmModel(**firm_data.dict())
+            firm_data_dict = firm_data.dict()
+            firm_data_dict['firm_user_id'] = user_id
+            
+            firm = FirmModel(**firm_data_dict)
             await firm.insert()
-            return True
+            
+            # Assuming firm_data contains a 'user_id' to associate the user
+            # user_id = firm_data.get('user_id')
+            
+            # Find the user (assuming user_id is the unique identifier)
+            user = await UserModel.get(user_id)
+            
+            if user:
+                # Add role 'F' (Firm Founder) to the user
+                if UserRole.founder not in user.role:
+                    user.role.append(UserRole.founder)
+                    await user.save()  # Save the updated user back to the database
+                return True
+            else:
+                print(f"User with user_id {user_id} not found.")
+                return False
+                
         except Exception as e:
             print("Error registering firm:", e)
             return False
-    
+
     async def add_publisher(self, data: AddPublisherSchema) -> PublisherInfo:
         try:
             publisher = await UserModel.get(PydanticObjectId(data.publisher_user_id))
@@ -38,6 +67,11 @@ class FirmController:
                 firm.publishers = []
                 
             firm.publishers.append(new_publisher)
+            
+            if UserRole.publisher not in publisher.role:
+                publisher.role.append(UserRole.publisher)
+                await publisher.save()
+                
             await firm.save()
 
             return new_publisher

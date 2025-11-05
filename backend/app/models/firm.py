@@ -1,5 +1,5 @@
 from typing import Optional, List
-from beanie import Document, Link
+from beanie import Document, Indexed, Link
 from pydantic import BaseModel, Field
 from datetime import datetime
 from app.models.users import UserModel
@@ -14,10 +14,12 @@ class FirmModel(Document):
     # firm_ref_if: str = = Field(default_factory=lambda: secrets.token_hex(8))
     firm_user_id: Link["UserModel"]
     firm_name: str
+    firm_username: str = Indexed(str, unique=True)
     publishers: Optional[List[PublisherInfo]] = Field(default_factory=list)
     # publishers: List[PublisherInfo] = []
-    is_active: bool = True
+    is_active: bool = False
     is_deleted: bool = False
+    is_verified: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:
