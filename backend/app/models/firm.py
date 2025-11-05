@@ -15,6 +15,7 @@ class FirmModel(Document):
     firm_user_id: Link["UserModel"]
     firm_name: str
     publishers: Optional[List[PublisherInfo]] = Field(default_factory=list)
+    # publishers: List[PublisherInfo] = []
     is_active: bool = True
     is_deleted: bool = False
     created_at: datetime = Field(default_factory=datetime.now)

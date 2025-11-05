@@ -7,6 +7,7 @@ from app.config import settings
 from app.api.user_api import router as user_router
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_db
 from app.api.refresh_api import router as token_router
+from app.api.firm_api import router as firm_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -68,6 +69,13 @@ app.include_router(
     token_router, 
     prefix=f"{settings.API_PREFIX}", 
     tags=["token"],
+
+)
+
+app.include_router(
+    firm_router, 
+    prefix=f"{settings.API_PREFIX}", 
+    tags=["firm"],
 
 )
 # app.include_router(
