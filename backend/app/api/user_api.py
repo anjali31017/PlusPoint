@@ -87,7 +87,7 @@ async def verify_user_otp(otp_data: OTPVerifySchema):
 
 @router.post("/login", response_model=BaseResponse)
 async def login(data: LoginSchema):
-    user = await UserModel.find_one(UserModel.email == data.email)
+    user = await UserModel.find_one(UserModel.username == data.username, UserModel.is_deleted == False)
     if not user or not user.verify_password(data.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 

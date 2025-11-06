@@ -12,5 +12,5 @@ class FirmRegisterSchema(BaseModel):
     publishers: Optional[List[PublisherSchema]] = None
 
 class AddPublisherSchema(BaseModel):
-    firm_id: str
-    publisher_user_id: str 
+    firm_username: str
+    publisher_username: str 
