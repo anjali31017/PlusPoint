@@ -81,3 +81,26 @@ class ArticleController:
         except Exception as e:
             print(f"Error while adding comment: {str(e)}")
             return None 
+        
+    
+    async def like_article(self, article_id: str, user_id:str) -> bool:
+        try:
+            article = await ArticleModel.get(ObjectId(article_id))
+            if not article:
+                raise HTTPException(status_code=404, detail="Article not found")
+            
+            if user_id in [str(user.id) for user in article.liked_by]:
+                return True  # User has already liked the article
+            
+            # user = await UserModel.get(ObjectId(user_id))
+            # if not user:
+            #     raise HTTPException(status_code=404, detail="User not found")
+
+            # article.liked_by.append(user)
+            article.liked_by.append(user_id)
+            await article.save()
+            return True
+
+        except Exception as e:
+            print(f"Error while liking article: {str(e)}")
+            return False
