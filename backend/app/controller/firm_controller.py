@@ -1,9 +1,11 @@
 from datetime import datetime
 from beanie import PydanticObjectId
+from bson import ObjectId
 from fastapi import HTTPException
 from app.models.firm import FirmModel, PublisherInfo
 from app.schema.firm_schema import AddPublisherSchema, FirmRegisterSchema
 from app.models.users import UserModel, UserRole
+from app.models.subscription import SubscriptionModel
 
 class FirmController:
     
@@ -89,40 +91,4 @@ class FirmController:
             print("Error adding publisher to firm:", e)
             raise HTTPException(status_code=500, detail="Internal server error")
 
-
-
-    # async def add_publisher(self, data: AddPublisherSchema) -> PublisherInfo:
-    #     try:
-    #         publisher = await UserModel.get(PydanticObjectId(data.publisher_username))
-    #         if not publisher:
-    #             raise HTTPException(status_code=404, detail="Publisher (user) not found")
-
-    #         firm = await FirmModel.get(PydanticObjectId(data.firm_id))
-    #         if not firm:
-    #             raise HTTPException(status_code=404, detail="Firm not found")
-
-    #         for existing_pub in firm.publishers or []:
-    #             if str(existing_pub.publisher_user_id.id) == data.publisher_user_id:
-    #                 raise HTTPException(status_code=400, detail="Publisher already added to firm")
-
-    #         new_publisher = PublisherInfo(
-    #             publisher_user_id=publisher,
-    #             invited_at=datetime.now()
-    #         )
-    #         if firm.publishers is None:
-    #             firm.publishers = []
-                
-    #         firm.publishers.append(new_publisher)
-            
-    #         if UserRole.publisher not in publisher.role:
-    #             publisher.role.append(UserRole.publisher)
-    #             await publisher.save()
-                
-    #         await firm.save()
-
-    #         return new_publisher
-    #     except HTTPException as e:  
-    #         raise e
-    #     except Exception as e:
-    #         print("Error adding publisher to firm:", e)
-    #         raise HTTPException(status_code=500, detail="Internal server error")
+        

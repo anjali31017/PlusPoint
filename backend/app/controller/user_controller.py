@@ -1,10 +1,11 @@
-from http.client import HTTPException
+from fastapi import HTTPException
 from typing import Optional
 from bson import ObjectId
-from app.models.users import UserModel
+from app.models.users import UserModel, UserRole
 from beanie.operators import Or, Eq
 
 from app.models.firm import FirmModel
+from app.models.subscription import SubscriptionModel
 
 class UserController:
 
@@ -74,3 +75,56 @@ class UserController:
         except Exception as e:
             print("Error updating user:", e)
             return None
+
+    async def subscribe(self, firm_username:str|None, publisher_username: str|None, subscriber_id: str) -> bool:
+        try:
+            firm = None
+            publisher = None
+            
+            if firm_username:
+                firm = await FirmModel.find_one(
+                    FirmModel.firm_username == firm_username,
+                    FirmModel.is_deleted == False,
+                    FirmModel.is_active == True,
+                    )
+                if not firm:
+                    raise HTTPException(status_code=404, detail="Firm not found")
+
+            if publisher_username:
+                publisher = await UserModel.find_one(
+                    UserModel.username == publisher_username,
+                    UserModel.role == UserRole.publisher,
+                    UserModel.is_active == True,
+                    UserModel.is_deleted == False,
+                    )
+                if not publisher:
+                    raise HTTPException(status_code=404, detail="Publisher (user) not found")
+                
+            subscriber = await UserModel.get(ObjectId(subscriber_id))
+            if not subscriber:
+                raise HTTPException(status_code=404, detail="Subscriber (user) not found")
+
+            subscription = await SubscriptionModel.find_one(SubscriptionModel.subscriber_id.id == subscriber.id)
+            
+            if not subscription:
+                subscription = SubscriptionModel(
+                    subscriber_id=subscriber, firm_ids=[], publisher_ids=[]
+                )
+                
+            
+            if firm:
+                if str(firm.id) not in subscription.firm_ids:
+                    subscription.firm_ids.append(str(firm.id))
+
+            if publisher:
+                if str(publisher.id) not in subscription.publisher_ids:
+                    subscription.publisher_ids.append(str(publisher.id))
+
+            await subscription.save()
+            return True
+
+        except HTTPException as e:
+            raise e
+        except Exception as e:
+            print("Error subscribing to publisher:", e)
+            raise HTTPException(status_code=500, detail="Internal server error")

@@ -39,11 +39,12 @@ async def add_article(article_data: ArticleCreateSchema,  current_user: dict = D
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) 
     
-@router.post("/{article_id}/comment/{comment_id}", response_model=BaseResponse)
-@router.post("/{article_id}/comment", response_model=BaseResponse)
+# @router.post("/{article_id}/comment/{comment_id}", response_model=BaseResponse)
+# @router.post("/{article_id}/comment", response_model=BaseResponse)
+@router.post("/comment", response_model=BaseResponse)
 async def add_comment(
     comment_data: CreateCommentSchema, 
-    article_id: str, 
+    article_id: str | None = None, 
     comment_id: str | None = None,
     current_user: dict = Depends(get_current_user)):
     try:

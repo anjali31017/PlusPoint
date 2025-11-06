@@ -17,9 +17,9 @@ class FirmModel(Document):
     firm_username: str = Indexed(str, unique=True)
     publishers: Optional[List[PublisherInfo]] = Field(default_factory=list)
     # publishers: List[PublisherInfo] = []
-    is_active: bool = False
+    is_active: bool = True
     is_deleted: bool = False
-    is_verified: bool = False
+    is_verified: bool = True
     created_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:
