@@ -178,7 +178,23 @@ async def logout(data: LogoutSchema):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-    
+
+
+@router.post("/subscribe", response_model=BaseResponse)
+async def subscribe_to_entity(
+    firm_username: str | None = None,
+    publisher_username: str | None = None,
+    current_user: dict = Depends(get_current_user)
+):
+    if not firm_username and not publisher_username:
+        raise HTTPException(status_code=400, detail="Either firm_username or publisher_username is required")
+
+    await user_controller.subscribe(firm_username, publisher_username, current_user["user_id"])
+    return {
+        "status": 1,
+        "message": "Subscribed successfully",
+        "data": None
+    }
 
 @router.get("/protected")
 async def protected_route(current_user: dict = Depends(get_current_user)):

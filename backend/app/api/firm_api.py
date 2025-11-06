@@ -59,3 +59,22 @@ async def add_publisher(data: AddPublisherSchema, current_user: dict = Depends(g
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+# @router.post("/{firm_username}/subscribe", response_model=BaseResponse)
+# @router.post("/publisher/{publisher_username}/subscribe", response_model=BaseResponse)
+# async def subscribe_to_firm(firm_username: str|None = None, publisher_username: str|None = None,current_user: dict = Depends(get_current_user)):
+#     try:
+#         subscription = await firm_controller.subscribe(firm_username, publisher_username, current_user["user_id"])
+#         response_data = {
+#             "status": 1,
+#             "message": "Subscribed successfully",
+#             "data": subscription
+#         }
+#         return response_data
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
+
+
