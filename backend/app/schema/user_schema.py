@@ -20,7 +20,7 @@ class UserProfileSchema(BaseModel):
     created_at: datetime
     
 class LoginSchema(BaseModel):
-    email: str
+    username: str
     password: str
     
 
