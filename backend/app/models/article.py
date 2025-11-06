@@ -12,7 +12,7 @@ class ArticleModel(Document):
     content: str
     category: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
-    liked_by: List[Link["UserModel"]] = Field(default_factory=list)
+    liked_by: List[str] = Field(default_factory=list)
     hot_topic: bool = False
     is_deleted: bool = False
     published_at: datetime = Field(default_factory=datetime.now)
