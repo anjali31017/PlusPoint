@@ -12,13 +12,18 @@ class ArticleModel(Document):
     content: str
     category: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
-    liked_by: List[str] = Field(default_factory=list)
+    like_count: int = 0
     hot_topic: bool = False
     is_deleted: bool = False
     published_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:
         name = "articles"  
-
-
 #view counts, comments, shares can be added later
+
+class ArticleLikeModel(Document):
+    article_id : Link["ArticleModel"]
+    user_id: Link["UserModel"]
+    created_at: datetime = Field(default_factory=datetime.now)
+    class Settings:
+        name = "likes"  

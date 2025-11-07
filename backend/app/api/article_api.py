@@ -77,7 +77,7 @@ async def add_comment(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-@router.post("/{article_id}/like", response_model=BaseResponse)
+@router.post("/like", response_model=BaseResponse)
 async def like_article(article_id: str, current_user: dict = Depends(get_current_user)):
     try:
         success = await article_controller.like_article(article_id, current_user["user_id"])
@@ -87,7 +87,7 @@ async def like_article(article_id: str, current_user: dict = Depends(get_current
         response_data = {
             "status": 1,
             "message": "Article liked successfully",
-            "data": {}
+            "data": success
         }
         return response_data
 

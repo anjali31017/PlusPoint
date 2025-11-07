@@ -1,5 +1,5 @@
 from bson import ObjectId
-from app.models.article import ArticleModel
+from app.models.article import ArticleModel, ArticleLikeModel
 from app.models.firm import FirmModel
 from app.models.users import UserModel
 from typing import Dict
@@ -7,6 +7,7 @@ from datetime import datetime
 from fastapi import HTTPException
 
 from app.models.comment import CommentModel
+
 
 class ArticleController:
 
@@ -52,7 +53,8 @@ class ArticleController:
         comment_data :dict, 
         article_id:str, 
         parent_comment_id: str | None,
-        user_id: str) -> ArticleModel | None:
+        user_id: str
+        ) -> ArticleModel | None:
         try:
             article = await ArticleModel.get(ObjectId(article_id))
             if not article:
@@ -82,25 +84,64 @@ class ArticleController:
             print(f"Error while adding comment: {str(e)}")
             return None 
         
+    # async def like_article(self, article_id: str, user_id: str):
+    #     try:
+    #         user = await UserModel.get(ObjectId(user_id))
+    #         if not user:
+    #             raise HTTPException(status_code=404, detail="User not found")
+
+    #         # Validate article exists
+    #         article = await ArticleModel.get(ObjectId(article_id))
+    #         if not article:
+    #             raise HTTPException(status_code=404, detail="Article not found")
+            
+    #         # Check if like already exists
+    #         existing_like = await LikeModel.find_one(
+    #             LikeModel.user_id.id == user_id,
+    #             LikeModel.article_id.id == article_id
+    #         )
+    #         if existing_like:
+    #             # Optional: return existing like instead of creating new
+    #             return existing_like
+
+    #         # Create new like
+    #         like = LikeModel(user_id=user, article_id=article, created_at=datetime.now())
+    #         await like.insert()
+    #         return like
+    #     except Exception as e:
+    #         print("Exception: ", str(e))
+    #         return e
     
-    async def like_article(self, article_id: str, user_id:str) -> bool:
+    async def like_article(
+        self, 
+        a_id: str,
+        u_id:str
+        ) -> ArticleLikeModel:
         try:
-            article = await ArticleModel.get(ObjectId(article_id))
+            article = await ArticleModel.get(ObjectId(a_id))
             if not article:
                 raise HTTPException(status_code=404, detail="Article not found")
-            
-            if user_id in [str(user.id) for user in article.liked_by]:
-                return True  # User has already liked the article
-            
-            # user = await UserModel.get(ObjectId(user_id))
-            # if not user:
-            #     raise HTTPException(status_code=404, detail="User not found")
 
-            # article.liked_by.append(user)
-            article.liked_by.append(user_id)
-            await article.save()
-            return True
+            user = await UserModel.get(ObjectId(u_id))
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
 
+            liked = await ArticleLikeModel.find_one(
+                ArticleLikeModel.user_id.id == user.id,
+                ArticleLikeModel.article_id.id == article.id
+                )
+
+            if liked:
+                await liked.delete()
+                return "un-liked"
+
+            like = ArticleLikeModel(
+                article_id=a_id,
+                user_id=u_id
+                )
+            
+            await like.insert()
+            return "liked"
         except Exception as e:
             print(f"Error while liking article: {str(e)}")
             return False
