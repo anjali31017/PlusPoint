@@ -1,13 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks 
-
-from app.controller.user_controller import UserController
-from app.models.users import UserModel
-from app.schema.user_schema import LogoutSchema, UserCreateSchema, LoginSchema, UserProfileSchema
-from app.controller.token_controller import create_token_pair, get_current_user
-from app.models.token import RefreshTokenModel
+from fastapi import APIRouter, Depends, HTTPException 
+from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
-from app.controller.email_controller import send_otp_email
-from app.schema.email_schema import OTPVerifySchema
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleCreateSchema, CreateCommentSchema
 

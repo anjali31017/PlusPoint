@@ -1,5 +1,5 @@
 from typing import ClassVar, Optional, List
-from beanie import Document, Indexed, Link
+from beanie import Document, Indexed
 from pydantic import Field
 from datetime import datetime
 from enum import Enum

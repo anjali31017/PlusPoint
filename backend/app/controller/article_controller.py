@@ -2,7 +2,6 @@ from bson import ObjectId
 from app.models.article import ArticleModel, ArticleLikeModel
 from app.models.firm import FirmModel
 from app.models.users import UserModel
-from typing import Dict
 from datetime import datetime
 from fastapi import HTTPException
 
@@ -25,7 +24,6 @@ class ArticleController:
             if not is_publisher_in_firm:
                 raise HTTPException(status_code=400, detail="User is not associated with the provided firm")
             
-            # Create the article document
             article = ArticleModel(
                 firm_id=firm,
                 publisher_id=publisher_id,
@@ -37,13 +35,10 @@ class ArticleController:
                 published_at=datetime.now()
             )
 
-            # Insert the article into the database
             await article.insert()
-
             return article
 
         except Exception as e:
-            # Handle any unexpected errors
             print(f"Error while creating article: {str(e)}")
             return None
         
@@ -77,41 +72,13 @@ class ArticleController:
             )
 
             await comment.insert()
-
             return comment
 
         except Exception as e:
             print(f"Error while adding comment: {str(e)}")
             return None 
-        
-    # async def like_article(self, article_id: str, user_id: str):
-    #     try:
-    #         user = await UserModel.get(ObjectId(user_id))
-    #         if not user:
-    #             raise HTTPException(status_code=404, detail="User not found")
 
-    #         # Validate article exists
-    #         article = await ArticleModel.get(ObjectId(article_id))
-    #         if not article:
-    #             raise HTTPException(status_code=404, detail="Article not found")
-            
-    #         # Check if like already exists
-    #         existing_like = await LikeModel.find_one(
-    #             LikeModel.user_id.id == user_id,
-    #             LikeModel.article_id.id == article_id
-    #         )
-    #         if existing_like:
-    #             # Optional: return existing like instead of creating new
-    #             return existing_like
 
-    #         # Create new like
-    #         like = LikeModel(user_id=user, article_id=article, created_at=datetime.now())
-    #         await like.insert()
-    #         return like
-    #     except Exception as e:
-    #         print("Exception: ", str(e))
-    #         return e
-    
     async def like_article(
         self, 
         a_id: str,

@@ -2,7 +2,6 @@ from fastapi import HTTPException
 from typing import Optional
 from bson import ObjectId
 from app.models.users import UserModel, UserRole
-from beanie.operators import Or, Eq
 
 from app.models.firm import FirmModel
 from app.models.subscription import SubscriptionModel
@@ -24,12 +23,18 @@ class UserController:
             print("Checking username:", username)
             
             # Querying the users collection
-            username_in_users = await UserModel.find_one({"username": username, "is_deleted": False})
+            username_in_users = await UserModel.find_one(
+                UserModel.username == username,
+                UserModel.is_deleted == False
+                )
             if username_in_users:
                 return username_in_users  # Return the user document if found
 
             # Querying the firms collection
-            username_in_firms = await FirmModel.find_one({"firm_username": username, "is_deleted": False})
+            username_in_firms = await FirmModel.find_one(
+                FirmModel.firm_username == username,
+                FirmModel.is_deleted == False
+                )
             if username_in_firms:
                 return username_in_firms  # Return the firm document if found
 

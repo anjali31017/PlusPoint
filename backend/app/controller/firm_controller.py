@@ -1,11 +1,8 @@
 from datetime import datetime
-from beanie import PydanticObjectId
-from bson import ObjectId
 from fastapi import HTTPException
 from app.models.firm import FirmModel, PublisherInfo
 from app.schema.firm_schema import AddPublisherSchema, FirmRegisterSchema
 from app.models.users import UserModel, UserRole
-from app.models.subscription import SubscriptionModel
 
 class FirmController:
     

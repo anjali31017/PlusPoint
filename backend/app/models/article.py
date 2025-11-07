@@ -1,6 +1,6 @@
-from typing import Optional, List
-from beanie import Document, Indexed, Link
-from pydantic import BaseModel, Field
+from typing import List
+from beanie import Document, Link
+from pydantic import Field
 from datetime import datetime
 from app.models.firm import FirmModel
 from app.models.users import UserModel

@@ -1,7 +1,5 @@
-from fastapi import APIRouter, HTTPException, BackgroundTasks 
+from fastapi import APIRouter, HTTPException
 from datetime import datetime, timedelta
-from fastapi import Depends, Header
-
 from app.config import settings
 from app.controller.token_controller import create_access_token, create_refresh_token, decode_token
 from app.models.token import RefreshTokenModel

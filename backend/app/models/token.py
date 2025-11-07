@@ -1,7 +1,6 @@
 from beanie import Document, Indexed, Link
 from pydantic import Field
 from datetime import datetime
-from typing import Optional
 
 from app.models.users import UserModel
 

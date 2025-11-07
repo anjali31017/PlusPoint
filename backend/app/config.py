@@ -1,12 +1,7 @@
 from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
-    # MYSQL_USER: str
-    # MYSQL_PASSWORD: str
-    # MYSQL_HOST: str
-    # MYSQL_PORT: int
-    # MYSQL_DB: str
-
+    
     SMTP_SERVER: str
     SMTP_PORT: int
     SMTP_USERNAME: str

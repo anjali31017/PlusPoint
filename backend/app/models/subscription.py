@@ -1,7 +1,6 @@
-from typing import List, Optional
+from typing import Optional
 from beanie import Document, Link
-from pydantic import Field
-from datetime import datetime
+
 
 from app.models.firm import FirmModel
 from app.models.users import UserModel
