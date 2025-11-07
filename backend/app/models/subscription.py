@@ -8,8 +8,8 @@ from app.models.users import UserModel
 
 class SubscriptionModel(Document):
     subscriber_id: Link["UserModel"]
-    firm_ids: Optional[List[str]] = []
-    publisher_ids: Optional[List[str]] = []
+    firm_id: Optional[Link["FirmModel"]] = None
+    publisher_id: Optional[Link["UserModel"]] = None
 
     class Settings:
         name = "subscriptions"  

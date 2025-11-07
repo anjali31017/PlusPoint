@@ -80,6 +80,8 @@ class UserController:
         try:
             firm = None
             publisher = None
+            firm_data = None
+            pub_data = None
             
             if firm_username:
                 firm = await FirmModel.find_one(
@@ -87,6 +89,7 @@ class UserController:
                     FirmModel.is_deleted == False,
                     FirmModel.is_active == True,
                     )
+                firm_data = firm.id
                 if not firm:
                     raise HTTPException(status_code=404, detail="Firm not found")
 
@@ -97,31 +100,33 @@ class UserController:
                     UserModel.is_active == True,
                     UserModel.is_deleted == False,
                     )
+                pub_data =  publisher.id
                 if not publisher:
                     raise HTTPException(status_code=404, detail="Publisher (user) not found")
-                
+            
             subscriber = await UserModel.get(ObjectId(subscriber_id))
             if not subscriber:
                 raise HTTPException(status_code=404, detail="Subscriber (user) not found")
-
-            subscription = await SubscriptionModel.find_one(SubscriptionModel.subscriber_id.id == subscriber.id)
             
-            if not subscription:
-                subscription = SubscriptionModel(
-                    subscriber_id=subscriber, firm_ids=[], publisher_ids=[]
-                )
                 
+                
+            subscription = await SubscriptionModel.find_one(
+                SubscriptionModel.subscriber_id.id == subscriber.id,
+                SubscriptionModel.firm_id.id == firm_data,
+                SubscriptionModel.publisher_id.id == pub_data
+                )
+
+            if subscription:
+                await subscription.delete()
+                return "unsubscribed"
+                # raise HTTPException(status_code=200, detail="Already subscribed")
             
-            if firm:
-                if str(firm.id) not in subscription.firm_ids:
-                    subscription.firm_ids.append(str(firm.id))
+            subscription = SubscriptionModel(
+                subscriber_id=subscriber, firm_id=firm_data, publisher_id=pub_data
+            )
 
-            if publisher:
-                if str(publisher.id) not in subscription.publisher_ids:
-                    subscription.publisher_ids.append(str(publisher.id))
-
-            await subscription.save()
-            return True
+            await subscription.insert()
+            return "subscribed"
 
         except HTTPException as e:
             raise e
