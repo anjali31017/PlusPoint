@@ -189,11 +189,11 @@ async def subscribe_to_entity(
     if not firm_username and not publisher_username:
         raise HTTPException(status_code=400, detail="Either firm_username or publisher_username is required")
 
-    await user_controller.subscribe(firm_username, publisher_username, current_user["user_id"])
+    response = await user_controller.subscribe(firm_username, publisher_username, current_user["user_id"])
     return {
         "status": 1,
-        "message": "Subscribed successfully",
-        "data": None
+        "message": "request successfully",
+        "data": response
     }
 
 @router.get("/protected")
