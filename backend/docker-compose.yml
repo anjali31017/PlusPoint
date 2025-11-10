@@ -6,11 +6,13 @@ services:
       - "5000:5500"
     depends_on:
       - mongodb_pluspoint
+      - kafka_pluspoint
     env_file:
       - .env
     restart: always
     volumes:
       - ./app:/app/app 
+
   mongodb_pluspoint:
     image: mongo:6
     container_name: mongodb_pluspoint
@@ -20,9 +22,30 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
       MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
     ports:
-      - "27018:27017"  # host port 27018 mapped to container 27017
+      - "27018:27017" 
     volumes:
       - mongo_data:/data/db
 
+  zookeeper_pluspoint:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper_pluspoint
+    ports:
+      - "2181:2181"
+    restart: always
+
+  kafka_pluspoint:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka_pluspoint
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: ${KAFKA_BROKER_ID}
+      KAFKA_ZOOKEEPER_CONNECT: ${KAFKA_ZOOKEEPER_CONNECT}
+      KAFKA_ADVERTISED_LISTENERS: ${KAFKA_ADVERTISED_LISTENERS}
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: ${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
+    depends_on:
+      - zookeeper_pluspoint
+    restart: always
+    
 volumes:
   mongo_data:
