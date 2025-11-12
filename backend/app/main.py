@@ -3,20 +3,29 @@ from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
+import asyncio
+
 # from router.oauth import router as oauth_router
 from app.api.user_api import router as user_router
+from app.websocket.websocket_endpoints import router as websocket_router
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_db
 from app.api.refresh_api import router as token_router
 from app.api.firm_api import router as firm_router
 from app.api.article_api import router as article_router
+from app.kafka.producer import start_producer, stop_producer
+from app.kafka.consumer import KafkaConsumerService
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting application...")
     await connect_to_mongo()
+    await start_producer()
+    asyncio.create_task(KafkaConsumerService.consume_posts())
     yield
     print("Shutting down application...")
+    await stop_producer()
     await close_mongo_connection()
+    
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -88,6 +97,12 @@ app.include_router(
 
 )
 
+app.include_router(
+    websocket_router, 
+    prefix=f"{settings.WS_PREFIX}", 
+    tags=["websocket"],
+
+)
 
 # app.include_router(
 #     email_otp_router, 

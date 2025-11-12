@@ -27,5 +27,5 @@ async def start_producer():
 async def stop_producer():
     await producer.stop()
 
-async def send_kafka_event(post_data):
-    await producer.send_and_wait("posts", post_data)
+async def send_kafka_event(title, data):
+    await producer.send_and_wait(title, data)

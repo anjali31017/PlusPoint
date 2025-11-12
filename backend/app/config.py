@@ -41,6 +41,7 @@ class Settings(BaseSettings):
 
     
     API_PREFIX: str
+    WS_PREFIX: str
 
     class Config:
         env_file = ".env"

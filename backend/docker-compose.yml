@@ -1,3 +1,6 @@
+networks:
+  pluspoint_network:
+    driver: bridge
 services:
   fastapi_pluspoint:
     build: .
