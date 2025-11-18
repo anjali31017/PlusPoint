@@ -29,10 +29,11 @@ async def check_username(username: str):
 async def create_user(user_data: UserCreateSchema, background_tasks: BackgroundTasks):
     try:
         user = await user_controller.check_username_exists(user_data.username)
-        if user:  
-            if user.is_verified == True:
+        if user and user.is_verified == True:
                 raise HTTPException(status_code=400, detail="Username already exists")
             
+        elif user and user.is_verified == False:
+            pass
         else:
             user = await user_controller.create(user_data.dict())
             if user is None:
@@ -44,7 +45,7 @@ async def create_user(user_data: UserCreateSchema, background_tasks: BackgroundT
             "status": 1,
             "message": "User created, OTP sent to email",
             "data": {
-                "email": user.username
+                "username": user.username
             }
         }
         return response_data
@@ -56,7 +57,7 @@ async def create_user(user_data: UserCreateSchema, background_tasks: BackgroundT
 @router.post("/verify-otp", response_model=BaseResponse)
 async def verify_user_otp(otp_data: OTPVerifySchema):
     try:
-        user = await UserModel.find_one(UserModel.email == otp_data.email)
+        user = await UserModel.find_one(UserModel.username == otp_data.username, UserModel.is_deleted == False)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 

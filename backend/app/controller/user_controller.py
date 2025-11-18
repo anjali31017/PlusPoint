@@ -11,6 +11,7 @@ class UserController:
     async def create(self, user_data:dict) -> UserModel | None:
         try:
             user = UserModel(**user_data)
+            user.role = ['E']
             user.password_hash = UserModel.hash_detail(user_data['password'])
             await user.insert()
             return user
@@ -25,7 +26,7 @@ class UserController:
             # Querying the users collection
             username_in_users = await UserModel.find_one(
                 UserModel.username == username,
-                UserModel.is_deleted == False
+                UserModel.is_deleted == False,
                 )
             if username_in_users:
                 return username_in_users  # Return the user document if found

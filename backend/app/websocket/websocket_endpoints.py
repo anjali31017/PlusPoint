@@ -1,8 +1,8 @@
 # main.py
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.websocket.websocket_manager import ConnectionManager
 
-router = FastAPI()
+router = APIRouter()
 
 article_notification_manager = ConnectionManager()
 

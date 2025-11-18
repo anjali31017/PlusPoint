@@ -12,17 +12,30 @@ from app.database.connection import connect_to_mongo, close_mongo_connection, ge
 from app.api.refresh_api import router as token_router
 from app.api.firm_api import router as firm_router
 from app.api.article_api import router as article_router
-from app.kafka.producer import start_producer, stop_producer
+from app.kafka.producer import start_producer, stop_producer, wait_for_kafka
 from app.kafka.consumer import KafkaConsumerService
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting application...")
     await connect_to_mongo()
+    
+    await wait_for_kafka()
     await start_producer()
-    asyncio.create_task(KafkaConsumerService.consume_posts())
+    await asyncio.sleep(30) 
+    consumer_task = asyncio.create_task(KafkaConsumerService.consume_posts())
+    
     yield
+    
     print("Shutting down application...")
+    # KafkaConsumerService.is_running = False
+    await KafkaConsumerService.shutdown()
+    
+    try:
+        await consumer_task.cancel()
+    except:
+        print("Kafka consumer task cancellation failed or was already cancelled.")
+    await asyncio.gather(consumer_task, return_exceptions=True)
     await stop_producer()
     await close_mongo_connection()
     

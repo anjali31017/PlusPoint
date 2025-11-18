@@ -18,27 +18,34 @@ class FirmController:
     
     async def register_firm(self, firm_data:FirmRegisterSchema, user_id:str) -> bool:
         try:
-            firm_data_dict = firm_data.dict()
-            firm_data_dict['firm_user_id'] = user_id
             
-            firm = FirmModel(**firm_data_dict)
-            await firm.insert()
-            
-            # Assuming firm_data contains a 'user_id' to associate the user
-            # user_id = firm_data.get('user_id')
-            
-            # Find the user (assuming user_id is the unique identifier)
             user = await UserModel.get(user_id)
-            
             if user:
-                # Add role 'F' (Firm Founder) to the user
+                firm_data_dict = firm_data.dict()
+                firm_data_dict['firm_user_id'] = user_id
+
+                firm = FirmModel(**firm_data_dict)
+                register_firm = await firm.insert()
+                if register_firm is None:
+                    return False
+                print("Registered Firm:", register_firm.firm_username)
+                pub_data = {
+                    "firm_username": register_firm.firm_username,   
+                    "publisher_username": user.username,
+                    
+                }
+                # 
+                register_firm.publishers = [await self.add_publisher(AddPublisherSchema(**pub_data))]
+                # register_firm.publishers.append(new_pub)
+                # register_firm.publishers = [await self.add_publisher(new_pub)]
+                await firm.save()
+                
                 if UserRole.founder not in user.role:
                     user.role.append(UserRole.founder)
-                    await user.save()  # Save the updated user back to the database
+                    if UserRole.publisher not in user.role:
+                        user.role.append(UserRole.publisher)
+                    await user.save()
                 return True
-            else:
-                print(f"User with user_id {user_id} not found.")
-                return False
                 
         except Exception as e:
             print("Error registering firm:", e)

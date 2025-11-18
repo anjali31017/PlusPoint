@@ -1,8 +1,10 @@
+from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException 
 from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleCreateSchema, CreateCommentSchema
+from app.kafka.producer import send_kafka_event
 
 
 router = APIRouter(prefix="/article", tags=["Article"])
@@ -10,27 +12,87 @@ router = APIRouter(prefix="/article", tags=["Article"])
 article_controller = ArticleController()
 
 @router.post("/create", response_model=BaseResponse)
-async def add_article(article_data: ArticleCreateSchema,  current_user: dict = Depends(get_current_user)):
+async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
     try:
         article_data_dict = article_data.dict()
 
-        article = await article_controller.create_article(article_data_dict, current_user["user_id"])
-        
+        article = await article_controller.create_article(
+            article_data_dict, 
+            current_user["user_id"]
+        )
+
         if article is None:
             raise HTTPException(status_code=500, detail="Failed to create article")
-        response_data = {
+
+        # # final, clean Kafka event
+        # kafka_article_event = {
+        #     "event_type": "article_published",
+        #     "firm_id": str(article.firm_id.id),
+        #     "publisher_id": current_user["user_id"],
+        #     "article_id": str(article.id),
+        #     "title": article.title,
+        #     "firm_username": article.firm_id.firm_username,
+        #     "publisher_username": current_user["username"],
+        #     "published_at": (
+        #         article.published_at.isoformat() 
+        #         if article.published_at else datetime.now().isoformat()
+        #     )
+        # }
+
+        # # publish event
+        # await send_kafka_event("article_published", kafka_article_event)
+
+        return {
             "status": 1,
             "message": "Article created successfully",
             "data": {
-                "article_id": str(article.id)
+                "article_id": str(article.id),
             }
         }
-        return response_data
 
-    except HTTPException as he:
-        raise he
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# @router.post("/create", response_model=BaseResponse)
+# async def add_article(article_data: ArticleCreateSchema,  current_user: dict = Depends(get_current_user)):
+#     try:
+#         article_data_dict = article_data.dict()
+
+#         article = await article_controller.create_article(article_data_dict, current_user["user_id"])
+        
+#         if article is None:
+#             raise HTTPException(status_code=500, detail="Failed to create article")
+        
+#         kafka_article_event = {
+#             "firm_id": str(article.firm_id.id),
+#             # "publisher_id": article.publisher_id.id,
+#             "publisher_id": current_user["user_id"],
+#             "article_id": str(article.id),
+#             "article_title": article.title,
+#             "article_firm": article.firm_id.firm_username,
+#             "article_publisher": current_user["username"],
+#             # "published_at": article.published_at
+#         }
+#         await send_kafka_event("article_published",kafka_article_event )
+        
+#         response_data = {
+#             "status": 1,
+#             "message": "Article created successfully",
+#             "data": {
+#                 "article_id": str(article.id),
+#                 # "data":article
+#                 "details": kafka_article_event
+#             }
+#         }
+#         return response_data
+
+#     except HTTPException as he:
+#         raise he
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e)) 
     
 # @router.post("/{article_id}/comment/{comment_id}", response_model=BaseResponse)
 # @router.post("/{article_id}/comment", response_model=BaseResponse)
