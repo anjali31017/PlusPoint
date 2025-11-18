@@ -1,23 +1,72 @@
-
 networks:
   pluspoint_network:
     driver: bridge
     name: pluspoint
 
 services:
+  kafka_pluspoint_1:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka_pluspoint_1
+    ports:
+      - "29091:9092"   # Host:Container; for outside-Docker access
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_pluspoint_1:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka_pluspoint_1:9093,2@kafka_pluspoint_2:9095"
+      KAFKA_CLUSTER_ID: "<your-cluster-id>"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: nc -z kafka_pluspoint_1 9092 || exit 1
+      interval: 5s
+      retries: 10
+    networks:
+      - pluspoint_network
+
+  kafka_pluspoint_2:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka_pluspoint_2
+    ports:
+      - "29094:9094"
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9094,CONTROLLER://0.0.0.0:9095
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_pluspoint_2:9094
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka_pluspoint_1:9093,2@kafka_pluspoint_2:9095"
+      KAFKA_CLUSTER_ID: "<your-cluster-id>"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 2
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    healthcheck:
+      test: nc -z kafka_pluspoint_2 9094 || exit 1
+      interval: 5s
+      retries: 10
+    networks:
+      - pluspoint_network
+
   fastapi_pluspoint:
     build: .
     container_name: fastapi_pluspoint
-    ports:
-      - "5000:5000"
     depends_on:
-      - mongodb_pluspoint
-      - kafka_pluspoint
+      - kafka_pluspoint_1
+      - kafka_pluspoint_2
     env_file:
       - .env
     restart: always
     volumes:
       - ./app:/app/app 
+    ports:
+      - "5000:5000"
     networks:
       - pluspoint_network
 
@@ -36,83 +85,17 @@ services:
     networks:
       - pluspoint_network
 
-  zookeeper_pluspoint:
-    image: confluentinc/cp-zookeeper:latest
-    container_name: zookeeper_pluspoint
-    ports:
-      - 22181:2181
-    restart: always
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks:
-      - pluspoint_network
-
-  kafka_pluspoint:
-    image: confluentinc/cp-kafka:latest
-    container_name: kafka_pluspoint
-    depends_on:
-      - zookeeper_pluspoint
-    ports:
-      - 29091:9092
-    restart: always
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper_pluspoint:2181'
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka_pluspoint:29091
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-      KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_CONFLUENT_BALANCER_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_JMX_PORT: 9101
-      KAFKA_JMX_HOSTNAME: broker-1
-      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
-      KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker-1:29091
-      CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
-      KAFKA_LOG_DIRS: '/var/lib/kafka/data'
-      CONFLUENT_METRICS_ENABLE: 'true'
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
-      KAFKA_PROCESS_ROLES: 'broker,controller'
-    healthcheck:
-      test: nc -z kafka_pluspoint 29091 || exit 1
-      start_period: 15s
-      interval: 5s
-      timeout: 10s
-      retries: 10
-    networks:
-      - pluspoint_network
-
-  kafka-ui:
-    image: provectuslabs/kafka-ui
-    container_name: kafka-ui
-    ports:
-      - 8090:8080
-    restart: always
-    environment:
-      - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka_pluspoint:29091
-    networks:
-      - pluspoint_network
-  kafka-init:
-    image: confluentinc/cp-kafka:latest
-    container_name: kafka-init
-    networks:
-      - pluspoint_network
-    command: ["/bin/bash", "-c", "/create_topics.sh && tail -f /dev/null"]
-    env_file: ./.env
-    depends_on:
-      kafka_pluspoint:
-        condition: service_healthy
-    volumes:
-      - type: bind
-        source: ./create_topics.sh
-        target: /create_topics.sh
-    init: true
+  # kafka-ui:
+  #   image: provectuslabs/kafka-ui
+  #   container_name: kafka-ui
+  #   ports:
+  #     - "8090:8080"
+  #   restart: always
+  #   environment:
+  #     KAFKA_CLUSTERS_0_NAME: local
+  #     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka_pluspoint_1:9092,kafka_pluspoint_2:9094
+  #   networks:
+  #     - pluspoint_network
 
 volumes:
   mongo_data:

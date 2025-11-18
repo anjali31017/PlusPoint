@@ -24,24 +24,27 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
         if article is None:
             raise HTTPException(status_code=500, detail="Failed to create article")
 
-        # # final, clean Kafka event
-        # kafka_article_event = {
-        #     "event_type": "article_published",
-        #     "firm_id": str(article.firm_id.id),
-        #     "publisher_id": current_user["user_id"],
-        #     "article_id": str(article.id),
-        #     "title": article.title,
-        #     "firm_username": article.firm_id.firm_username,
-        #     "publisher_username": current_user["username"],
-        #     "published_at": (
-        #         article.published_at.isoformat() 
-        #         if article.published_at else datetime.now().isoformat()
-        #     )
-        # }
+        # final, clean Kafka event
+        kafka_article_event = {
+            "event_type": "article_published",
+            "firm_id": str(article.firm_id.id),
+            "publisher_id": current_user["user_id"],
+            "article_id": str(article.id),
+            "title": article.title,
+            "firm_username": article.firm_id.firm_username,
+            "publisher_username": current_user["username"],
+            "published_at": (
+                article.published_at.isoformat() 
+                if article.published_at else datetime.now().isoformat()
+            )
+        }
 
-        # # publish event
-        # await send_kafka_event("article_published", kafka_article_event)
-
+        # publish event
+        r = await send_kafka_event("article_published", kafka_article_event)
+        if r:
+            print(f"Kafka event sent successfully: {r}")
+        else:
+            print("Failed to send Kafka event")
         return {
             "status": 1,
             "message": "Article created successfully",

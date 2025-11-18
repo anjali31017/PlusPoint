@@ -20,15 +20,15 @@ async def lifespan(app: FastAPI):
     print("Starting application...")
     await connect_to_mongo()
     
-    await wait_for_kafka()
+    # await wait_for_kafka()
     await start_producer()
-    await asyncio.sleep(30) 
+    # await asyncio.sleep(30) 
     consumer_task = asyncio.create_task(KafkaConsumerService.consume_posts())
     
     yield
     
     print("Shutting down application...")
-    # KafkaConsumerService.is_running = False
+    KafkaConsumerService.is_running = False
     await KafkaConsumerService.shutdown()
     
     try:
