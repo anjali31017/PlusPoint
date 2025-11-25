@@ -1,12 +1,13 @@
 import datetime
 import asyncio, json
 from aiokafka import AIOKafkaConsumer
+from bson import ObjectId
 from app.models.subscription import SubscriptionModel
 from app.config import settings
 # from .celery_app import run_recommendation_task
 from app.websocket.websocket_endpoints import article_notification_manager
 
-
+from app.sse.sse_endpoint import sse_connection_manager
 
 import asyncio
 import json
@@ -29,26 +30,28 @@ class KafkaConsumerService:
                 cls.consumer = AIOKafkaConsumer(
                     'article_published',
                     bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
-                    group_id="notification_service_group",
+                    group_id="notification_service_group_test",
                     value_deserializer=lambda v: json.loads(v.decode('utf-8')),
-                    auto_offset_reset="latest",
+                    auto_offset_reset="earliest",
                 )
 
                 await cls.consumer.start()
                 print("Kafka Consumer connected successfully!")
 
                 async for msg in cls.consumer:
-                    if not cls.is_running:
-                        break
+
                     try:
+                        print("Message received from Kafka")
                         post = msg.value
 
                         if post.get("event_type") != "article_published":
                             continue
 
-                        firm = post["firm_id"]
-                        publisher = post["publisher_id"]
-
+                        firm_id = post["firm_id"]
+                        publisher_id = post["publisher_id"]
+                        
+                        firm_obj_id = ObjectId(firm_id)
+                        publisher_obj_id = ObjectId(publisher_id)
                         article = {
                             "article_id": post["article_id"],
                             "article_title": post["article_title"],
@@ -57,36 +60,79 @@ class KafkaConsumerService:
                             "published_at": post["published_at"]
                         }
 
-                        # Fetch subscribers
-                        firm_subscribers = await SubscriptionModel.find(
-                            SubscriptionModel.firm_id == firm
-                        ).to_list()
+                        firm_subscriptions = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
+                        print(f"Firm Subscriptions: {firm_subscriptions}")
+                        # subscriber_ids = [sub.subscriber_id.id for sub in firm_subscriptions]
+                        # firm_iddddd = 
+                        # subscriber_ids = [sub.subscriber_id.link for sub in firm_subscriptions]
+                        # print(f"Firm Subscriber IDs: {subscriber_ids}")
+                        
+                        all_subscribers = None
+                        # query = {"$or": []}
 
-                        publisher_subscribers = await SubscriptionModel.find(
-                            SubscriptionModel.firm_id == publisher
-                        ).to_list()
+                        # if firm_id:
+                        #     query["$or"].append({"firm_id.id": ObjectId(firm_id)})
+                        # if publisher_id:
+                        #     query["$or"].append({"publisher_id.id": ObjectId(publisher_id)})
 
-                        # Unique subscriber IDs
-                        all_subscribers = {
-                            sub.subscriber_id for sub in (firm_subscribers + publisher_subscribers)
-                        }
+                        # # If no conditions, return empty list
+                        # if not query["$or"]:
+                        #     return []
 
-                        # Prepare WS message
-                        message = json.dumps({
+                        # subscriptions = await SubscriptionModel.find(query).to_list()
+                        # subscriber_ids = [sub.subscriber_id.id for sub in subscriptions]
+                        # print(f"Subscriber IDs: {subscriber_ids}")
+                        # all_subscribers = list(set(subscriber_ids))
+    
+                        # firm_subscribers = await SubscriptionModel.find(
+                        #     SubscriptionModel.firm_id.id == ObjectId(firm)
+                        # ).to_list()
+
+                        # publisher_subscribers = await SubscriptionModel.find(
+                        #     SubscriptionModel.publisher_id.id == ObjectId(publisher)
+                        # ).to_list()
+
+                        # if firm_subscribers:
+                        #     firm_ids = [str(sub.id) for sub in firm_subscribers]
+                        # if publisher_subscribers:
+                        #     publisher_ids = [str(sub.id) for sub in publisher_subscribers]
+                            
+                        # if firm_subscribers:
+                        #     all_subscribers = set(firm_ids)
+                        # if publisher_subscribers:
+                        #     all_subscribers = set(publisher_ids)
+                        # if firm_subscribers and publisher_subscribers:
+                        #     all_subscribers = set(firm_ids).union(set(publisher_ids))
+                            
+                        # print(f"Firm Subscribers: {firm_subscribers}")
+                        # print(f"Publisher Subscribers: {publisher_subscribers}")
+                        # all_subscribers = {
+                        #     str(sub.subscriber_id.get_link()) 
+                        #     for sub in (firm_subscribers + publisher_subscribers)
+                        # }
+                        # all_subscribers = {str(sub.subscriber_id) for sub in (firm_subscribers.id + publisher_subscribers.id)}
+                        print(f"All Subscribers: {all_subscribers}")
+                        # all_subscribers = {
+                        #     str(sub.subscriber_id) if isinstance(sub.subscriber_id, ObjectId) else str(sub.subscriber_id.id)
+                        #     for sub in (firm_subscribers + publisher_subscribers)
+                        # }
+                        
+                        if not all_subscribers:
+                            continue 
+                        
+                        message = {
                             "type": "new_article",
                             "data": article
-                        })
+                        }
+                        # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", message)
                         if all_subscribers:
+                            print(f"Sending notifications to subscribers: {all_subscribers}")
                             await asyncio.gather(*[
-                                article_notification_manager.send_personal_message(message, sid)
+                                # article_notification_manager.send_personal_message(message, sid)
+                                sse_connection_manager.send_to_user(sid, message)
                                 for sid in all_subscribers
                             ])
-                        # # Send message to each subscriber
-                        # for subscriber_id in all_subscribers:
-                        #     await article_notification_manager.send_personal_message(
-                        #         message, subscriber_id
-                        #     )
-
+                            print("Notifications sent to subscribers.")
                     except Exception as process_err:
                         print(f"Error processing message: {process_err}")
 
@@ -95,13 +141,26 @@ class KafkaConsumerService:
                 print("Retrying in 5 seconds...")
                 await asyncio.sleep(5)
 
-            finally:
-                if cls.consumer:
-                    try:
-                        await asyncio.wait_for(cls.consumer.stop(), timeout=5)
-                    except asyncio.TimeoutError:
-                        print("Kafka consumer stop timed out")
-                    cls.consumer = None
+            # finally:
+            #     if cls.consumer:
+            #         try:
+            #             await asyncio.wait_for(cls.consumer.stop(), timeout=5)
+            #         except asyncio.TimeoutError:
+            #             print("Kafka consumer stop timed out")
+            #         cls.consumer = None
+
+#----------------------------
+#  PENDING NOTIFICAITON
+#----------------------------
+# # Store notification
+# await Notifications.create(user_id=subscriber_id, message=message)
+
+# # When user connects
+# pending_notifications = await Notifications.find(user_id=user.id, sent=False).to_list()
+# for note in pending_notifications:
+#     await article_notification_manager.send_personal_message(note.message, user.id)
+#     note.sent = True
+#     await note.save()
 
 
     @classmethod

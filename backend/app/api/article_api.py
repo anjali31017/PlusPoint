@@ -5,7 +5,8 @@ from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleCreateSchema, CreateCommentSchema
 from app.kafka.producer import send_kafka_event
-
+from app.websocket.websocket_endpoints import article_notification_manager
+from app.sse.sse_endpoint import sse_connection_manager
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -23,14 +24,15 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
 
         if article is None:
             raise HTTPException(status_code=500, detail="Failed to create article")
-
+        # article_notification_manager.send_personal_message("hello", "692052180cbaa9500904c230")
+        
         # final, clean Kafka event
         kafka_article_event = {
             "event_type": "article_published",
             "firm_id": str(article.firm_id.id),
             "publisher_id": current_user["user_id"],
             "article_id": str(article.id),
-            "title": article.title,
+            "article_title": article.title,
             "firm_username": article.firm_id.firm_username,
             "publisher_username": current_user["username"],
             "published_at": (
@@ -38,13 +40,11 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
                 if article.published_at else datetime.now().isoformat()
             )
         }
-
+        
         # publish event
-        r = await send_kafka_event("article_published", kafka_article_event)
-        if r:
-            print(f"Kafka event sent successfully: {r}")
-        else:
-            print("Failed to send Kafka event")
+        await send_kafka_event("article_published", kafka_article_event)
+        # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", {"msg": "Hello!"})
+
         return {
             "status": 1,
             "message": "Article created successfully",
@@ -99,6 +99,7 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
     
 # @router.post("/{article_id}/comment/{comment_id}", response_model=BaseResponse)
 # @router.post("/{article_id}/comment", response_model=BaseResponse)
+
 @router.post("/comment", response_model=BaseResponse)
 async def add_comment(
     comment_data: CreateCommentSchema, 

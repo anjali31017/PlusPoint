@@ -28,11 +28,37 @@ class ConnectionManager:
             if not self.active_connections[user_key]:
                 del self.active_connections[user_key]
 
-    async def send_personal_message(self, message: str, user_id: str):
-        """Send a message to all connections of a user."""
+    # async def send_personal_message(self, message: str, user_id: str):
+    #     """Send a message to all connections of a user."""
+    #     user_key = user_id or "anonymous"
+    #     for ws in self.active_connections.get(user_key, {}).values():
+    #         await ws.send_text(message)
+            
+    # async def send_personal_message(self, message: dict | str, user_id: str):
+    #     user_key = user_id or "anonymous"
+    #     if user_key not in self.active_connections:
+    #         print(f"User {user_key} not connected, skipping message")
+    #     for ws in self.active_connections.get(user_key, {}).values():
+    #         if isinstance(message, dict):
+    #             await ws.send_json(message)
+    #         else:
+    #             await ws.send_text(message)
+
+    async def send_personal_message(self, message: dict | str, user_id: str):
         user_key = user_id or "anonymous"
-        for ws in self.active_connections.get(user_key, {}).values():
-            await ws.send_text(message)
+        if user_key not in self.active_connections:
+            print(f"User {user_key} not connected, skipping message")
+            return
+
+        for ws in self.active_connections[user_key].values():
+            try:
+                if isinstance(message, dict):
+                    await ws.send_json(message)
+                else:
+                    await ws.send_text(message)
+            except Exception as e:
+                print(f"Failed to send message to {user_key}: {e}")
+
 
     async def send_to_connection(self, message: str, user_id: str, connection_id: str):
         """Send a message to a specific connection."""

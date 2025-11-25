@@ -50,4 +50,13 @@ async def stop_producer():
     await producer.stop()
 
 async def send_kafka_event(title, data):
-    await producer.send_and_wait(title, data)
+    try:
+        if title is None or data is None:
+            return "invalid data"
+        if producer is None:
+            await start_producer()
+        await producer.send_and_wait(title, data)
+        return "kafka sent"
+    except Exception as e:
+        print(f"Error sending Kafka event: {e}")
+        return None
