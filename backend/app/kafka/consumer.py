@@ -59,15 +59,25 @@ class KafkaConsumerService:
                             "article_publisher": post["publisher_username"],
                             "published_at": post["published_at"]
                         }
-
-                        firm_subscriptions = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
-                        print(f"Firm Subscriptions: {firm_subscriptions}")
+                        
+                        firm_subscribers = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
+                        publisher_subscribers = await SubscriptionModel.find(SubscriptionModel.publisher_id.id == publisher_obj_id).to_list()
+                        firm_subscribers_id = [str(sub.subscriber_id.ref.id) for sub in firm_subscribers]
+                        publisher_subscribers_id = [str(sub.subscriber_id.ref.id) for sub in publisher_subscribers]
+                        all_subscribers = []
+                        if firm_subscribers is not None or publisher_subscribers is not None:
+                            all_subscribers = firm_subscribers_id + publisher_subscribers_id
+                            all_subscribers = list(set(all_subscribers))
+                        
+                        
+                        # firm_subscriptions = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
+                        # print(f"Firm Subscriptions: {firm_subscriptions}")
                         # subscriber_ids = [sub.subscriber_id.id for sub in firm_subscriptions]
                         # firm_iddddd = 
                         # subscriber_ids = [sub.subscriber_id.link for sub in firm_subscriptions]
                         # print(f"Firm Subscriber IDs: {subscriber_ids}")
                         
-                        all_subscribers = None
+                        # all_subscribers = None
                         # query = {"$or": []}
 
                         # if firm_id:
@@ -111,7 +121,7 @@ class KafkaConsumerService:
                         #     for sub in (firm_subscribers + publisher_subscribers)
                         # }
                         # all_subscribers = {str(sub.subscriber_id) for sub in (firm_subscribers.id + publisher_subscribers.id)}
-                        print(f"All Subscribers: {all_subscribers}")
+                        # print(f"All Subscribers: {all_subscribers}")
                         # all_subscribers = {
                         #     str(sub.subscriber_id) if isinstance(sub.subscriber_id, ObjectId) else str(sub.subscriber_id.id)
                         #     for sub in (firm_subscribers + publisher_subscribers)
@@ -133,6 +143,7 @@ class KafkaConsumerService:
                                 for sid in all_subscribers
                             ])
                             print("Notifications sent to subscribers.")
+
                     except Exception as process_err:
                         print(f"Error processing message: {process_err}")
 

@@ -1,4 +1,5 @@
 from datetime import datetime
+from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException 
 from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
@@ -7,6 +8,7 @@ from app.schema.article_schema import ArticleCreateSchema, CreateCommentSchema
 from app.kafka.producer import send_kafka_event
 from app.websocket.websocket_endpoints import article_notification_manager
 from app.sse.sse_endpoint import sse_connection_manager
+from app.models.subscription import SubscriptionModel
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -43,13 +45,20 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
         
         # publish event
         await send_kafka_event("article_published", kafka_article_event)
+        # firm_obj_id = ObjectId(str(article.firm_id.id))
+        # publisher_obj_id = ObjectId(current_user["user_id"])
+        # firm_subscriptions = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
+        # publisher_subscriptions = await SubscriptionModel.find(SubscriptionModel.publisher_id.id == publisher_obj_id).to_list()
+        
+        # all_subscriptions = [str(sub.subscriber_id.ref.id) for sub in firm_subscriptions] + [str(sub.subscriber_id.ref.id) for sub in publisher_subscriptions]
+        # all_subscriptions = list(set(all_subscriptions))  # Remove duplicates
         # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", {"msg": "Hello!"})
 
         return {
             "status": 1,
             "message": "Article created successfully",
             "data": {
-                "article_id": str(article.id),
+                "article_id":str(article.id),
             }
         }
 
