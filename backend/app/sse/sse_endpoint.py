@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from app.sse.sse_manager import SSEManager
 import json
@@ -10,15 +10,21 @@ router = APIRouter(prefix="/sse", tags=["sse"])
 sse_connection_manager = SSEManager()
 
 @router.get("/notifications")
-async def sse_notifications(currect_user: dict = Depends(get_current_user)):
+async def sse_notifications(request: Request, currect_user: dict = Depends(get_current_user)):
     user_id = currect_user["user_id"]
     queue = await sse_connection_manager.connect(user_id)
-
+    print(f"User {user_id} connected to SSE")
     async def event_stream():
         try:
             yield f"data: {json.dumps({'type': 'connection_established', 'user_id': user_id})}\n\n"
             while True:
-                # wait for messages sent to this specific user
+                # if await request.is_disconnected():
+                #     print("Client disconnected")
+                #     sse_connection_manager.disconnect(user_id)
+                #     break
+            #--------------------------
+            #code to disconnect if browser closes
+            #--------------------------
                 message = await queue.get()
                 yield f"data: {json.dumps(message)}\n\n"
         except asyncio.CancelledError:

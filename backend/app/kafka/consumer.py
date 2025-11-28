@@ -136,7 +136,7 @@ class KafkaConsumerService:
                         }
                         # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", message)
                         if all_subscribers:
-                            print(f"Sending notifications to subscribers: {all_subscribers}")
+                            # print(f"Sending notifications to subscribers: {all_subscribers}")
                             await asyncio.gather(*[
                                 # article_notification_manager.send_personal_message(message, sid)
                                 sse_connection_manager.send_to_user(sid, message)

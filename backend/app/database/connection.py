@@ -1,3 +1,4 @@
+
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from app.config import settings
@@ -7,6 +8,7 @@ from app.models.subscription import SubscriptionModel
 from app.models.comment import CommentModel
 from app.models.article import ArticleModel, ArticleLikeModel
 from app.models.token import RefreshTokenModel
+from app.models.notification import NotificationModel
 
 client: AsyncIOMotorClient | None = None
 
@@ -26,7 +28,8 @@ async def connect_to_mongo():
                 CommentModel, 
                 ArticleModel, 
                 ArticleLikeModel, 
-                RefreshTokenModel
+                RefreshTokenModel,
+                NotificationModel,
                 ])
             print("Connected to MongoDB with Beanie")
     except Exception as e:

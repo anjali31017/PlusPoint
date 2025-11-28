@@ -44,7 +44,11 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
         }
         
         # publish event
-        await send_kafka_event("article_published", kafka_article_event)
+        event  = await send_kafka_event("article_published", kafka_article_event)
+        
+        if event is None:
+            raise HTTPException(status_code=500, detail="Failed to send Kafka event")
+        
         # firm_obj_id = ObjectId(str(article.firm_id.id))
         # publisher_obj_id = ObjectId(current_user["user_id"])
         # firm_subscriptions = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()

@@ -1,6 +1,11 @@
 import asyncio
 from typing import Dict
 
+from app.models.notification import NotificationModel
+from app.controller.notification_controller import NotificationController
+
+notification_controller = NotificationController()
+
 class SSEManager:
     def __init__(self):
         self.connections: Dict[str, asyncio.Queue] = {}
@@ -22,8 +27,19 @@ class SSEManager:
 
     async def send_to_user(self, user_id: str, message: dict):
         try:
+            notification_data = {
+                    "user_id": user_id,
+                    "message": message,
+                    "sent": True
+                }
             if user_id in self.connections:
+                print(f"Sending message to user {user_id}")
                 await self.connections[user_id].put(message)
+                await notification_controller.save_notification(notification_data)
+            else:
+                print(f"User {user_id} not connected")
+                notification_data["sent"] = False
+                await notification_controller.save_notification(notification_data)
         except Exception as e:
             print(f"Error sending message to user {user_id}: {e}")
             
