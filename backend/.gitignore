@@ -3,3 +3,4 @@
 help.txt
 *.pyc
 __pycache__/
+.ipynb_checkpoints

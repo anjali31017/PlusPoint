@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from beanie import Document, Link
 from pydantic import Field
 from datetime import datetime
@@ -10,6 +10,7 @@ class ArticleModel(Document):
     publisher_id: Link["UserModel"]
     title: str
     content: str
+    summary: Optional[str] = None
     category: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
     like_count: int = 0

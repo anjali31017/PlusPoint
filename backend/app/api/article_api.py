@@ -9,19 +9,22 @@ from app.kafka.producer import send_kafka_event
 from app.websocket.websocket_endpoints import article_notification_manager
 from app.sse.sse_endpoint import sse_connection_manager
 from app.models.subscription import SubscriptionModel
+from app.summary.summarization_model import multi_stage_summary
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
 article_controller = ArticleController()
 
 @router.post("/create", response_model=BaseResponse)
-async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
+# async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
+async def add_article(article_data: ArticleCreateSchema):
     try:
         article_data_dict = article_data.dict()
 
         article = await article_controller.create_article(
             article_data_dict, 
-            current_user["user_id"]
+            # current_user["user_id"]
+            "692052180cbaa9500904c230"
         )
 
         if article is None:
@@ -32,11 +35,11 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
         kafka_article_event = {
             "event_type": "article_published",
             "firm_id": str(article.firm_id.id),
-            "publisher_id": current_user["user_id"],
+            "publisher_id": "692052180cbaa9500904c230", #current_user["user_id"],
             "article_id": str(article.id),
             "article_title": article.title,
             "firm_username": article.firm_id.firm_username,
-            "publisher_username": current_user["username"],
+            "publisher_username": "692052180cbaa9500904c230", #current_user["username"],
             "published_at": (
                 article.published_at.isoformat() 
                 if article.published_at else datetime.now().isoformat()
@@ -57,12 +60,14 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
         # all_subscriptions = [str(sub.subscriber_id.ref.id) for sub in firm_subscriptions] + [str(sub.subscriber_id.ref.id) for sub in publisher_subscriptions]
         # all_subscriptions = list(set(all_subscriptions))  # Remove duplicates
         # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", {"msg": "Hello!"})
-
+        summary_reponse = multi_stage_summary(article.content)
+        
         return {
             "status": 1,
             "message": "Article created successfully",
             "data": {
                 "article_id":str(article.id),
+                "summary": summary_reponse,
             }
         }
 

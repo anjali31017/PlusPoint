@@ -11,3 +11,9 @@ fastapi-mail[httpx]
 python-jose[argon2] 
 python-multipart
 aiokafka
+datasets
+beautifulsoup4
+notebook
+peft
+transformers
+torch
