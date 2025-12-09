@@ -3,17 +3,20 @@ from transformers import BartTokenizer, BartForConditionalGeneration
 import torch
 from bs4 import BeautifulSoup
 import os 
+from app.controller.article_controller import ArticleController
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # model_path = os.path.join(BASE_DIR, "bart_lora")
 
-tokenizer = BartTokenizer.from_pretrained('../bart_lora')
-model = BartForConditionalGeneration.from_pretrained('../bart_lora').to(device)
+tokenizer = BartTokenizer.from_pretrained('/app/app/summary/bart_lora')
+model = BartForConditionalGeneration.from_pretrained('/app/app/summary/bart_lora').to(device)
 # Load the fine-tuned model
 # tokenizer = BartTokenizer.from_pretrained('./bart_lora')
 # model = BartForConditionalGeneration.from_pretrained('./bart_lora').to(device)
+
+article_controller = ArticleController()
 
 def clean_html(html_text):
     try:
@@ -98,7 +101,7 @@ def summarize(text):
         
 
 
-def multi_stage_summary(html_text):
+async def multi_stage_summary(html_text, article_id=None):
     # Step 1: Clean
     cleaned = clean_html(html_text)
 
@@ -120,7 +123,12 @@ def multi_stage_summary(html_text):
     # Step 5: Final summary pass
     print("Generating final summary...")
     final_summary = summarize(combined_summary_text)
-
+    print("db entry")
+    # db entry
+    db_entry = await article_controller.update_article(article_id, {
+        "summary": final_summary
+    })
+    print("db updated")
     return {
         "cleaned_text": cleaned,
         "chunks": chunks,

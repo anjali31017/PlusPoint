@@ -42,7 +42,23 @@ class ArticleController:
             print(f"Error while creating article: {str(e)}")
             return None
         
-    
+    async def update_article( self, article_id: str, update_data: dict) -> ArticleModel | None:
+        try:
+            article = await ArticleModel.get(ObjectId(article_id))
+            print("article_id")
+            print("update_data")
+            if not article:
+                raise HTTPException(status_code=404, detail="Article not found")
+            
+            for key, value in update_data.items():
+                setattr(article, key, value)
+            
+            await article.save()
+            return article           
+        except Exception as e:
+            print(f"Error while updating article: {str(e)}")
+            return None
+                         
     async def create_comment(
         self, 
         comment_data :dict, 

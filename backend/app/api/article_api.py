@@ -24,7 +24,7 @@ async def add_article(article_data: ArticleCreateSchema):
         article = await article_controller.create_article(
             article_data_dict, 
             # current_user["user_id"]
-            "692052180cbaa9500904c230"
+            "692051620cbaa9500904c22d"
         )
 
         if article is None:
@@ -35,11 +35,11 @@ async def add_article(article_data: ArticleCreateSchema):
         kafka_article_event = {
             "event_type": "article_published",
             "firm_id": str(article.firm_id.id),
-            "publisher_id": "692052180cbaa9500904c230", #current_user["user_id"],
+            "publisher_id": "692051620cbaa9500904c22d", #current_user["user_id"],
             "article_id": str(article.id),
             "article_title": article.title,
             "firm_username": article.firm_id.firm_username,
-            "publisher_username": "692052180cbaa9500904c230", #current_user["username"],
+            "publisher_username": "692051620cbaa9500904c22d", #current_user["username"],
             "published_at": (
                 article.published_at.isoformat() 
                 if article.published_at else datetime.now().isoformat()
@@ -60,8 +60,11 @@ async def add_article(article_data: ArticleCreateSchema):
         # all_subscriptions = [str(sub.subscriber_id.ref.id) for sub in firm_subscriptions] + [str(sub.subscriber_id.ref.id) for sub in publisher_subscriptions]
         # all_subscriptions = list(set(all_subscriptions))  # Remove duplicates
         # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", {"msg": "Hello!"})
-        summary_reponse = multi_stage_summary(article.content)
+        summary_reponse = await multi_stage_summary(article.content, article.id)
         
+    #     db_entry = article_controller.update_article(article.id, {
+    #     "summary": summary_reponse["final_summary"]
+    # })
         return {
             "status": 1,
             "message": "Article created successfully",
