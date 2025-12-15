@@ -1,25 +1,45 @@
+import asyncio
 import re
+from bson import ObjectId
 from transformers import BartTokenizer, BartForConditionalGeneration
-import torch
-from bs4 import BeautifulSoup
-import os 
+import torch 
 from app.controller.article_controller import ArticleController
+from app.celery.worker import celery_app
+from app.database.connection import connect_to_mongo
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # model_path = os.path.join(BASE_DIR, "bart_lora")
 
-tokenizer = BartTokenizer.from_pretrained('/app/app/summary/bart_lora')
-model = BartForConditionalGeneration.from_pretrained('/app/app/summary/bart_lora').to(device)
+# tokenizer = BartTokenizer.from_pretrained('/app/app/summary/bart_lora')
+# model = BartForConditionalGeneration.from_pretrained('/app/app/summary/bart_lora').to(device)
 # Load the fine-tuned model
 # tokenizer = BartTokenizer.from_pretrained('./bart_lora')
 # model = BartForConditionalGeneration.from_pretrained('./bart_lora').to(device)
 
 article_controller = ArticleController()
 
+model = None
+tokenizer = None
+device = None
+
+
+def load_model():
+    try:
+        print("LOADINGGG MODEL")
+        global model, tokenizer, device
+        if model is None or tokenizer is None:
+            device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+            tokenizer = BartTokenizer.from_pretrained('/app/app/summary/bart_lora')
+            model = BartForConditionalGeneration.from_pretrained('/app/app/summary/bart_lora').to(device)
+    except Exception as e:
+        str(e)
+    
+    
 def clean_html(html_text):
     try:
+        print("CLEANINGGG")
         # Remove media elements explicitly
         html_text = re.sub(r'<img[^>]*>', '', html_text, flags=re.IGNORECASE)
         html_text = re.sub(r'<video[^>]*>.*?</video>', '', html_text, flags=re.DOTALL | re.IGNORECASE)
@@ -60,6 +80,7 @@ def clean_html(html_text):
 
 def chunk_text(text, max_tokens=400):
     try:
+        print("CHUNKINGGG")
         words = text.split()
         chunks = []
         current = []
@@ -77,11 +98,12 @@ def chunk_text(text, max_tokens=400):
 
         return chunks
     except Exception as e:
-        str(e)
+        print("Chunk text error:", e)
         return [text]
 
 def summarize(text):
     try:
+        print("SUMMERIZEEE")
         inputs = tokenizer(text, return_tensors="pt", max_length=512, truncation=True)
         inputs = {k: v.to(device) for k, v in inputs.items()}
 
@@ -97,44 +119,103 @@ def summarize(text):
         summary = tokenizer.decode(summary_ids[0], skip_special_tokens=True)
         return summary
     except Exception as e:
-        str(e)
+        print("Summarize error:", e)
+        
+
+        
+async def update_summary(article_id, final_summary):
+    try:
+        print("DBBBBBB")
+        article_id = ObjectId(article_id)
+        await connect_to_mongo()
+        await article_controller.update_article(article_id, {"summary": final_summary})
+
+    except Exception as e:
+        print("Update summary error:", e)
+        
+# import asyncio
+
+# def run_async_task(coro):
+#     """Run an async coroutine safely inside Celery."""
+#     try:
+#         loop = asyncio.get_event_loop()
+#     except RuntimeError:  # no event loop in this thread
+#         loop = asyncio.new_event_loop()
+#         asyncio.set_event_loop(loop)
+
+#     if loop.is_closed():  # sometimes the loop exists but is closed
+#         loop = asyncio.new_event_loop()
+#         asyncio.set_event_loop(loop)
+
+#     return loop.run_until_complete(coro)
+
+# def run_async(coro):
+#     """Run an async function safely in a synchronous context."""
+#     loop = asyncio.new_event_loop()  # always create a fresh loop
+#     asyncio.set_event_loop(loop)
+#     try:
+#         return loop.run_until_complete(coro)
+#     finally:
+#         loop.close()
+        
         
 
 
-async def multi_stage_summary(html_text, article_id=None):
-    # Step 1: Clean
-    cleaned = clean_html(html_text)
+# @celery_app.on_after_configure.connect
+# def init_worker(sender, **kwargs):
+#     print("Worker starting, loading model...")
+#     load_model()
 
-    # Step 2: Chunk
-    chunks = chunk_text(cleaned, max_tokens=400)
 
-    print(f"Total chunks: {len(chunks)}")
+# @celery_app.task(
+#     name="final_summary",
+#     bind=True,
+#     autoretry_for=(Exception,),
+#     retry_backoff=5,
+#     retry_kwargs={"max_retries": 3},
+# )
+# def final_summary(self, html_text, article_id=None):
+    
+#     # load_model()
+#     # Step 1: Clean
+#     cleaned = clean_html(html_text)
 
-    # Step 3: Summaries of chunks
-    chunk_summaries = []
-    for i, chunk in enumerate(chunks, start=1):
-        print(f"Summarizing chunk {i}/{len(chunks)}...")
-        summary = summarize(chunk)
-        chunk_summaries.append(summary)
+#     # Step 2: Chunk
+#     chunks = chunk_text(cleaned, max_tokens=400)
 
-    # Step 4: Combine partial summaries
-    combined_summary_text = " ".join(chunk_summaries)
+#     print(f"Total chunks: {len(chunks)}")
 
-    # Step 5: Final summary pass
-    print("Generating final summary...")
-    final_summary = summarize(combined_summary_text)
-    print("db entry")
-    # db entry
-    db_entry = await article_controller.update_article(article_id, {
-        "summary": final_summary
-    })
-    print("db updated")
-    return {
-        "cleaned_text": cleaned,
-        "chunks": chunks,
-        "chunk_summaries": chunk_summaries,
-        "final_summary": final_summary
-    }
+#     # Step 3: Summaries of chunks
+#     chunk_summaries = []
+#     for i, chunk in enumerate(chunks, start=1):
+#         print(f"Summarizing chunk {i}/{len(chunks)}...")
+#         summary = summarize(chunk)
+#         chunk_summaries.append(summary)
+
+#     # Step 4: Combine partial summaries
+#     combined_summary_text = " ".join(chunk_summaries)
+
+#     # Step 5: Final summary pass
+#     print("Generating final summary...")
+#     final_summary = summarize(combined_summary_text)
+    
+#     # #db connection
+#     # asyncio.run(connect_to_mongo())
+    
+#     # db entry
+#     asyncio.run(update_summary(article_id, final_summary))
+    
+#     # asyncio.run(article_controller.update_article(ObjectId(article_id), {"summary": final_summary}))
+    
+#     print("db updated")
+    
+    
+#     return {
+#         "cleaned_text": cleaned,
+#         "chunks": chunks,
+#         "chunk_summaries": chunk_summaries,
+#         "final_summary": final_summary
+#     }
 
 
 

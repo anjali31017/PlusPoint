@@ -85,6 +85,43 @@ services:
     networks:
       - pluspoint_network
 
+  redis_pluspoint:
+    image: redis:7-alpine
+    container_name: redis_pluspoint
+    ports:
+      - "6379:6379"
+    networks:
+      - pluspoint_network
+
+  celery_pluspoint:
+    build: .
+    container_name: celery_pluspoint
+    command: celery -A app.celery.worker worker --loglevel=info
+    depends_on:
+      - redis_pluspoint
+      - mongodb_pluspoint
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+    networks:
+      - pluspoint_network
+
+  flower_pluspoint:
+    image: mher/flower:2.0
+    container_name: flower_pluspoint
+    command: >
+      celery
+      --broker=redis://redis_pluspoint:6379/0
+      flower
+      --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis_pluspoint
+      - celery_pluspoint
+    networks:
+      - pluspoint_network
   # kafka-ui:
   #   image: provectuslabs/kafka-ui
   #   container_name: kafka-ui

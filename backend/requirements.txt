@@ -17,3 +17,6 @@ notebook
 peft
 transformers
 torch
+celery[redis]
+redis
+flower

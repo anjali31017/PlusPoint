@@ -1,15 +1,11 @@
 from datetime import datetime
-from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException 
 from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleCreateSchema, CreateCommentSchema
 from app.kafka.producer import send_kafka_event
-from app.websocket.websocket_endpoints import article_notification_manager
-from app.sse.sse_endpoint import sse_connection_manager
-from app.models.subscription import SubscriptionModel
-from app.summary.summarization_model import multi_stage_summary
+from app.celery.summary_tasks import final_summary
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -60,7 +56,12 @@ async def add_article(article_data: ArticleCreateSchema):
         # all_subscriptions = [str(sub.subscriber_id.ref.id) for sub in firm_subscriptions] + [str(sub.subscriber_id.ref.id) for sub in publisher_subscriptions]
         # all_subscriptions = list(set(all_subscriptions))  # Remove duplicates
         # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", {"msg": "Hello!"})
-        summary_reponse = await multi_stage_summary(article.content, article.id)
+        
+        
+        # summary_reponse = multi_stage_summary.delay(article.content, article.id)
+        summary_reponse = final_summary.delay(article.content, str(article.id))
+        
+        
         
     #     db_entry = article_controller.update_article(article.id, {
     #     "summary": summary_reponse["final_summary"]
@@ -70,7 +71,7 @@ async def add_article(article_data: ArticleCreateSchema):
             "message": "Article created successfully",
             "data": {
                 "article_id":str(article.id),
-                "summary": summary_reponse,
+                # "summary": summary_reponse,
             }
         }
 

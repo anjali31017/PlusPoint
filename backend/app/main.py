@@ -13,7 +13,7 @@ from app.api.refresh_api import router as token_router
 from app.api.firm_api import router as firm_router
 from app.api.article_api import router as article_router
 from app.sse.sse_endpoint import router as sse_router
-from app.kafka.producer import start_producer, stop_producer, wait_for_kafka
+from app.kafka.producer import start_producer, stop_producer
 from app.kafka.consumer import KafkaConsumerService
 
 @asynccontextmanager
@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     await connect_to_mongo()
     
     await start_producer()
-    consumer_task = asyncio.create_task(KafkaConsumerService.consume_posts())
+    consumer_task = asyncio.create_task(KafkaConsumerService.consume_articles())
     
     yield
     

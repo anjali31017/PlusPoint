@@ -1,19 +1,11 @@
-import datetime
 import asyncio, json
 from aiokafka import AIOKafkaConsumer
 from bson import ObjectId
 from app.models.subscription import SubscriptionModel
 from app.config import settings
-# from .celery_app import run_recommendation_task
-from app.websocket.websocket_endpoints import article_notification_manager
-
 from app.sse.sse_endpoint import sse_connection_manager
 
-import asyncio
-import json
-from aiokafka import AIOKafkaConsumer
-from app.config import settings
-from datetime import datetime
+
 
 
 class KafkaConsumerService:
@@ -21,9 +13,10 @@ class KafkaConsumerService:
     consumer = None
 
     @classmethod
-    async def consume_posts(cls):
+    async def consume_articles(cls):
         """Kafka Consumer with retry logic."""
         while cls.is_running:
+            # await asyncio.sleep(0.1)
             try:
                 print("Attempting to connect Kafka Consumer...")
 
