@@ -1,3 +1,4 @@
+import asyncio
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException 
 from app.controller.token_controller import get_current_user
@@ -5,7 +6,7 @@ from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleCreateSchema, CreateCommentSchema
 from app.kafka.producer import send_kafka_event
-from app.celery.summary_tasks import final_summary
+from app.celery.summary_tasks import summerization_task
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -59,9 +60,9 @@ async def add_article(article_data: ArticleCreateSchema):
         
         
         # summary_reponse = multi_stage_summary.delay(article.content, article.id)
-        summary_reponse = final_summary.delay(article.content, str(article.id))
+        summary_reponse = summerization_task.delay(article.content, str(article.id))
         
-        
+        # await article_controller.update_article(article.id, {"summary": "demodata summary"})
         
     #     db_entry = article_controller.update_article(article.id, {
     #     "summary": summary_reponse["final_summary"]

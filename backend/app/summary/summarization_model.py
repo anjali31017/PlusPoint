@@ -4,8 +4,7 @@ from bson import ObjectId
 from transformers import BartTokenizer, BartForConditionalGeneration
 import torch 
 from app.controller.article_controller import ArticleController
-from app.celery.worker import celery_app
-from app.database.connection import connect_to_mongo
+from app.database.connection import connect_to_mongo, close_mongo_connection
 
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -19,6 +18,8 @@ from app.database.connection import connect_to_mongo
 # model = BartForConditionalGeneration.from_pretrained('./bart_lora').to(device)
 
 article_controller = ArticleController()
+
+
 
 model = None
 tokenizer = None
@@ -129,10 +130,36 @@ async def update_summary(article_id, final_summary):
         article_id = ObjectId(article_id)
         await connect_to_mongo()
         await article_controller.update_article(article_id, {"summary": final_summary})
-
+        await close_mongo_connection()
     except Exception as e:
         print("Update summary error:", e)
+
+def end_summary(self, html_text, article_id=None):
+    
+    try:
+        load_model()
+        cleaned = clean_html(html_text)
+        chunks = chunk_text(cleaned, max_tokens=400)
+        chunk_summaries = [summarize(c) for c in chunks]
+        combined_summary_text = " ".join(chunk_summaries)
+        final_summary = summarize(combined_summary_text)
         
+        print(final_summary)
+        # article_id = ObjectId(article_id)
+        # asyncio.run(article_controller.update_article(article_id, {"summary": final_summary}))
+        
+        asyncio.run(update_summary(article_id, final_summary))
+        return {
+            "cleaned_text": cleaned,
+            "chunks": chunks,
+            "chunk_summaries": chunk_summaries,
+            "final_summary": final_summary
+        }
+    except Exception as e:
+        print("Final summary error:", str(e))
+        raise self.retry(exc=e)
+    
+    
 # import asyncio
 
 # def run_async_task(coro):
@@ -174,7 +201,7 @@ async def update_summary(article_id, final_summary):
 #     retry_backoff=5,
 #     retry_kwargs={"max_retries": 3},
 # )
-# def final_summary(self, html_text, article_id=None):
+# def end_summary(self, html_text, article_id=None):
     
 #     # load_model()
 #     # Step 1: Clean

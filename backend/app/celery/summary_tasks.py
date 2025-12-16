@@ -1,6 +1,6 @@
 import asyncio
 from app.celery.worker import celery_app
-from app.summary.summarization_model import clean_html, chunk_text, summarize, load_model, update_summary
+from app.summary.summarization_model import end_summary
 
 
 # @celery_app.on_after_configure.connect
@@ -10,31 +10,40 @@ from app.summary.summarization_model import clean_html, chunk_text, summarize, l
 
 
 @celery_app.task(
-    name="final_summary",
+    name="summerization_task",
     bind=True,
     autoretry_for=(Exception,),
     retry_backoff=5,
     retry_kwargs={"max_retries": 3},
 )
-def final_summary(self, html_text, article_id=None):
-    
+def summerization_task(self, html_text, article_id=None):
     try:
-        load_model()
-        cleaned = clean_html(html_text)
-        chunks = chunk_text(cleaned, max_tokens=400)
-        chunk_summaries = [summarize(c) for c in chunks]
-        combined_summary_text = " ".join(chunk_summaries)
-        final_summary = summarize(combined_summary_text)
-        asyncio.run(update_summary(article_id, final_summary))
-        return {
-            "cleaned_text": cleaned,
-            "chunks": chunks,
-            "chunk_summaries": chunk_summaries,
-            "final_summary": final_summary
-        }
+        result = end_summary(self, html_text, article_id)
+        return result
     except Exception as e:
         print("Final summary error:", str(e))
         raise self.retry(exc=e)
+    
+    
+    
+    
+    # try:
+    #     # load_model()
+    #     cleaned = clean_html(html_text)
+    #     chunks = chunk_text(cleaned, max_tokens=400)
+    #     chunk_summaries = [summarize(c) for c in chunks]
+    #     combined_summary_text = " ".join(chunk_summaries)
+    #     final_summary = summarize(combined_summary_text)
+    #     asyncio.run(update_summary(article_id, final_summary))
+    #     return {
+    #         "cleaned_text": cleaned,
+    #         "chunks": chunks,
+    #         "chunk_summaries": chunk_summaries,
+    #         "final_summary": final_summary
+    #     }
+    # except Exception as e:
+    #     print("Final summary error:", str(e))
+    #     raise self.retry(exc=e)
     
     # # load_model()
     # # Step 1: Clean

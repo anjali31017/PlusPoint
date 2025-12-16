@@ -1,6 +1,10 @@
 from celery import Celery
 import os
-# from app.summary.summarization_model import load_model 
+import asyncio
+from celery.signals import worker_process_init
+from app.summary.summarization_model import load_model 
+from app.database.connection import connect_to_mongo
+
 
 celery_app = Celery(
     "pluspoint",
@@ -16,6 +20,31 @@ celery_app.conf.update(
     timezone="UTC",
 )
 
+
+
+
+@worker_process_init.connect
+def init_worker_process(**kwargs):
+    try:
+        # global db, loop
+        
+        load_model()
+        # loop = asyncio.new_event_loop()
+        # asyncio.set_event_loop(loop)
+        # db = loop.run_until_complete(connect_to_mongo())
+        
+        
+        print("Child worker process started")
+    except Exception as e:
+        print("Error initializing worker process:", e)
+
+
+
+
+# @worker_process_shutdown.connect
+# def close_db(**kwargs):
+#     global db
+#     db.close()
 
 # @celery_app.on_after_configure.connect
 # def init_worker(sender, **kwargs):
