@@ -22,3 +22,44 @@ mongosh
 use admin
 db.auth("root","root")
 show databases;
+
+
+
+
+kafka bash
+
+docker exec -it kafka_pluspoint_1 /bin/bash
+kafka-console-producer --bootstrap-server kafka_pluspoint_1:9092 --topic test-topic
+kafka-console-consumer --bootstrap-server kafka_pluspoint_1:9092 --topic test-topic --from-beginning
+
+kafka-console-consumer --bootstrap-server kafka_pluspoint_1:9092 --topic article_published --from-beginning
+
+ctrl+c to exit
+
+
+
+
+__________________________
+TEST SSE 
+
+const sse = new EventSource("http://localhost:8000/notifications/123");
+
+sse.onmessage = (event) => {
+    console.log("Received:", event.data);
+};
+
+sse.onerror = (e) => {
+    console.log("SSE error", e);
+};
+
+
+curl -N \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE" \
+  http://localhost:5000/sse/notifications
+
+
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"message": "hello"}' \
+  http://localhost:5000/send/<user_id>
+
