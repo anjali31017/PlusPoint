@@ -37,6 +37,9 @@ kafka-console-consumer --bootstrap-server kafka_pluspoint_1:9092 --topic article
 ctrl+c to exit
 
 
++++++++++++++++++cluster id kafka+++++++++++++
+docker run --rm confluentinc/cp-kafka kafka-storage random-uuid
+
 
 
 __________________________

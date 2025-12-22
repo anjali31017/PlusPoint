@@ -22,10 +22,17 @@ class KafkaConsumerService:
 
                 cls.consumer = AIOKafkaConsumer(
                     'article_published',
-                    bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
+                    bootstrap_servers="kafka_pluspoint_1:9092",
+                    # bootstrap_servers=[
+                    #     'kafka_pluspoint_1:9092',
+                    #     'kafka_pluspoint_2:9094'
+                    # ],
                     group_id="notification_service_group_test",
                     value_deserializer=lambda v: json.loads(v.decode('utf-8')),
                     auto_offset_reset="earliest",
+                    request_timeout_ms=30000,
+                    session_timeout_ms=10000,
+                    heartbeat_interval_ms=3000,
                 )
 
                 await cls.consumer.start()
@@ -144,6 +151,12 @@ class KafkaConsumerService:
                 print(f"Kafka connection failed: {conn_err}")
                 print("Retrying in 5 seconds...")
                 await asyncio.sleep(5)
+            except Exception as e:
+                print(f"Kafka consumer error: {e}")
+                if cls.consumer:
+                    await cls.consumer.stop()
+                await asyncio.sleep(3)
+
 
             # finally:
             #     if cls.consumer:

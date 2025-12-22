@@ -2,7 +2,7 @@ from celery import Celery
 import os
 import asyncio
 from celery.signals import worker_process_init
-from app.summary.summarization_model import load_model 
+from app.summary.summarization_model import load_summerization_model 
 from app.database.connection import connect_to_mongo
 
 
@@ -28,7 +28,7 @@ def init_worker_process(**kwargs):
     try:
         # global db, loop
         
-        load_model()
+        load_summerization_model()
         # loop = asyncio.new_event_loop()
         # asyncio.set_event_loop(loop)
         # db = loop.run_until_complete(connect_to_mongo())

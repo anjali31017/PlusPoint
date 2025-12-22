@@ -21,7 +21,7 @@ async def wait_for_kafka():
     import socket
     while True:
         try:
-            s = socket.create_connection(("kafka_pluspoint", 9092), timeout=2)
+            s = socket.create_connection(("kafka_pluspoint_1", 9092), timeout=2)
             s.close()
             print("Kafka is ready!")
             return
@@ -33,7 +33,11 @@ async def wait_for_kafka():
 async def start_producer():
     global producer
     producer = AIOKafkaProducer(
-        bootstrap_servers=settings.KAFKA_BOOTSTRAP_SERVERS,
+        bootstrap_servers="kafka_pluspoint_1:9092",
+        # bootstrap_servers=[
+        #         'kafka_pluspoint_1:9092',
+        #         'kafka_pluspoint_2:9094'
+        #     ],
         value_serializer=lambda v: json.dumps(v).encode('utf-8')
     )
     for _ in range(10):

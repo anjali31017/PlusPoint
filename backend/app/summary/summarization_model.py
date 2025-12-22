@@ -26,7 +26,7 @@ tokenizer = None
 device = None
 
 
-def load_model():
+def load_summerization_model():
     try:
         print("LOADINGGG MODEL")
         global model, tokenizer, device
@@ -137,7 +137,7 @@ async def update_summary(article_id, final_summary):
 def end_summary(self, html_text, article_id=None):
     
     try:
-        load_model()
+        # load_model()
         cleaned = clean_html(html_text)
         chunks = chunk_text(cleaned, max_tokens=400)
         chunk_summaries = [summarize(c) for c in chunks]
