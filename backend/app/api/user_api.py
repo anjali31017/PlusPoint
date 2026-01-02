@@ -28,16 +28,19 @@ async def check_username(username: str):
 @router.post("/register", response_model=BaseResponse)
 async def create_user(user_data: UserCreateSchema, background_tasks: BackgroundTasks):
     try:
-        user = await user_controller.check_username_exists(user_data.username)
-        if user and user.is_verified == True:
-                raise HTTPException(status_code=400, detail="Username already exists")
+        # username = user_controller.generate_username(user_data)
+        
+        # user = await user_controller.check_username_exists(username)
+        # if user and user.is_verified == True:
+        #         raise HTTPException(status_code=400, detail="Username already exists")
             
-        elif user and user.is_verified == False:
-            pass
-        else:
-            user = await user_controller.create(user_data.dict())
-            if user is None:
-                raise HTTPException(status_code=400, detail="User creation failed")
+        # elif user and user.is_verified == False:
+        #     pass
+        # ################### pending user verification flow ###################
+        # else:
+        user = await user_controller.create(user_data.dict())
+        if user is None:
+            raise HTTPException(status_code=400, detail="User creation failed")
         
         background_tasks.add_task(send_otp_email, user)
         
@@ -57,7 +60,7 @@ async def create_user(user_data: UserCreateSchema, background_tasks: BackgroundT
 @router.post("/verify-otp", response_model=BaseResponse)
 async def verify_user_otp(otp_data: OTPVerifySchema):
     try:
-        user = await UserModel.find_one(UserModel.username == otp_data.username, UserModel.is_deleted == False)
+        user = await UserModel.find_one(UserModel.email == otp_data.email, UserModel.is_deleted == False)
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -88,7 +91,7 @@ async def verify_user_otp(otp_data: OTPVerifySchema):
 
 @router.post("/login", response_model=BaseResponse)
 async def login(data: LoginSchema):
-    user = await UserModel.find_one(UserModel.username == data.username, UserModel.is_deleted == False)
+    user = await UserModel.find_one(UserModel.email == data.email, UserModel.is_deleted == False)
     if not user or not user.verify_password(data.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 

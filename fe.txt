@@ -1,0 +1,5 @@
+npm init vite@latest .
+react 
+ts
+
+npm install

@@ -2,23 +2,12 @@ from fastapi import HTTPException
 from typing import Optional
 from bson import ObjectId
 from app.models.users import UserModel, UserRole
-
+import random
 from app.models.firm import FirmModel
 from app.models.subscription import SubscriptionModel
 
 class UserController:
-
-    async def create(self, user_data:dict) -> UserModel | None:
-        try:
-            user = UserModel(**user_data)
-            user.role = ['E']
-            user.password_hash = UserModel.hash_detail(user_data['password'])
-            await user.insert()
-            return user
-        except Exception as e:
-            print(str(e))
-            return None
-        
+    
     async def check_username_exists(self, username: str) -> Optional[UserModel | FirmModel]:
         try:
             print("Checking username:", username)
@@ -27,6 +16,7 @@ class UserController:
             username_in_users = await UserModel.find_one(
                 UserModel.username == username,
                 UserModel.is_deleted == False,
+                UserModel.is_verified == True
                 )
             if username_in_users:
                 return username_in_users  # Return the user document if found
@@ -47,6 +37,41 @@ class UserController:
             raise HTTPException(status_code=500, detail="Internal server error")
 
     
+    async def generate_username(self, user_data: dict) -> str:
+        try:
+            # Generate a random 10-digit number
+            # random_number = random.randint(10**9, 10**10 - 1)
+            
+            num_digits = random.randint(5, 10)
+            random_number = random.randint(10**(num_digits - 1), 10**num_digits - 1)
+            username = user_data["first_name"].lower() +"_"+ user_data["last_name"].lower() +"_"+ str(random_number)
+            
+            # user = await self.check_username_exists(username)
+            # if user and user.is_verified == True:
+            #     raise HTTPException(status_code=400, detail="Username already exists")
+            
+            return username
+        except Exception as e:
+            print("Error generating username:", e)
+            raise HTTPException(status_code=500, detail="Internal server error")
+        
+    async def create(self, user_data:dict) -> UserModel | None:
+        try:
+            while True:
+                username = await self.generate_username(user_data)
+                user = await self.check_username_exists(username)
+                if not user:
+                    break
+            user = UserModel(**user_data)
+            user.username = username
+            user.role = ['E']
+            user.password_hash = UserModel.hash_detail(user_data['password'])
+            await user.insert()
+            return user
+        except Exception as e:
+            print(str(e))
+            return None
+        
     async def _find_active_user(self, user_id: str) -> UserModel | None:
         try:
             obj_id = ObjectId(user_id)
