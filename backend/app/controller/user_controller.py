@@ -44,6 +44,8 @@ class UserController:
             
             num_digits = random.randint(5, 10)
             random_number = random.randint(10**(num_digits - 1), 10**num_digits - 1)
+            if user_data["last_name"] == "":
+                username = user_data["first_name"].lower() +"_"+ str(random_number)
             username = user_data["first_name"].lower() +"_"+ user_data["last_name"].lower() +"_"+ str(random_number)
             
             # user = await self.check_username_exists(username)

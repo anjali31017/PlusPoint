@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile - PlusPoint</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-tr from-blue-100 to-purple-200 min-h-screen flex justify-center py-16">
+
+    <!-- Profile Card -->
+    <div class="w-full max-w-3xl bg-white rounded-3xl shadow-2xl p-8 space-y-6 relative overflow-hidden">
+
+        <!-- Background Circle -->
+        <div class="absolute -top-16 -right-16 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse"></div>
+
+        <!-- Profile Header -->
+        <div class="flex flex-col md:flex-row items-center md:items-start md:space-x-8">
+            <!-- Profile Picture -->
+            <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-400 shadow-lg">
+                <img src="https://i.pravatar.cc/300" alt="Profile Picture" class="w-full h-full object-cover">
+            </div>
+
+            <!-- Name & Stats -->
+            <div class="mt-4 md:mt-0 flex-1">
+                <h1 class="text-3xl font-bold text-purple-700">Jane Doe</h1>
+                <p class="text-gray-500">@janedoe</p>
+
+                <!-- Stats -->
+                <div class="flex space-x-6 mt-4 text-center">
+                    <div>
+                        <p class="text-xl font-bold text-gray-800">128</p>
+                        <p class="text-gray-500 text-sm">Posts</p>
+                    </div>
+                    <div>
+                        <p class="text-xl font-bold text-gray-800">2.3K</p>
+                        <p class="text-gray-500 text-sm">Followers</p>
+                    </div>
+                    <div>
+                        <p class="text-xl font-bold text-gray-800">540</p>
+                        <p class="text-gray-500 text-sm">Following</p>
+                    </div>
+                </div>
+
+                <!-- Edit Profile Button -->
+                <button class="mt-4 px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white rounded-lg font-semibold shadow-lg hover:scale-105 transition-transform duration-300">
+                    Edit Profile
+                </button>
+            </div>
+        </div>
+
+        <!-- About Section -->
+        <div class="mt-6">
+            <h2 class="text-lg font-semibold text-gray-700">About</h2>
+            <p class="text-gray-500 mt-2">
+                Tech enthusiast, writer, and lover of clean design. Sharing daily news and updates in a fun, engaging way.
+            </p>
+        </div>
+
+        <!-- Posts Grid -->
+        <div class="mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="w-full h-40 bg-purple-100 rounded-xl shadow hover:scale-105 transition-transform duration-300"></div>
+            <div class="w-full h-40 bg-pink-100 rounded-xl shadow hover:scale-105 transition-transform duration-300"></div>
+            <div class="w-full h-40 bg-blue-100 rounded-xl shadow hover:scale-105 transition-transform duration-300"></div>
+            <div class="w-full h-40 bg-purple-100 rounded-xl shadow hover:scale-105 transition-transform duration-300"></div>
+            <div class="w-full h-40 bg-pink-100 rounded-xl shadow hover:scale-105 transition-transform duration-300"></div>
+            <div class="w-full h-40 bg-blue-100 rounded-xl shadow hover:scale-105 transition-transform duration-300"></div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

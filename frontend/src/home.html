@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlusPoint Home</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+</head>
+<body class="bg-gray-50">
+
+  <!-- Top Navbar -->
+  <nav class="bg-white shadow sticky top-0 z-50">
+    <div class="max-w-3xl mx-auto flex justify-between items-center p-4">
+      <h1 class="text-2xl font-bold text-purple-700">PlusPoint</h1>
+      <div class="flex items-center space-x-4">
+        <i class="fas fa-search text-gray-600 text-lg cursor-pointer"></i>
+        <i class="far fa-paper-plane text-gray-600 text-lg cursor-pointer"></i>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Stories Section -->
+  <section class="bg-white mt-2 py-3 overflow-x-auto">
+    <div class="max-w-3xl mx-auto flex space-x-4 px-4">
+      <!-- Example Story -->
+      <div class="flex flex-col items-center space-y-1">
+        <div class="w-16 h-16 rounded-full border-2 border-purple-600 p-1">
+          <img src="https://i.pravatar.cc/150?img=1" alt="Story" class="w-full h-full rounded-full object-cover">
+        </div>
+        <span class="text-xs text-gray-700">John</span>
+      </div>
+      <div class="flex flex-col items-center space-y-1">
+        <div class="w-16 h-16 rounded-full border-2 border-purple-600 p-1">
+          <img src="https://i.pravatar.cc/150?img=2" alt="Story" class="w-full h-full rounded-full object-cover">
+        </div>
+        <span class="text-xs text-gray-700">Emma</span>
+      </div>
+      <div class="flex flex-col items-center space-y-1">
+        <div class="w-16 h-16 rounded-full border-2 border-purple-600 p-1">
+          <img src="https://i.pravatar.cc/150?img=3" alt="Story" class="w-full h-full rounded-full object-cover">
+        </div>
+        <span class="text-xs text-gray-700">Alex</span>
+      </div>
+      <!-- Add more stories as needed -->
+    </div>
+  </section>
+
+  <!-- Posts Feed -->
+  <main class="max-w-3xl mx-auto mt-4 space-y-6 px-4">
+
+    <!-- Post Example -->
+    <div class="bg-white rounded-lg shadow-sm">
+      <!-- Post Header -->
+      <div class="flex items-center p-3 space-x-3">
+        <img src="https://i.pravatar.cc/150?img=4" alt="User" class="w-10 h-10 rounded-full object-cover">
+        <span class="font-semibold text-gray-800">Sophia</span>
+        <span class="ml-auto text-gray-400 text-sm">2h</span>
+      </div>
+      <!-- Post Image -->
+      <img src="https://picsum.photos/600/400?random=1" alt="Post" class="w-full object-cover">
+      <!-- Post Actions -->
+      <div class="flex items-center justify-between p-3">
+        <div class="flex space-x-4 text-gray-600">
+          <i class="far fa-heart cursor-pointer hover:text-red-500"></i>
+          <i class="far fa-comment cursor-pointer hover:text-blue-500"></i>
+          <i class="far fa-paper-plane cursor-pointer hover:text-purple-500"></i>
+        </div>
+        <i class="far fa-bookmark cursor-pointer text-gray-600 hover:text-purple-600"></i>
+      </div>
+      <!-- Likes and Caption -->
+      <div class="px-3 pb-3 space-y-1">
+        <p class="text-sm font-semibold text-gray-800">Liked by <span class="font-bold">Mike</span> and <span class="font-bold">others</span></p>
+        <p class="text-sm"><span class="font-bold">Sophia</span> Loving this new feature! 😍</p>
+      </div>
+    </div>
+
+    <!-- Another Post Example -->
+    <div class="bg-white rounded-lg shadow-sm">
+      <div class="flex items-center p-3 space-x-3">
+        <img src="https://i.pravatar.cc/150?img=5" alt="User" class="w-10 h-10 rounded-full object-cover">
+        <span class="font-semibold text-gray-800">Liam</span>
+        <span class="ml-auto text-gray-400 text-sm">5h</span>
+      </div>
+      <img src="https://picsum.photos/600/400?random=2" alt="Post" class="w-full object-cover">
+      <div class="flex items-center justify-between p-3">
+        <div class="flex space-x-4 text-gray-600">
+          <i class="far fa-heart cursor-pointer hover:text-red-500"></i>
+          <i class="far fa-comment cursor-pointer hover:text-blue-500"></i>
+          <i class="far fa-paper-plane cursor-pointer hover:text-purple-500"></i>
+        </div>
+        <i class="far fa-bookmark cursor-pointer text-gray-600 hover:text-purple-600"></i>
+      </div>
+      <div class="px-3 pb-3 space-y-1">
+        <p class="text-sm font-semibold text-gray-800">Liked by <span class="font-bold">Ella</span> and <span class="font-bold">others</span></p>
+        <p class="text-sm"><span class="font-bold">Liam</span> Check out this amazing view! 🌅</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Bottom Navbar (Mobile) -->
+  <nav class="fixed bottom-0 left-0 w-full bg-white border-t shadow-inner md:hidden">
+    <div class="flex justify-around items-center p-2">
+      <i class="fas fa-home text-gray-700 text-xl cursor-pointer"></i>
+      <i class="fas fa-search text-gray-700 text-xl cursor-pointer"></i>
+      <i class="fas fa-plus-square text-gray-700 text-xl cursor-pointer"></i>
+      <i class="far fa-heart text-gray-700 text-xl cursor-pointer"></i>
+      <i class="far fa-user text-gray-700 text-xl cursor-pointer"></i>
+    </div>
+  </nav>
+
+</body>
+</html>

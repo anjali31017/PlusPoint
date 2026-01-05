@@ -6,7 +6,7 @@ networks:
 services:
 
   fastapi_pluspoint:
-    build: .
+    build: ./backend
     container_name: fastapi_pluspoint
     # depends_on:
     #   - kafka_pluspoint_1
@@ -14,10 +14,10 @@ services:
     #   - celery_pluspoint
     #   - mongodb_pluspoint
     env_file:
-      - .env
+      - ./backend/.env
     restart: always
     volumes:
-      - ./app:/app/app 
+      - ./backend/app:/app/app 
     ports:
       - "5000:5000"
     networks:
@@ -109,10 +109,12 @@ services:
     image: mongo:6
     container_name: mongodb_pluspoint
     restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
+    env_file:
+      - ./backend/.env
+    # environment:
+    #   MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+    #   MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    #   MONGO_INITDB_DATABASE: ${MONGO_DB_NAME}
     ports:
       - "27018:27017" 
     volumes:
@@ -129,16 +131,16 @@ services:
       - pluspoint_network
 
   celery_pluspoint:
-    build: .
+    build: ./backend
     container_name: celery_pluspoint
     command: celery -A app.celery.worker worker --loglevel=info --concurrency=2
     depends_on:
       - redis_pluspoint
       - mongodb_pluspoint
     env_file:
-      - .env
+      - ./backend/.env
     volumes:
-      - ./app:/app/app
+      - ./backend/app:/app/app
     networks:
       - pluspoint_network
 
@@ -157,6 +159,18 @@ services:
       - celery_pluspoint
     networks:
       - pluspoint_network
+
+  frontend_pluspoint:
+    image: nginx:alpine
+    container_name: frontend_pluspoint
+    restart: always
+    ports:
+      - "3000:80"       # Map localhost:3000 → Nginx
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    networks:
+      - pluspoint_network
+
   # kafka-ui:
   #   image: provectuslabs/kafka-ui
   #   container_name: kafka-ui

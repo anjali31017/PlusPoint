@@ -1,5 +1,5 @@
-npm init vite@latest .
-react 
-ts
+next.js
+react
+tailwind CSS
 
-npm install
+npx create-next-app@latest .
