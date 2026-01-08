@@ -6,6 +6,7 @@ import aiosmtplib
 from app.config import settings
 from datetime import datetime, timedelta
 from app.models.users import UserModel
+import secrets
 
 async def generate_otp(length: int = 6) -> dict[str, str | datetime]:
     """Generate a numeric OTP."""
@@ -82,18 +83,6 @@ async def send_otp_email(user: dict) -> bool:
         print("Failed to send OTP email:", e)
         return False
 
-# async def resend_otp_email(user: dict) -> bool:
-#     """Resend OTP email to the user."""
-#     try:
-#         # user = await UserModel.find_one(UserModel.username == user['username'], UserModel.is_deleted == False)
-#         # if not user:
-#         #     return False
-#         await send_otp_email(user)
-
-#         return True
-#     except Exception as e:
-#         print("Failed to resend OTP email:", e)
-#         return False
 
 async def verify_otp(user: dict, otp: str) -> bool:
     """Verify the provided OTP against the stored hashed OTP."""
@@ -105,5 +94,51 @@ async def verify_otp(user: dict, otp: str) -> bool:
         return is_valid
     except Exception as e:
         print("OTP verification failed:", e)
+        return False
+    
+def generate_reset_token():
+    try:
+        return secrets.token_urlsafe(32)
+    except Exception as e:
+        print("Error generating reset token:", e)
+        return None
+
+
+async def reset_password_email(to_email: str, link: str) -> bool:
+
+    subject = "PlusPoint Reset Password."
+    body = f"""
+    <p>Your password verification link: <strong>{link}</strong></p>
+    <p>Token expires in 15 minutes.</p>
+    <p><small><em>"This is your secure link. Do not share it."</em></small></p>
+    <p><span style="font-weight:900; font-size:26px; color:#1a73e8;">PlusPoint</span></p>
+    
+    
+    """
+    # <p><span style="font-weight:900; font-size:26px; color:#1a73e8;">PlusPoint</span> Stay on the pulse of trending topics!</p>
+
+    # <p><strong>PlusPoint</strong> Stay on the plue of trending topics!</p>
+    message = MIMEMultipart()
+    message["From"] = settings.SMTP_FROM_EMAIL
+    message["To"] = to_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "html"))
+
+    try:
+        await aiosmtplib.send(
+            message,
+            hostname=settings.SMTP_SERVER,
+            port=settings.SMTP_PORT,
+            start_tls=True,
+            username=settings.SMTP_USERNAME,
+            password=settings.SMTP_PASSWORD
+        )
+        # with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
+        #     server.starttls()
+        #     server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+        #     server.sendmail(settings.SMTP_FROM_EMAIL, to_email, message.as_string())
+        return True
+    except Exception as e:
+        print("Error sending email:", e)
         return False
     

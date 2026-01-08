@@ -28,6 +28,8 @@ class UserModel(Document):
     otp_attempts: int = 0          
     otp_resend_count: int = 0 
     otp_blocked_until: Optional[datetime] = None
+    reset_token: Optional[str] = None
+    reset_token_expiry: Optional[datetime] = None   
     is_verified: bool = False
     is_active: bool = False
     is_deleted: bool = False

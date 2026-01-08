@@ -115,7 +115,7 @@ $(document).ready(function () {
                 Swal.fire({
                     icon: 'success',
                     title: 'OTP Resent ✅',
-                    text: `Remaining attempts: ${res.data.remaining_resends}`|| 'A new OTP has been sent to your email',
+                    text: `Remaining attempts: ${res.data.remaining_resends}` || 'A new OTP has been sent to your email',
                     confirmButtonColor: '#7C3AED'
                 });
 
@@ -177,8 +177,15 @@ $(document).ready(function () {
 
         const username = sessionStorage.getItem("username");
         if (!username) {
-            Swal.fire("Session Expired", "Please register again", "error");
-            window.location.href = "register.html";
+            Swal.fire({
+                icon: "error",
+                title: "Session Expired",
+                text: "Please register again",
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.href = "register.html";
+            });
             return;
         }
 

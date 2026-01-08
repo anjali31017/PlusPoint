@@ -70,6 +70,8 @@ class UserController:
                 return None
             
             if user_exists and user_exists.is_verified == False:
+                update_password = UserModel.hash_detail(user_data['password'])
+                await user_exists.set({UserModel.password_hash: update_password})
                 return user_exists
             
             while True:

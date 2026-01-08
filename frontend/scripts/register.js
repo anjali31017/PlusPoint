@@ -15,11 +15,17 @@ function userRegistrationForm() {
     if (!firstname) {
         $('#firstnameError').removeClass('hidden');
         isValid = false;
+        setTimeout(() => {
+            $('#firstnameError').addClass('hidden').text('');
+        }, 10000);
     }
 
     if (!email || !emailRegex.test(email)) {
         $('#emailError').removeClass('hidden');
         isValid = false;
+        setTimeout(() => {
+            $('#emailError').addClass('hidden').text('');
+        }, 10000);
     }
 
     if (!password || !passwordRegex.test(password)) {
@@ -27,6 +33,9 @@ function userRegistrationForm() {
             .text('Password must be 6+ chars with letter & number')
             .removeClass('hidden');
         isValid = false;
+        setTimeout(() => {
+            $('#passwordError').addClass('hidden').text('');
+        }, 10000);
     }
 
     if (!isValid) return;
@@ -55,11 +64,11 @@ function userRegistrationForm() {
             //     text: response.message || 'Your account has been created',
             //     confirmButtonColor: '#7C3AED'
             // }).then(() => {
-                // ✅ Redirect AFTER user clicks OK
-                sessionStorage.setItem("username", response.data.username);
-                window.location.href = "otp.html";
+            // ✅ Redirect AFTER user clicks OK
+            sessionStorage.setItem("username", response.data.username);
+            window.location.href = "otp.html";
 
-                // window.location.href = `otp.html?username=${response.data.username}`;
+            // window.location.href = `otp.html?username=${response.data.username}`;
             // });
 
             $('#registerForm')[0].reset();

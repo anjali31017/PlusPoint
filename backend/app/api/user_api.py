@@ -4,11 +4,11 @@ import httpx
 
 from app.controller.user_controller import UserController
 from app.models.users import UserModel
-from app.schema.user_schema import LogoutSchema, UserCreateSchema, LoginSchema, UserProfileSchema
+from app.schema.user_schema import ForgotPasswordSchema, LogoutSchema, ResetPasswordSchema, UserCreateSchema, LoginSchema, UserProfileSchema
 from app.controller.token_controller import create_token_pair, get_current_user
 from app.models.token import RefreshTokenModel
 from app.schema.base_schema import BaseResponse
-from app.controller.email_controller import is_user_blocked, send_otp_email
+from app.controller.email_controller import generate_reset_token, is_user_blocked, reset_password_email, send_otp_email
 from app.schema.email_schema import OTPVerifySchema, ResendOTPSchema
 from fastapi import status
 
@@ -171,7 +171,7 @@ async def resend_otp(data: ResendOTPSchema, background_tasks: BackgroundTasks):
 
 @router.post("/login", response_model=BaseResponse)
 async def login(data: LoginSchema):
-    user = await UserModel.find_one(UserModel.email == data.email, UserModel.is_deleted == False)
+    user = await UserModel.find_one(UserModel.email == data.email, UserModel.is_deleted == False, UserModel.is_verified == True)
     if not user or not user.verify_password(data.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
@@ -190,6 +190,79 @@ async def login(data: LoginSchema):
 
 
 
+
+@router.post("/forgot-password", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def forgot_password(data: ForgotPasswordSchema, background_tasks: BackgroundTasks):
+    try:
+        
+        user = await UserModel.find_one(
+        UserModel.email == data.email,
+        UserModel.is_deleted == False
+        )
+
+        if not user:
+            raise HTTPException( 
+                        status_code=status.HTTP_404_NOT_FOUND ,
+                        detail= f"User Not Found" 
+                    )
+        if not user.is_verified:
+            raise HTTPException( 
+                        status_code=status.HTTP_400_BAD_REQUEST ,
+                        detail= f"User is not verified. Register Again." 
+                    )
+        
+        reset_token = generate_reset_token()
+        
+        await user.set({
+        UserModel.reset_token: reset_token,
+        UserModel.reset_token_expiry: datetime.now() + timedelta(minutes=15)
+        })
+        
+        reset_link = f"http://127.0.0.1:3000/src/reset-password.html?token={reset_token}"
+        
+        
+        background_tasks.add_task(reset_password_email, data.email, reset_link)
+        
+        response_data = {
+            "status": 1,
+            "message": "Password reset link sent to your email",
+            "data": {
+                "username": user.username
+            }
+        }
+        return response_data
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+    
+@router.post("/reset-password", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def reset_password(data: ResetPasswordSchema, background_tasks: BackgroundTasks):
+    try:
+        
+        user = await UserModel.find_one( UserModel.reset_token == data.token, UserModel.reset_token_expiry > datetime.now())
+
+        if not user:
+            raise HTTPException( status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token" )
+        
+        await user.set({
+        UserModel.password_hash: UserModel.hash_detail(data.password),
+        UserModel.reset_token: None,
+        UserModel.reset_token_expiry: None
+        })
+        
+        
+        response_data = {
+            "status": 1,
+            "message": "Password reset successful",
+            "data": {
+                "username": user.username
+            }
+        }
+        return response_data
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+    
 
 @router.get("/profile", response_model=BaseResponse)
 async def get_profile(current_user: dict = Depends(get_current_user)):
@@ -224,7 +297,7 @@ async def update_profile(
         updated_user = await user_controller.update_user(current_user['user_id'], update_data)
 
         if not updated_user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         data = UserProfileSchema(**updated_user.dict())
         return {
@@ -260,7 +333,7 @@ async def logout(data: LogoutSchema):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 
 
@@ -271,7 +344,7 @@ async def subscribe_to_entity(
     current_user: dict = Depends(get_current_user)
 ):
     if not firm_username and not publisher_username:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST detail="Either firm_username or publisher_username is required")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Either firm_username or publisher_username is required")
 
     response = await user_controller.subscribe(firm_username, publisher_username, current_user["user_id"])
     return {

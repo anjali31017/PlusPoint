@@ -29,3 +29,10 @@ class RefreshSchema(BaseModel):
     
 class LogoutSchema(BaseModel):
     refresh_token: str
+
+class ForgotPasswordSchema(BaseModel):
+    email: EmailStr
+
+class ResetPasswordSchema(BaseModel):
+    token: str
+    password: str

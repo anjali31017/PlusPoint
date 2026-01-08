@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - PlusPoint</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         /* Floating labels */
         .floating-input:focus~label,
@@ -75,44 +77,11 @@
             </button>
         </form>
 
-        <p class="text-center text-gray-500 mt-4">Don't have an account? <a href="#"
+        <p class="text-center text-gray-500 mt-4">Don't have an account? <a href="./register.html"
                 class="text-purple-600 font-semibold hover:underline">Register</a></p>
     </div>
-
-    <script>
-        const form = document.getElementById('loginForm');
-        const email = document.getElementById('email');
-        const password = document.getElementById('password');
-
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            let valid = true;
-
-            // Email validation
-            const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
-            if (!email.value.match(emailPattern)) {
-                valid = false;
-                document.getElementById('emailError').classList.remove('hidden');
-            } else {
-                document.getElementById('emailError').classList.add('hidden');
-            }
-
-            // Password validation
-            if (!password.value) {
-                valid = false;
-                document.getElementById('passwordError').classList.remove('hidden');
-            } else {
-                document.getElementById('passwordError').classList.add('hidden');
-            }
-
-            if (valid) {
-                alert('Login successful! 🎉');
-                form.reset();
-            }
-        });
-
-    </script>
-<script src="../scripts/index.js"></script>
+    <script src="../scripts/login.js"></script>
+    <script src="../scripts/index.js"></script>
 </body>
 
 </html>
