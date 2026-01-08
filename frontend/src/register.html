@@ -6,6 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - PlusPoint</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         /* Floating labels */
         .floating-input:focus~label,
@@ -30,9 +33,9 @@
         <div
             class="absolute -top-16 -right-16 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse">
         </div>
-
+        <!-- <img src="../images/Gemini_Generated_Image_8gsg6n8gsg6n8gsg.png" alt="PlusPoint Logo" class="w-50 h-50 mx-auto mb-4"> -->
         <h1 class="text-4xl font-extrabold text-center text-purple-700 mb-2">Join PlusPoint</h1>
-        <p class="text-center text-gray-500 mb-6">Get the latest news straight to your inbox</p>
+        <p class="text-center text-gray-500 mb-6">Fresh news in a visual, bite-sized format.</p>
 
         <form id="registerForm" class="space-y-5" novalidate>
 
@@ -83,9 +86,17 @@
             </div>
 
 
-            <button type="submit"
-                class="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold py-3 rounded-lg hover:scale-105 transition-transform duration-300 shadow-lg">
-                Register
+            <button type="submit" id="user-registration-btn"
+                class="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold py-3 rounded-lg hover:scale-105 transition-transform duration-300 shadow-lg">
+
+                <span id="btn-text">Register</span>
+
+                <!-- Loader -->
+                <svg id="btn-loader" class="hidden animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+                    fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
             </button>
         </form>
 
@@ -94,57 +105,20 @@
     </div>
 
     <script>
-        const form = document.getElementById('registerForm');
-        const firstname = document.getElementById('firstname');
-        const email = document.getElementById('email');
-        const password = document.getElementById('password');
 
-        function togglePassword(id, btn) {
-            const input = document.getElementById(id);
-            if (input.type === "password") {
-                input.type = "text";
-                btn.textContent = "🙈"; // eye closed
-            } else {
-                input.type = "password";
-                btn.textContent = "👁️"; // eye open
-            }
-        }
+        $(document).ready(function () {
 
-        form.addEventListener('submit', function (e) {
-            e.preventDefault();
-            let valid = true;
+            $('#registerForm').on('submit', function (e) {
+                e.preventDefault();
+                userRegistrationForm();
+            });
 
-            // First Name validation
-            if (!firstname.value.trim()) {
-                valid = false;
-                document.getElementById('firstnameError').classList.remove('hidden');
-            } else {
-                document.getElementById('firstnameError').classList.add('hidden');
-            }
-
-            // Email validation
-            const emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
-            if (!email.value.match(emailPattern)) {
-                valid = false;
-                document.getElementById('emailError').classList.remove('hidden');
-            } else {
-                document.getElementById('emailError').classList.add('hidden');
-            }
-
-            // Password validation
-            if (password.value.length < 6) {
-                valid = false;
-                document.getElementById('passwordError').classList.remove('hidden');
-            } else {
-                document.getElementById('passwordError').classList.add('hidden');
-            }
-
-            if (valid) {
-                alert('Registration successful! 🎉');
-                form.reset();
-            }
         });
+
     </script>
+
+    <script type="text/javascript" src="../scripts/register.js" defer></script>
+    <script type="text/javascript" src="../scripts/index.js" defer></script>
 
 </body>
 

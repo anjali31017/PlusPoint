@@ -5,6 +5,7 @@ from app.models.users import UserModel, UserRole
 import random
 from app.models.firm import FirmModel
 from app.models.subscription import SubscriptionModel
+from app.controller.email_controller import is_user_blocked
 
 class UserController:
     
@@ -44,7 +45,7 @@ class UserController:
             
             num_digits = random.randint(5, 10)
             random_number = random.randint(10**(num_digits - 1), 10**num_digits - 1)
-            if user_data["last_name"] == "":
+            if not user_data["last_name"]:
                 username = user_data["first_name"].lower() +"_"+ str(random_number)
             username = user_data["first_name"].lower() +"_"+ user_data["last_name"].lower() +"_"+ str(random_number)
             
@@ -59,6 +60,17 @@ class UserController:
         
     async def create(self, user_data:dict) -> UserModel | None:
         try:
+            
+            user_exists = await UserModel.find_one(
+                UserModel.email == user_data['email'],
+                UserModel.is_deleted == False
+            )
+            if user_exists and not user_exists.is_verified:
+                return user_exists
+            
+            if user_exists and user_exists.is_verified:
+                return None
+            
             while True:
                 username = await self.generate_username(user_data)
                 user = await self.check_username_exists(username)

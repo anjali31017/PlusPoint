@@ -16,7 +16,7 @@ class UserModel(Document):
     # user_id: Optional[str] = Field(None, alias="_id")
     # user_ref_if: str = = Field(default_factory=lambda: secrets.token_hex(8))
     username: str = Indexed(str, unique=True)
-    email: str = Indexed(str)
+    email: str = Indexed(str, unique=True)
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     password_hash: Optional[str] = None
@@ -25,6 +25,9 @@ class UserModel(Document):
     bio: Optional[str] = None
     otp: Optional[str] = None
     otp_expires_at: Optional[datetime] = None
+    otp_attempts: int = 0          
+    otp_resend_count: int = 0 
+    otp_blocked_until: Optional[datetime] = None
     is_verified: bool = False
     is_active: bool = False
     is_deleted: bool = False

@@ -54,7 +54,14 @@ async def otp_email(to_email: str, otp: str) -> bool:
         print("Error sending email:", e)
         return False
 
-
+def is_user_blocked(user: dict) -> bool:
+    try:
+        if user.otp_blocked_until and user.otp_blocked_until > datetime.now():
+            return True
+        return False
+    except Exception as e:
+        print("Error checking user block status:", e)
+        return False
     
 async def send_otp_email(user: dict) -> bool:
     """Wrapper function to send OTP email."""
@@ -66,7 +73,8 @@ async def send_otp_email(user: dict) -> bool:
         hashed_otp = UserModel.hash_detail(otp_details["otp"])
         await user.set({
             UserModel.otp: hashed_otp,
-            UserModel.otp_expires_at: otp_details["expires_at"]
+            UserModel.otp_expires_at: otp_details["expires_at"],
+            UserModel.otp_attempts: 0,
         })
 
         return True
@@ -74,6 +82,18 @@ async def send_otp_email(user: dict) -> bool:
         print("Failed to send OTP email:", e)
         return False
 
+# async def resend_otp_email(user: dict) -> bool:
+#     """Resend OTP email to the user."""
+#     try:
+#         # user = await UserModel.find_one(UserModel.username == user['username'], UserModel.is_deleted == False)
+#         # if not user:
+#         #     return False
+#         await send_otp_email(user)
+
+#         return True
+#     except Exception as e:
+#         print("Failed to resend OTP email:", e)
+#         return False
 
 async def verify_otp(user: dict, otp: str) -> bool:
     """Verify the provided OTP against the stored hashed OTP."""
