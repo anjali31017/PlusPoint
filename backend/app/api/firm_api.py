@@ -4,7 +4,7 @@ from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
 from app.controller.firm_controller import FirmController
 from app.schema.firm_schema import AddPublisherSchema, FirmRegisterSchema
-
+from fastapi import status
 
 router = APIRouter(prefix="/firm", tags=["Firm"])
 
@@ -17,14 +17,14 @@ async def register_firm(firm_data: FirmRegisterSchema, current_user: dict = Depe
         user = await user_controller.check_username_exists(firm_data.firm_username)
         if user:  
             if user.is_verified == True:
-                raise HTTPException(status_code=400, detail="Username already exists")
+                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Username already exists")
         
         else:
             # firm_data["firm_user_id"] = current_user["user_id"]
             
             user = await firm_controller.register_firm(firm_data, user_id=current_user["user_id"])
             if not user:
-                raise HTTPException(status_code=400, detail="Firm registration failed")
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Firm registration failed")
         
         response_data = {
             "status": 1,
@@ -33,7 +33,7 @@ async def register_firm(firm_data: FirmRegisterSchema, current_user: dict = Depe
         }
         return response_data
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
     
 @router.post("/add-publisher", response_model=BaseResponse)
@@ -52,7 +52,7 @@ async def add_publisher(data: AddPublisherSchema, current_user: dict = Depends(g
     except HTTPException as e:
         raise e
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
     
 # @router.post("/{firm_username}/subscribe", response_model=BaseResponse)

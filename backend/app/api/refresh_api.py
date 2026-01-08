@@ -5,7 +5,7 @@ from app.controller.token_controller import create_access_token, create_refresh_
 from app.models.token import RefreshTokenModel
 from app.schema.base_schema import BaseResponse
 from app.schema.user_schema import RefreshSchema
-
+from fastapi import status
 
 
 router = APIRouter(prefix="/token", tags=["User"])
@@ -15,14 +15,14 @@ async def refresh_token_route(data: RefreshSchema):
     try:
         token_doc = await RefreshTokenModel.find_one(RefreshTokenModel.token == data.refresh_token)
         if not token_doc or token_doc.is_revoked:
-            raise HTTPException(status_code=401, detail="Invalid or revoked refresh token")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or revoked refresh token")
 
         if token_doc.expires_at < datetime.now():
-            raise HTTPException(status_code=401, detail="Refresh token expired")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
 
         payload = await decode_token(data.refresh_token)
         if not payload:
-            raise HTTPException(status_code=401, detail="Invalid refresh token")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token")
 
         # Issue new access token
         new_access_token = await create_access_token({
@@ -50,6 +50,6 @@ async def refresh_token_route(data: RefreshSchema):
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 

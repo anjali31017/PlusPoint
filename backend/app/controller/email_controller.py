@@ -106,3 +106,4 @@ async def verify_otp(user: dict, otp: str) -> bool:
     except Exception as e:
         print("OTP verification failed:", e)
         return False
+    

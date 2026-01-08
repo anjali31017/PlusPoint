@@ -7,6 +7,7 @@ from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleCreateSchema, CreateCommentSchema
 from app.kafka.producer import send_kafka_event
 from app.celery.summary_tasks import summerization_task
+from fastapi import status
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -25,7 +26,7 @@ async def add_article(article_data: ArticleCreateSchema):
         )
 
         if article is None:
-            raise HTTPException(status_code=500, detail="Failed to create article")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create article")
         # article_notification_manager.send_personal_message("hello", "692052180cbaa9500904c230")
         
         # final, clean Kafka event
@@ -47,7 +48,7 @@ async def add_article(article_data: ArticleCreateSchema):
         event  = await send_kafka_event("article_published", kafka_article_event)
         
         if event is None:
-            raise HTTPException(status_code=500, detail="Failed to send Kafka event")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to send Kafka event")
         
         # firm_obj_id = ObjectId(str(article.firm_id.id))
         # publisher_obj_id = ObjectId(current_user["user_id"])
@@ -79,7 +80,7 @@ async def add_article(article_data: ArticleCreateSchema):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 # @router.post("/create", response_model=BaseResponse)
@@ -139,7 +140,7 @@ async def add_comment(
             current_user["user_id"])
         
         if comment is None:
-            raise HTTPException(status_code=500, detail="Failed to create comment")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create comment")
         response_data = {
             "status": 1,
             "message": "Comment added successfully",
@@ -157,7 +158,7 @@ async def add_comment(
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 @router.post("/like", response_model=BaseResponse)
 async def like_article(article_id: str, current_user: dict = Depends(get_current_user)):
@@ -165,7 +166,7 @@ async def like_article(article_id: str, current_user: dict = Depends(get_current
         success = await article_controller.like_article(article_id, current_user["user_id"])
         
         if not success:
-            raise HTTPException(status_code=500, detail="Failed to like article")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to like article")
         response_data = {
             "status": 1,
             "message": "Article liked successfully",
@@ -176,4 +177,4 @@ async def like_article(article_id: str, current_user: dict = Depends(get_current
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))

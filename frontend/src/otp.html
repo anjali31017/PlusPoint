@@ -43,18 +43,10 @@
         class="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold py-3 rounded-lg hover:scale-105 transition-transform duration-300 shadow-lg mt-4">
         Verify OTP
       </button>
+<p id="otpError" class="text-red-600 text-sm mt-2 hidden text-center"></p>
     </form>
 
-    <!-- <p class="text-center text-gray-500 mt-4 text-sm">
-      Didn't receive the code?
-      <a href="#" id="resendOTP" class="text-purple-600 font-semibold hover:underline opacity-50 pointer-events-none">
-        Resend OTP
-      </a>
-      <span id="resendTimer" class="ml-2 text-xs text-gray-400"></span>
-    </p>
-    <p class="text-center text-gray-500 mt-1 text-sm">
-      Time remaining: <span id="otpTimer">05:00</span>
-    </p> -->
+    
     <p class="text-center text-gray-500 mt-4 text-sm">
       Didn't receive the code?
       <button id="resendOTP" type="button"
@@ -75,37 +67,6 @@
 
   </div>
 
-  <!-- <script>
-    const otpInputs = document.querySelectorAll('.otp-input');
-
-    otpInputs.forEach((input, index) => {
-      // Allow only numbers
-      input.addEventListener('input', () => {
-        input.value = input.value.replace(/[^0-9]/g, '');
-        if (input.value.length === 1 && index < otpInputs.length - 1) {
-          otpInputs[index + 1].focus();
-        }
-      });
-
-      // Backspace behavior
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Backspace' && index > 0 && !input.value) {
-          otpInputs[index - 1].focus();
-        }
-      });
-    });
-
-    const form = document.getElementById('otpForm');
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const otp = Array.from(otpInputs).map(i => i.value).join('');
-      if (otp.length === 6) {
-        alert('OTP verified! 🎉');
-      } else {
-        alert('Please enter a 6-digit OTP');
-      }
-    });
-  </script> -->
 
 
   <script src="../scripts/otp.js" defer></script>

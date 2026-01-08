@@ -1,7 +1,7 @@
 $(document).ready(function () {
 
     /* =========================
-       OTP INPUT HANDLING
+    OTP INPUT HANDLING
     ========================= */
     const $otpInputs = $('.otp-input');
 
@@ -23,7 +23,7 @@ $(document).ready(function () {
 
 
     /* =========================
-       OTP 5-MINUTE TIMER
+    OTP 5-MINUTE TIMER
     ========================= */
     let otpCountdown = 5 * 60;
     let otpTimerInterval;
@@ -53,7 +53,7 @@ $(document).ready(function () {
 
 
     /* =========================
-       RESEND OTP COOLDOWN (40s)
+    RESEND OTP COOLDOWN (40s)
     ========================= */
     let resendCountdown = 40;
     let resendInterval;
@@ -84,10 +84,12 @@ $(document).ready(function () {
 
 
     /* =========================
-       RESEND OTP CLICK
+    RESEND OTP CLICK
     ========================= */
     $resendBtn.on('click', function (e) {
         e.preventDefault();
+
+
         // e.stopPropagation();
         if (resendCountdown > 0) return;
 
@@ -113,7 +115,7 @@ $(document).ready(function () {
                 Swal.fire({
                     icon: 'success',
                     title: 'OTP Resent ✅',
-                    text: res.message || 'A new OTP has been sent to your email',
+                    text: `Remaining attempts: ${res.data.remaining_resends}`|| 'A new OTP has been sent to your email',
                     confirmButtonColor: '#7C3AED'
                 });
 
@@ -157,100 +159,98 @@ $(document).ready(function () {
             }
         });
     });
-        //     $.ajax({
-        //         url: "http://127.0.0.1:5000/api/user/resend-otp",
-        //         type: "POST",
-        //         contentType: "application/json",
-        //         data: JSON.stringify({ username }),
 
-        //         beforeSend: function () {
-        //             $resendBtn.text('Sending...');
-        //         },
+    /* =========================
+        VERIFY OTP SUBMIT
+    ========================= */
+    $('#otpForm').on('submit', function (e) {
 
-        //         success: function () {
-        //             Swal.fire({
-        //                 icon: 'success',
-        //                 title: 'OTP Resent ✅',
-        //                 text: 'A new OTP has been sent to your email',
-        //                 confirmButtonColor: '#7C3AED'
-        //             });
+        e.preventDefault();
+        const $errorMsg = $('#otpError');
+        $errorMsg.text('').addClass('hidden');
 
-        //             // 🔁 Restart both timers
-        //             startResendCooldown();
-        //             startOtpTimer();
-        //         },
+        const otp = $.map($otpInputs, input => $(input).val()).join('');
+        if (otp.length !== 6) {
+            Swal.fire("Invalid OTP", "Enter 6-digit OTP", "error");
+            return;
+        }
 
-        //         error: function () {
-        //             Swal.fire({
-        //                 icon: 'error',
-        //                 title: 'Failed ❌',
-        //                 text: 'Unable to resend OTP',
-        //                 confirmButtonColor: '#DC2626'
-        //             });
-        //         }
-        //     });
-        // });
+        const username = sessionStorage.getItem("username");
+        if (!username) {
+            Swal.fire("Session Expired", "Please register again", "error");
+            window.location.href = "register.html";
+            return;
+        }
 
+        const $submitBtn = $(this).find('button[type="submit"]');
+        $submitBtn.prop('disabled', true).text('Verifying...');
 
-        /* =========================
-           VERIFY OTP SUBMIT
-        ========================= */
-        $('#otpForm').on('submit', function (e) {
-            e.preventDefault();
+        $.ajax({
+            url: "http://127.0.0.1:5000/api/user/verify-otp",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({ username, otp }),
 
-            const otp = $.map($otpInputs, input => $(input).val()).join('');
-            if (otp.length !== 6) {
-                Swal.fire("Invalid OTP", "Enter 6-digit OTP", "error");
-                return;
-            }
+            success: function (res) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Verified 🎉',
+                    text: res.message || 'OTP verified successfully',
+                    confirmButtonColor: '#7C3AED'
+                }).then(() => {
+                    localStorage.setItem('access_token', res.data.access_token);
+                    localStorage.setItem('refresh_token', res.data.refresh_token);
+                    window.location.href = "home.html";
+                });
+            },
+            // $errorMsg.text("Enter a valid 6-digit OTP").removeClass('hidden');
+            error: function (xhr) {
+                let msg = "Verification failed";
+                if (xhr.responseJSON) {
+                    msg = xhr.responseJSON.message || xhr.responseJSON.detail || msg;
+                    $errorMsg.text(msg).removeClass('hidden');
+                    setTimeout(() => {
+                        $errorMsg.addClass('hidden').text('');
+                    }, 10000);
 
-            const username = sessionStorage.getItem("otp_username");
-            if (!username) {
-                Swal.fire("Session Expired", "Please register again", "error");
-                window.location.href = "register.html";
-                return;
-            }
-
-            const $submitBtn = $(this).find('button[type="submit"]');
-            $submitBtn.prop('disabled', true).text('Verifying...');
-
-            $.ajax({
-                url: "http://127.0.0.1:5000/api/user/verify-otp",
-                type: "POST",
-                contentType: "application/json",
-                data: JSON.stringify({ username, otp }),
-
-                success: function (res) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Verified 🎉',
-                        text: res.message || 'OTP verified successfully',
-                        confirmButtonColor: '#7C3AED'
-                    }).then(() => {
-                        localStorage.setItem('access_token', res.data.access_token);
-                        localStorage.setItem('refresh_token', res.data.refresh_token);
-                        window.location.href = "dashboard.html";
-                    });
-                },
-
-                error: function (xhr) {
-                    let msg = "Verification failed";
-                    if (xhr.responseJSON) {
-                        msg = xhr.responseJSON.message || xhr.responseJSON.detail || msg;
-                    }
-
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'OTP Failed ❌',
-                        text: msg,
-                        confirmButtonColor: '#DC2626'
-                    });
-                },
-
-                complete: function () {
-                    $submitBtn.prop('disabled', false).text('Verify OTP');
                 }
-            });
-        });
+                // if (xhr.status === 404) {
+                //     console.log("404 User not found");
+                //     $errorMsg.text(msg).removeClass('hidden');
+                // }
+                // if (xhr.status === 400) {
+                //     console.log("400");
+                //     $errorMsg.text(msg).removeClass('hidden');
+                // }
+                // if (xhr.status === 500) {
+                //     console.log("500");
+                //     $errorMsg.text(msg).removeClass('hidden');
+                // }
+                // if (xhr.status === 401) {
+                //     console.log("401");
+                //     $errorMsg.text(msg).removeClass('hidden');
+                // }
+                // if (xhr.status === 429) {
+                //     console.log("429");
+                //     $errorMsg.text(msg).removeClass('hidden');
+                // }
 
+                // if (xhr.status === 403) {
+                //     console.log("403");
+                //     //     Swal.fire({
+                //     //     icon: 'error',
+                //     //     title: 'User Not Found ❌',
+                //     //     text: msg,
+                //     //     confirmButtonColor: '#DC2626'
+                //     // });
+                // }
+
+            },
+
+            complete: function () {
+                $submitBtn.prop('disabled', false).text('Verify OTP');
+            }
+        });
     });
+
+});

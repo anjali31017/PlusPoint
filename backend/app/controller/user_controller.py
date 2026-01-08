@@ -65,11 +65,12 @@ class UserController:
                 UserModel.email == user_data['email'],
                 UserModel.is_deleted == False
             )
-            if user_exists and not user_exists.is_verified:
-                return user_exists
             
-            if user_exists and user_exists.is_verified:
+            if user_exists and user_exists.is_verified == True:
                 return None
+            
+            if user_exists and user_exists.is_verified == False:
+                return user_exists
             
             while True:
                 username = await self.generate_username(user_data)
