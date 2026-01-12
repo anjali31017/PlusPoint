@@ -17,25 +17,25 @@ from app.models.kyc import KYCModel
 class KYCController:
     
     @staticmethod
-    def generate_id_fingerprint( kyc_data:dict ) -> str:
+    def generate_id_fingerprint( id_type:str, id_last4:str , dob:str, name_on_id:str  ) -> str:
         """
         Generates irreversible fingerprint for government ID
         """
         # Normalize input
         try:
-            raw = (
-                f"{kyc_data['id_type'].upper()}|"
-                f"{kyc_data['id_last4']}|"
-                f"{kyc_data['dob']}|"
-                f"{kyc_data['name_on_id'].lower()}"
-                )
+            # raw = (
+            #     f"{kyc_data['id_type'].upper()}|"
+            #     f"{kyc_data['id_last4']}|"
+            #     f"{kyc_data['dob']}|"
+            #     f"{kyc_data['name_on_id'].lower()}"
+            #     )
             
             # id_type = kyc_data['id_type'].upper().strip()
             # id_last4 = kyc_data['id_last4'].strip()
             # dob = kyc_data['dob'].strip()
             # name_on_id = kyc_data['name_on_id'].strip()
             
-            # raw = f"{id_type}|{id_last4}|{dob}|{name_on_id.lower().strip()}"
+            raw = f"{id_type}|{id_last4}|{dob}|{name_on_id.lower().strip()}"
 
             fingerprint = hmac.new(
                 key=settings.KYC_FINGERPRINT_SECRET.encode(),
@@ -48,15 +48,16 @@ class KYCController:
             print(str(e))
             return False
 
-    async def create_kyc(self, kyc_data, fingerprint, file: UploadFile, current_user):
+    async def create_kyc(self, 
+                         id_type:str, id_last4:str, dob:str, name_on_id:str, 
+                         fingerprint:str, file: UploadFile, current_user:dict):
         # Implementation for creating KYC record
         try:
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = (
                 f"{current_user['username']}_"
-                f"{kyc_data['id_type']}_"
-                f"{timestamp}_"
-                f"{file.filename}"
+                f"{id_type}_"
+                f"{timestamp}"
             )
             file_path = os.path.join(settings.KYC_UPLOAD_FOLDER, filename)
             
@@ -66,13 +67,14 @@ class KYCController:
             
             kyc = KYCModel(
                 user_id=ObjectId(current_user["user_id"]),
-                id_type=kyc_data["id_type"],
-                id_last4=kyc_data["id_last4"],
-                dob=kyc_data["dob"],
-                name_on_id=kyc_data["name_on_id"],
+                id_type=id_type,
+                id_last4=id_last4,
+                dob=dob,
+                name_on_id=name_on_id,
                 id_fingerprint=fingerprint,
                 id_document_path=f"images/kyc/{filename}",
-                kyc_status="PENDING"
+                kyc_status="PENDING",
+                kyc_consent=True,
             )
             await kyc.insert()
             return True

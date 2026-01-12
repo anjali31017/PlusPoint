@@ -24,6 +24,7 @@ class KYCModel(Document):
     reviewed_at: Optional[datetime] = None
     rejection_reason: Optional[str] = None
     is_active: bool = True
+    kyc_consent: bool = False
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
