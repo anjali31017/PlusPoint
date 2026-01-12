@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KYC Verification - PlusPoint</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        .floating-input:focus~label,
+        .floating-input:not(:placeholder-shown)~label {
+            transform: translateY(-1.9rem) scale(0.85);
+            color: #6B46C1;
+            background-color: white;
+            padding: 0 0.25rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-tr from-blue-100 to-purple-200 min-h-screen flex items-center justify-center px-4 pt-16">
+
+    <div class="w-full max-w-2xl bg-white rounded-3xl shadow-2xl p-10 space-y-6 relative overflow-hidden">
+
+        <!-- Glow -->
+        <div
+            class="absolute -top-16 -right-16 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply blur-3xl opacity-30 animate-pulse">
+        </div>
+
+        <h1 class="text-4xl font-extrabold text-center text-purple-700">
+            KYC Verification
+        </h1>
+
+        <p class="text-center text-gray-500">
+            Complete your identity verification to continue.
+        </p>
+
+        <form id="kycForm" class="space-y-5" enctype="multipart/form-data">
+
+            <!-- ID Type -->
+            <div>
+                <select id="id_type" name="id_type" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400">
+                    <option value="">Select ID Type *</option>
+                    <option value="AADHAR">Aadhar</option>
+                    <option value="VOTER_ID">Voter ID</option>
+                    <option value="DRIVING_LICENSE">Driving License</option>
+                </select>
+            </div>
+
+            <!-- ID Last 4 -->
+            <div class="relative">
+                <input type="text" id="id_last4" name="id_last4" maxlength="4" required placeholder=" "
+                    class="floating-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400">
+                <label for="id_last4" class="absolute left-4 top-3 text-gray-400 bg-white px-1">
+                    ID Last 4 Digits *
+                </label>
+            </div>
+
+            <!-- DOB -->
+            <div>
+                <input type="date" id="dob" name="dob" required
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400">
+                <p id="dobError" class="text-red-500 text-sm mt-1 hidden">
+                    You must be at least 18 years old to submit KYC.
+                </p>
+            </div>
+
+            <!-- Name on ID -->
+            <div class="relative">
+                <input type="text" id="name_on_id" name="name_on_id" required placeholder=" "
+                    class="floating-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400">
+                <label for="name_on_id" class="absolute left-4 top-3 text-gray-400 bg-white px-1">
+                    Name on ID *
+                </label>
+            </div>
+
+
+            <!-- <div>
+    <input type="file" id="id_document" name="id_document" accept="image/*,.pdf" required class="w-full text-sm text-gray-600">
+    <p id="idDocumentError" class="text-red-500 text-sm hidden mt-1"></p>
+</div> -->
+
+            <!-- Upload -->
+            <div>
+                <label class="block text-sm font-medium text-gray-600 mb-2">
+                    Upload ID Document *
+                </label>
+
+                <div class="border-2 border-dashed border-purple-300 rounded-2xl p-6 text-center cursor-pointer
+               hover:border-purple-500 hover:bg-purple-50 transition"
+                    onclick="document.getElementById('id_document').click()">
+
+                    <p id="uploadText" class="text-gray-500 text-sm">
+                        Click to upload your ID (PNG, JPG, PDF)
+                    </p>
+
+                    <img id="docPreview" class="hidden mt-4 max-h-40 mx-auto rounded-xl shadow-md" />
+                </div>
+
+                <input type="file" id="id_document" name="id_document" accept="image/*,.pdf" required hidden />
+            </div>
+
+            <!-- Consent -->
+            <div class="flex items-start gap-2 text-sm text-gray-600">
+                <input type="checkbox" id="kyc_consent" class="mt-1">
+                <label for="kyc_consent">
+                    I confirm that the information and documents submitted for KYC are true, accurate, and belong to me.
+                    I authorize the platform to store and verify my KYC details for compliance and security purposes.
+                    I understand that providing false or misleading information may result in rejection or suspension of
+                    my account.
+                    <button type="button" onclick="window.location.href='terms.html'"
+                        class="ml-1 text-purple-600 font-semibold hover:underline">
+                        More
+                    </button>
+                </label>
+            </div>
+
+            <!-- Error -->
+            <p id="kycError" class="text-red-500 text-sm hidden text-center"></p>
+
+            <!-- Submit -->
+            <button type="submit"
+                class="w-full bg-gradient-to-r from-purple-600 to-pink-500 text-white font-bold py-3 rounded-lg hover:scale-105 transition-transform shadow-lg">
+                Submit KYC
+            </button>
+        </form>
+
+        <p class="text-xs text-gray-500 text-center">
+            🔒 Your data is encrypted and securely stored
+        </p>
+    </div>
+
+    <!-- Auth Guard -->
+    <script>
+        if (!localStorage.getItem("access_token")) {
+            window.location.href = "./login.html";
+        }
+    </script>
+
+    <script src="../scripts/kyc.js" defer></script>
+</body>
+
+</html>

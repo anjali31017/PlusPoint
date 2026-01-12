@@ -67,7 +67,7 @@ async def create_kyc(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="KYC with same ID already exists"
             )
-
+        
         success = await kyc_controller.create_kyc( 
                                                   id_type, 
                                                   id_last4, 
@@ -86,7 +86,7 @@ async def create_kyc(
         return BaseResponse(
         status=1,
         message="KYC done successfully",
-        data=None
+        data="Sent for verification"
         )
 
 

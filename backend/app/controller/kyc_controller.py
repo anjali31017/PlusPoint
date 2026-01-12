@@ -54,10 +54,12 @@ class KYCController:
         # Implementation for creating KYC record
         try:
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            ext = os.path.splitext(file.filename)[1]
+
             filename = (
                 f"{current_user['username']}_"
                 f"{id_type}_"
-                f"{timestamp}"
+                f"{timestamp}{ext}"
             )
             file_path = os.path.join(settings.KYC_UPLOAD_FOLDER, filename)
             
