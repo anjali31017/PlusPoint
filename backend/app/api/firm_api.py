@@ -30,12 +30,12 @@ async def create_firm_api( firm_data: FirmCreateSchema, current_user: dict = Dep
                 detail="User Not found"
             )
             
-        # kyc = await KYCModel.find_one(KYCModel.user_id == ObjectId(current_user["user_id"]))
-        # if not kyc or kyc.kyc_status != "VERIFIED":
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="KYC required to create firm"
-        #     )
+        kyc = await KYCModel.find_one(KYCModel.user_id == ObjectId(current_user["user_id"]))
+        if not kyc or kyc.kyc_status != "VERIFIED":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="KYC required to create firm"
+            )
             
         success = await firm_controller.create_firm(firm_data, user, ObjectId(current_user["user_id"]))
 

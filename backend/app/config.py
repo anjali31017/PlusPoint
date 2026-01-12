@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings
+import os
+from typing import ClassVar
 
 class Settings(BaseSettings):
     
@@ -24,6 +26,12 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int
     
     
+    BASE_DIR: ClassVar[str] = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+    KYC_UPLOAD_FOLDER: ClassVar[str] = os.path.join(BASE_DIR, "images", "kyc")
+
+    KYC_FINGERPRINT_SECRET: str
+
+
     #kafka
     # KAFKA_BROKER_ID: str
     # KAFKA_ZOOKEEPER_CONNECT: str
@@ -49,6 +57,7 @@ class Settings(BaseSettings):
     WS_PREFIX: str
 
     class Config:
-        env_file = ".env"
+        env_file = "backend/.env"
+
 
 settings = Settings()

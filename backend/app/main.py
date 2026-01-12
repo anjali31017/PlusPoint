@@ -4,9 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from app.config import settings
 import asyncio
+import os
 
 # from router.oauth import router as oauth_router
 from app.api.user_api import router as user_router
+from app.api.kyc_api import router as kyc_router
 from app.websocket.websocket_endpoints import router as websocket_router
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_db
 from app.api.refresh_api import router as token_router
@@ -24,6 +26,12 @@ async def lifespan(app: FastAPI):
     await start_producer()
     consumer_task = asyncio.create_task(KafkaConsumerService.consume_articles())
     
+    if not settings.KYC_FINGERPRINT_SECRET:
+        print("KYC_FINGERPRINT_SECRET not set in environment variables.")
+        raise RuntimeError("KYC_FINGERPRINT_SECRET not set")
+
+
+
     yield
     
     print("Shutting down application...")
@@ -53,6 +61,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -108,6 +118,15 @@ app.include_router(
     tags=["article"],
 
 )
+
+
+app.include_router(
+    kyc_router, 
+    prefix=f"{settings.API_PREFIX}", 
+    tags=["kyc"],
+
+)
+
 
 app.include_router(
     websocket_router, 
