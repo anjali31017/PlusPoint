@@ -10,16 +10,18 @@ class PublisherInfo(BaseModel):
 
 
 class FirmModel(Document):
-    # firm_id: Optional[str] = Field(None, alias="_id")
-    # firm_ref_if: str = = Field(default_factory=lambda: secrets.token_hex(8))
-    firm_user_id: Link["UserModel"]
+    owner_user_id: Link["UserModel"]
     firm_name: str
     firm_username: str = Indexed(str, unique=True)
     publishers: Optional[List[PublisherInfo]] = Field(default_factory=list)
-    # publishers: List[PublisherInfo] = []
-    is_active: bool = True
+    bio: Optional[str] = None
+    verification_status: str = Field(default="PENDING")  # PENDING | APPROVED | REJECTED | SUSPENDED
+    trust_score: int = Field(default=0)
+    violations_count: int = Field(default=0)
+    is_active: bool = False
     is_deleted: bool = False
-    is_verified: bool = True
+    is_verified: bool = False
+    verified_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:

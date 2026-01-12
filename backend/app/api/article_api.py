@@ -14,15 +14,15 @@ router = APIRouter(prefix="/article", tags=["Article"])
 article_controller = ArticleController()
 
 @router.post("/create", response_model=BaseResponse)
-# async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
-async def add_article(article_data: ArticleCreateSchema):
+async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
+# async def add_article(article_data: ArticleCreateSchema):
     try:
         article_data_dict = article_data.dict()
 
         article = await article_controller.create_article(
             article_data_dict, 
-            # current_user["user_id"]
-            "692051620cbaa9500904c22d"
+            current_user["user_id"]
+            # "692051620cbaa9500904c22d"
         )
 
         if article is None:
@@ -33,11 +33,11 @@ async def add_article(article_data: ArticleCreateSchema):
         kafka_article_event = {
             "event_type": "article_published",
             "firm_id": str(article.firm_id.id),
-            "publisher_id": "692051620cbaa9500904c22d", #current_user["user_id"],
+            "publisher_id": current_user["user_id"],
             "article_id": str(article.id),
             "article_title": article.title,
             "firm_username": article.firm_id.firm_username,
-            "publisher_username": "692051620cbaa9500904c22d", #current_user["username"],
+            "publisher_username": current_user["username"],
             "published_at": (
                 article.published_at.isoformat() 
                 if article.published_at else datetime.now().isoformat()

@@ -5,10 +5,10 @@ class PublisherSchema(BaseModel):
     publisher_id: str
 
 
-class FirmRegisterSchema(BaseModel):
+class FirmCreateSchema(BaseModel):
     firm_name: str
-    firm_username: str
     publishers: Optional[List[PublisherSchema]] = None
+    bio: Optional[str] = None
 
 class AddPublisherSchema(BaseModel):
     firm_username: str

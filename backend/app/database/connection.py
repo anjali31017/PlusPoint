@@ -9,6 +9,7 @@ from app.models.comment import CommentModel
 from app.models.article import ArticleModel, ArticleLikeModel
 from app.models.token import RefreshTokenModel
 from app.models.notification import NotificationModel
+from app.models.kyc import KYCModel
 
 client: AsyncIOMotorClient | None = None
 
@@ -30,6 +31,7 @@ async def connect_to_mongo():
                 ArticleLikeModel, 
                 RefreshTokenModel,
                 NotificationModel,
+                KYCModel,
                 ])
             print("Connected to MongoDB with Beanie")
     except Exception as e:

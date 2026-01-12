@@ -12,15 +12,17 @@ from app.controller.email_controller import generate_reset_token, is_user_blocke
 from app.schema.email_schema import OTPVerifySchema, ResendOTPSchema
 from fastapi import status
 
+from app.controller.util_controller import UtilController
+
 router = APIRouter(prefix="/user", tags=["User"])
 
 user_controller = UserController()
-
+util_controller = UtilController()
 
 @router.get("/check-username")
 async def check_username(username: str):
     try:
-        user = await user_controller.check_username_exists(username)
+        user = await util_controller.check_username_exists(username)
         return {"available": user is None}
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
