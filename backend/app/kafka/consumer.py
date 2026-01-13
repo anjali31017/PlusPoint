@@ -167,7 +167,7 @@ class KafkaConsumerService:
             #         cls.consumer = None
 
 #----------------------------
-#  PENDING NOTIFICAITON
+#   NOTIFICAITON
 #----------------------------
 # # Store notification
 # await Notifications.create(user_id=subscriber_id, message=message)

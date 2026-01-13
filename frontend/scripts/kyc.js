@@ -44,9 +44,9 @@ $(document).ready(function () {
     });
 
     // ===== Only allow numbers for ID Last 4 Digits =====
-    $("#id_last4").on("input", function () {
-        this.value = this.value.replace(/\D/g, ""); // Remove any non-digit characters
-    });
+    // $("#id_last4").on("input", function () {
+    //     this.value = this.value.replace(/\D/g, ""); // Remove any non-digit characters
+    // });
 
     // ===== Form submit =====
     $("#kycForm").on("submit", function (e) {

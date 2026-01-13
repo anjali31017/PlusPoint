@@ -1,11 +1,12 @@
 from datetime import datetime
 from fastapi import HTTPException
-from app.models.firm import FirmModel, PublisherInfo
-from app.schema.firm_schema import AddPublisherSchema, FirmCreateSchema
+from app.models.firm import FirmModel
+from app.schema.firm_schema import AddPublisherSchema
 from app.models.users import UserModel, UserRole
-from app.models.kyc import KYCModel
 from app.controller.util_controller import UtilController
 from typing import Optional
+
+from app.models.publisher import PublisherModel
 
 class FirmController:
     
@@ -15,24 +16,6 @@ class FirmController:
         No HTTPException raised here.
         """
         try:
-            # 1️⃣ Fetch user
-            # user = await UserModel.get(user_id)
-            # if not user or not user.is_verified or not user.is_active:
-            #     return None
-            
-            # existing_firm_name = await FirmModel.find_one(
-            #     FirmModel.firm_name == firm_data.firm_name,
-            #     FirmModel.is_deleted == False
-            # )
-            # if existing_firm_name:
-            #     return None 
-            
-            # 2️⃣ KYC check
-            # kyc = await KYCModel.find_one(KYCModel.user_id == user)
-            # if not kyc or kyc.kyc_status != "VERIFIED":
-            #     return None
-
-            # 3️⃣ Generate unique firm username
             util_controller = UtilController()
             while True:
                 username = await util_controller.generate_username(
@@ -48,21 +31,25 @@ class FirmController:
             firm_data_dict = firm_data.dict(exclude_unset=True)
             firm_data_dict["owner_user_id"] = user  # Link to UserModel
             firm_data_dict["firm_username"] = username
+            # firm_data_dict["created_at"] = datetime.now()
 
             firm = FirmModel(**firm_data_dict)
+            
             registered_firm = await firm.insert()
             if not registered_firm:
                 return None
 
             # 5️⃣ Add creator as publisher
-            pub_data = {
-                "firm_username": registered_firm.firm_username,
-                "publisher_username": user.username,
-            }
-            registered_firm.publishers = [
-                await self.add_publisher(AddPublisherSchema(**pub_data))
-            ]
-            await registered_firm.save()
+            # pub_data = {
+            #     "firm_id": registered_firm.id,
+            #     "publisher_id": user.id,
+            # }
+            # print("PUBBBBBBDATAAA ",pub_data)
+            await self.add_publisher(firm , user)
+            # registered_firm.publishers = [
+            #     await self.add_publisher(AddPublisherSchema(**pub_data))
+            # ]
+            # await registered_firm.save()
 
             # 6️⃣ Assign roles
             if UserRole.founder not in user.role:
@@ -78,42 +65,42 @@ class FirmController:
             return None
         
         
-    async def add_publisher(self, data: AddPublisherSchema):
+    async def add_publisher(self, firm, user):
         try:
-            # Fetch publisher by username
-            publisher = await UserModel.find_one(UserModel.username == data.publisher_username)
-            if not publisher:
-                raise HTTPException(status_code=404, detail="Publisher (user) not found")
+            # # Fetch publisher by username
+            # publisher = await UserModel.find_one(UserModel.username == data.publisher_username)
+            # if not publisher:
+            #     raise HTTPException(status_code=404, detail="Publisher (user) not found")
 
-            # Fetch firm by username
-            firm = await FirmModel.find_one(FirmModel.firm_username == data.firm_username)
-            if not firm:
-                raise HTTPException(status_code=404, detail="Firm not found")
+            # # Fetch firm by username
+            # firm = await FirmModel.find_one(FirmModel.firm_username == data.firm_username)
+            # if not firm:
+            #     raise HTTPException(status_code=404, detail="Firm not found")
 
-            # Check if publisher is already in firm's publisher list
-            for existing_pub in firm.publishers or []:
-                if str(existing_pub.publisher_user_id.id) == str(publisher.id):
-                    raise HTTPException(status_code=400, detail="Publisher already added to firm")
 
-            # Create new PublisherInfo object
-            new_publisher = PublisherInfo(
-                publisher_user_id=publisher,
-                invited_at=datetime.now()
-            )
+            existing_entry = await PublisherModel.find_one(
+                            PublisherModel.firm_id.id == firm.id, 
+                            PublisherModel.publisher_id.id == user.id, 
+                            PublisherModel.is_active == True,
+                            PublisherModel.is_deleted == False
+                        )
+            if existing_entry:
+                raise HTTPException(status_code=400, detail="Publisher already associated with firm")
 
-            if firm.publishers is None:
-                firm.publishers = []
-
-            firm.publishers.append(new_publisher)
-
+            publisher_entry = PublisherModel(
+                publisher_id=user,
+                firm_id=firm,
+                is_active=True,
+                verification_status="UNDER_REVIEW",
+                )   
+            await publisher_entry.insert()
+        
             # Ensure the user has the publisher role
-            if UserRole.publisher not in publisher.role:
-                publisher.role.append(UserRole.publisher)
-                await publisher.save()
+            if UserRole.publisher not in user.role:
+                user.role.append(UserRole.publisher)
+                await user.save()
 
-            await firm.save()
-
-            return new_publisher
+            return publisher_entry
 
         except HTTPException as e:
             raise e

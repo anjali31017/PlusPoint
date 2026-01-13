@@ -9,6 +9,7 @@ from fastapi import status
 
 from app.models.users import UserModel
 from app.models.kyc import KYCModel
+from app.models.firm import FirmModel
 
 router = APIRouter(prefix="/firm", tags=["Firm"])
 
@@ -30,7 +31,7 @@ async def create_firm_api( firm_data: FirmCreateSchema, current_user: dict = Dep
                 detail="User Not found"
             )
             
-        kyc = await KYCModel.find_one(KYCModel.user_id == ObjectId(current_user["user_id"]))
+        kyc = await KYCModel.find_one(KYCModel.user_id.id == ObjectId(current_user["user_id"]))
         if not kyc or kyc.kyc_status != "VERIFIED":
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
@@ -84,6 +85,27 @@ async def add_publisher(data: AddPublisherSchema, current_user: dict = Depends(g
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
+@router.get("/details", response_model=BaseResponse)
+async def get_firm_details(firm_username: str):
+    try:
+        firm = await FirmModel.find_one(
+            FirmModel.firm_username == firm_username,
+        )
+        if not firm:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Firm not found")
+        
+        firm_data = FirmModel(**firm.dict())
+        
+        response_data = {
+            "status": 1,
+            "message": "Firm details fetched successfully",
+            "data": firm_data
+        }
+        return response_data
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
     
 # @router.post("/{firm_username}/subscribe", response_model=BaseResponse)
 # @router.post("/publisher/{publisher_username}/subscribe", response_model=BaseResponse)

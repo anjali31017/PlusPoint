@@ -75,7 +75,7 @@ class KYCController:
                 name_on_id=name_on_id,
                 id_fingerprint=fingerprint,
                 id_document_path=f"images/kyc/{filename}",
-                kyc_status="PENDING",
+                kyc_status="UNDER_REVIEW",
                 kyc_consent=True,
             )
             await kyc.insert()

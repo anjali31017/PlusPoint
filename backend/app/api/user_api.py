@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
+from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
-import httpx 
 
 from app.controller.user_controller import UserController
 from app.models.users import UserModel
@@ -13,6 +13,10 @@ from app.schema.email_schema import OTPVerifySchema, ResendOTPSchema
 from fastapi import status
 
 from app.controller.util_controller import UtilController
+from app.models.kyc import KYCModel
+from app.models.firm import FirmModel
+from app.schema.firm_schema import FirmSchema
+from app.models.publisher import PublisherModel
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -263,27 +267,80 @@ async def reset_password(data: ResetPasswordSchema, background_tasks: Background
         return response_data
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
-    
+
 
 @router.get("/profile", response_model=BaseResponse)
 async def get_profile(current_user: dict = Depends(get_current_user)):
     try:
-        user = await user_controller.get_user(current_user['user_id'])
+        # 1. Fetch user details
+        user = await UserModel.find_one(UserModel.id == ObjectId(current_user['user_id']), UserModel.is_deleted == False)
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        data = UserProfileSchema(
-            **user.dict()
-        )
+        
+        user_data = UserProfileSchema(**user.dict())
+        
+        # 2. Fetch KYC status
+        kyc = await KYCModel.find_one(KYCModel.user_id.id == ObjectId(current_user["user_id"]), KYCModel.is_deleted == False)
+        
+        
+        kyc_status = kyc.kyc_status if kyc else "PENDING"
+        
+        # 3. Check if user owns any firm
+        firm = await FirmModel.find_one(FirmModel.owner_user_id.id == ObjectId(current_user["user_id"]), FirmModel.is_deleted == False, FirmModel.is_active == True)
+        firm_data =  FirmModel(**firm.dict()) if firm else None
+        
+        
+        publisher = await PublisherModel.find_one(PublisherModel.publisher_id.id == ObjectId(current_user["user_id"]), PublisherModel.is_deleted == False)
+        publisher_data = PublisherModel(**publisher.dict()) if publisher else None
+        data = {
+            "user_data": user_data,
+            "kyc_status": kyc_status,
+            "firm_data": firm_data,
+            "publisher_data": publisher_data  
+        }
+        
+        # 4. Return structured response
         return {
             "status": 1,
             "message": "User profile fetched successfully",
             "data": data
         }
+    
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+
+# @router.get("/profile", response_model=BaseResponse)
+# async def get_profile(current_user: dict = Depends(get_current_user)):
+#     try:
+#         user = await user_controller.get_user(current_user['user_id'])
+#         if not user:
+#             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+#         data = UserProfileSchema(
+#             **user.dict()
+#         )
+        
+#         kyc = await KYCModel.find_one(KYCModel.user_id == ObjectId(current_user["user_id"]))
+#         if not kyc or kyc.kyc_status != "VERIFIED":
+#             raise HTTPException(
+#                 status_code=status.HTTP_403_FORBIDDEN,
+#                 detail="KYC required to create firm"
+#             )
+            
+#         return {
+#             "status": 1,
+#             "message": "User profile fetched successfully",
+#             "user_data": data,
+#         }
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+  
+  
   
 @router.put("/profile", response_model=BaseResponse)
 async def update_profile(

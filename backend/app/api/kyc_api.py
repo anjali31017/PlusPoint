@@ -18,7 +18,7 @@ UPLOAD_FOLDER = "backend/images/kyc"
 # async def create_kyc( kyc_data: KYCSchema, current_user: UserModel = Depends(get_current_user)):
 #     """
 #     Accepts KYC data as JSON/dict.
-#     Stores the info in UserKYCModel with status PENDING.
+#     Stores the info in UserKYCModel with status .
 #     """
 #     try:
 #         existing_kyc = await UserKYCModel.find_one(UserKYCModel.user_id == ObjectId(current_user["user_id"]))
@@ -47,7 +47,7 @@ async def create_kyc(
                 ):
     """
     Accepts KYC data as JSON/dict.
-    Stores the info in UserKYCModel with status PENDING.
+    Stores the info in UserKYCModel with status 
     """
     try:
         print("!!!!!!!!!!!!!!!",current_user)
