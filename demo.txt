@@ -37,3 +37,96 @@ ________________________________________
 
 
 http://localhost:8090/ --- kafka ui
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+now make design for kyc requests
+i want a nav bar saing admin
+kyc
+reports
+logout
+and i want these pages to be login protected onyl
+and to list the api response in kyc-requests
+with 2 btn accept and reject
+if reject then a input window saying reason
+also have a drop down for common reasons to add
+please make this i have api endpoint
+
+http://127.0.0.1:5000/api/admin/kyc
+{
+    "status": 1,
+    "message": "KYC data retrieved",
+    "data": {
+        "data": [
+            {
+                "_id": "6967d22b062ad89379c676eb",
+                "user_id": {
+                    "id": "6966229eeed6916c53c1cb26",
+                    "collection": "users"
+                },
+                "kyc_status": "UNDER_REVIEW",
+                "id_type": "aadhar",
+                "id_last4": "1245",
+                "id_fingerprint": "8e0cdf4a0f57336e82bd1fa45390a9c3f2bfa3b70ef370e938d09944d76c082e",
+                "dob": "21-1.-1999",
+                "name_on_id": "John Doe",
+                "id_document_path": "images/kyc/bryarcarver169013022_aadhar_20260114172811.png",
+                "reviewed_at": null,
+                "rejection_reason": null,
+                "is_active": true,
+                "kyc_consent": true,
+                "is_deleted": false,
+                "created_at": "2026-01-14T17:28:11.572000",
+                "updated_at": "2026-01-14T17:28:11.572000"
+            },
+            {
+                "_id": "6967f56cfe4e82824fd17f5a",
+                "user_id": {
+                    "id": "6966229eeed6916c53c1cb26",
+                    "collection": "users"
+                },
+                "kyc_status": "UNDER_REVIEW",
+                "id_type": "passport",
+                "id_last4": "1234",
+                "id_fingerprint": "19a1fd41d6dded30d8721d79dfe84a4c6a9aeaf6d7e2c37f7428642756802f00",
+                "dob": "1990-05-21",
+                "name_on_id": "John Doe",
+                "id_document_path": "images/kyc/bryarcarver169013022_passport_20260114195836.jpg",
+                "reviewed_at": null,
+                "rejection_reason": null,
+                "is_active": true,
+                "kyc_consent": true,
+                "is_deleted": false,
+                "created_at": "2026-01-14T19:58:36.351000",
+                "updated_at": "2026-01-14T19:58:36.351000"
+            }
+        ]
+    }
+}
+
+
+
+open image in new tab
+
+adn please save user_id in id so that when clicked we can use that internall to call another api for approval and rejection
+
+http://127.0.0.1:5000/api/admin/kyc/{user_id}/approve
+
+

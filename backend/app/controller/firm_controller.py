@@ -90,8 +90,7 @@ class FirmController:
             publisher_entry = PublisherModel(
                 publisher_id=user,
                 firm_id=firm,
-                is_active=True,
-                verification_status="UNDER_REVIEW",
+                is_active=True
                 )   
             await publisher_entry.insert()
         

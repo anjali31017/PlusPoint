@@ -8,6 +8,7 @@ import os
 
 # from router.oauth import router as oauth_router
 from app.api.user_api import router as user_router
+from app.api.admin_api import router as admin_router
 from app.api.kyc_api import router as kyc_router
 from app.websocket.websocket_endpoints import router as websocket_router
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_db
@@ -17,12 +18,17 @@ from app.api.article_api import router as article_router
 from app.sse.sse_endpoint import router as sse_router
 from app.kafka.producer import start_producer, stop_producer
 from app.kafka.consumer import KafkaConsumerService
+from starlette.middleware.sessions import SessionMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting application...")
     await connect_to_mongo()
     
+    if not os.path.exists(settings.KYC_UPLOAD_FOLDER):
+        os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+        print(f"Directory created at: {settings.KYC_UPLOAD_FOLDER}")
+        
     await start_producer()
     consumer_task = asyncio.create_task(KafkaConsumerService.consume_articles())
     
@@ -62,7 +68,10 @@ app.add_middleware(
 )
 
 
-os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+
+app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET)
+
+# os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -101,6 +110,13 @@ app.include_router(
     token_router, 
     prefix=f"{settings.API_PREFIX}", 
     tags=["token"],
+
+)
+
+app.include_router(
+    admin_router, 
+    prefix=f"{settings.API_PREFIX}", 
+    tags=["admin"],
 
 )
 

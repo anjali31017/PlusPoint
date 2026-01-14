@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from app.models.users import UserModel
 import secrets
 
+
 async def generate_otp(length: int = 6) -> dict[str, str | datetime]:
     """Generate a numeric OTP."""
     otp = ''.join([str(random.randint(0, 9)) for _ in range(length)])
@@ -115,6 +116,62 @@ async def reset_password_email(to_email: str, link: str) -> bool:
     
     
     """
+    # <p><span style="font-weight:900; font-size:26px; color:#1a73e8;">PlusPoint</span> Stay on the pulse of trending topics!</p>
+
+    # <p><strong>PlusPoint</strong> Stay on the plue of trending topics!</p>
+    message = MIMEMultipart()
+    message["From"] = settings.SMTP_FROM_EMAIL
+    message["To"] = to_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "html"))
+
+    try:
+        await aiosmtplib.send(
+            message,
+            hostname=settings.SMTP_SERVER,
+            port=settings.SMTP_PORT,
+            start_tls=True,
+            username=settings.SMTP_USERNAME,
+            password=settings.SMTP_PASSWORD
+        )
+        # with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
+        #     server.starttls()
+        #     server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
+        #     server.sendmail(settings.SMTP_FROM_EMAIL, to_email, message.as_string())
+        return True
+    except Exception as e:
+        print("Error sending email:", e)
+        return False
+
+
+
+
+async def KYC_status_email(to_email: str, status: str, reason: str|None) -> bool:
+
+    
+    subject = f"Your KYC Status: {status}"
+
+    if status.lower() == "accepted":
+        body = f"""
+        <p>Your KYC has been: <strong>{status}</strong></p>
+        <p>You now have full access to all PlusPoint features.</p>
+        <p><small><em>Congratulations!</em></small></p>
+        <p><span style="font-weight:900; font-size:26px; color:#1a73e8;">PlusPoint</span></p>
+        """
+    elif status.lower() == "rejected":
+        body = f"""
+        <p>Your KYC has been: <strong>{status}</strong></p>
+        <p>Please complete your KYC again.</p>
+        <p><strong>Reason for rejection: </strong>{reason}</p>
+        <p><small><em>Email us at anjali17103@gmail.com if there are any issues</em></small></p>
+        <p><span style="font-weight:900; font-size:26px; color:#1a73e8;">PlusPoint</span></p>
+        """
+    else:
+        body = f"""
+        <p>Your KYC status is: <strong>{status}</strong></p>
+        <p><small><em>Contact support for more details.</em></small></p>
+        <p><span style="font-weight:900; font-size:26px; color:#1a73e8;">PlusPoint</span></p>
+        """
     # <p><span style="font-weight:900; font-size:26px; color:#1a73e8;">PlusPoint</span> Stay on the pulse of trending topics!</p>
 
     # <p><strong>PlusPoint</strong> Stay on the plue of trending topics!</p>

@@ -7,10 +7,10 @@ $(document).ready(function () {
         const accessToken = localStorage.getItem('access_token');
         const refreshToken = localStorage.getItem('refresh_token');
 
-        if (!accessToken) {
-            window.location.href = 'login.html';
-            return;
-        }
+        // if (!accessToken) {
+        //     window.location.href = 'login.html';
+        //     return;
+        // }
 
         try {
             const payload = JSON.parse(atob(accessToken.split('.')[1]));
@@ -39,7 +39,7 @@ $(document).ready(function () {
             }
         } catch (e) {
             localStorage.clear();
-            window.location.href = 'login.html';
+            // window.location.href = 'login.html';
         }
     }
 

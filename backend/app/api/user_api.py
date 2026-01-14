@@ -272,6 +272,9 @@ async def reset_password(data: ResetPasswordSchema, background_tasks: Background
 @router.get("/profile", response_model=BaseResponse)
 async def get_profile(current_user: dict = Depends(get_current_user)):
     try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
         # 1. Fetch user details
         user = await UserModel.find_one(UserModel.id == ObjectId(current_user['user_id']), UserModel.is_deleted == False)
         if not user:
@@ -348,6 +351,9 @@ async def update_profile(
     current_user: dict = Depends(get_current_user)
 ):
     try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
         update_data = payload.dict()
 
         # Remove keys where value is None (optional step)
@@ -402,6 +408,9 @@ async def subscribe_to_entity(
     publisher_username: str | None = None,
     current_user: dict = Depends(get_current_user)
 ):
+    if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
     if not firm_username and not publisher_username:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Either firm_username or publisher_username is required")
 
@@ -414,4 +423,7 @@ async def subscribe_to_entity(
 
 @router.get("/protected")
 async def protected_route(current_user: dict = Depends(get_current_user)):
+    if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
     return {"msg": f"Hello user {current_user['user_id']} with roles {current_user['role']}"}

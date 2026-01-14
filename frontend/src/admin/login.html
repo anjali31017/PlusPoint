@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Modern</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <style>
+    /* Floating labels */
+    .floating-input:focus~label,
+    .floating-input:not(:placeholder-shown)~label {
+      transform: translateY(-1.8rem) scale(0.85);
+      color: #ec4899;
+      /* pink accent */
+      background-color: white;
+      padding: 0 0.25rem;
+    }
+
+    /* Button hover gradient */
+    .btn-gradient:hover {
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+
+<body class="bg-gradient-to-tr from-blue-100 via-white to-pink-100 min-h-screen flex items-center justify-center">
+
+  <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 space-y-6 relative overflow-hidden">
+
+    <!-- Floating circles background for soft decoration -->
+    <div
+      class="absolute -top-16 -right-16 w-36 h-36 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse">
+    </div>
+    <div
+      class="absolute -bottom-16 -left-16 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse">
+    </div>
+
+    <h1 class="text-4xl font-extrabold text-center text-black mb-2">Welcome Back</h1>
+    <p class="text-center text-gray-600 mb-6">Log in to your admin dashboard</p>
+
+    <form id="loginForm" class="space-y-5" novalidate>
+
+      <!-- Email -->
+      <div class="relative">
+        <input type="email" id="email" name="email" required placeholder=" "
+          class="floating-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 transition duration-300 peer">
+        <label for="email"
+          class="absolute left-4 top-3 text-gray-400 pointer-events-none transition-all duration-300 bg-white px-1">Email
+          *</label>
+        <p class="text-red-500 text-sm mt-1 hidden" id="emailError">Please enter a valid email</p>
+      </div>
+
+      <!-- Password -->
+      <div class="relative">
+        <input type="password" id="password" name="password" required placeholder=" "
+          class="floating-input w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400 transition duration-300 peer">
+        <label for="password"
+          class="absolute left-4 top-3 text-gray-400 pointer-events-none transition-all duration-300 bg-white px-1">Password
+          *</label>
+
+        <!-- Eye toggle -->
+        <button type="button" class="absolute right-3 top-3 text-gray-500 hover:text-pink-600"
+          onclick="togglePassword('password', this)">👁️</button>
+
+        <p class="text-red-500 text-sm mt-1 hidden" id="passwordError">Password is required</p>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit"
+        class="w-full bg-gradient-to-r from-blue-400 to-pink-400 text-white font-bold py-3 rounded-lg shadow-lg btn-gradient transition-transform duration-300">
+        Login
+      </button>
+
+    </form>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    function togglePassword(id, btn) {
+      const input = document.getElementById(id);
+      if (input.type === "password") {
+        input.type = "text";
+        btn.textContent = "🙈";
+      } else {
+        input.type = "password";
+        btn.textContent = "👁️";
+      }
+    }
+
+    // Example validation + AJAX
+    $(document).ready(function () {
+      $('#loginForm').submit(function (e) {
+        e.preventDefault();
+        $('#emailError, #passwordError').hide();
+
+        let email = $('#email').val().trim();
+        let password = $('#password').val().trim();
+        let valid = true;
+
+        if (email === '') {
+          $('#emailError').text('Email is required').show();
+          valid = false;
+        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
+          $('#emailError').text('Enter a valid email').show();
+          valid = false;
+        }
+
+        if (password === '') {
+          $('#passwordError').text('Password is required').show();
+          valid = false;
+        }
+
+        if (!valid) return;
+
+        // Replace with your API endpoint
+
+
+        $.ajax({
+          url: 'http://127.0.0.1:5000/api/admin/login',
+          type: 'POST',
+          contentType: 'application/json',
+          data: JSON.stringify({ email: email, password: password }),
+          success: function (response) {
+            if (response.status === 1) {
+                window.location.href = '/src/admin/kyc-requests.html';
+
+            } else {
+              Swal.fire('Error', response.message, 'error');
+            }
+          },
+          error: function (xhr) {
+            let msg = xhr.responseJSON?.detail || 'Login failed';
+            Swal.fire('Error', msg, 'error');
+          }
+        });
+      });
+    });
+  </script>
+
+</body>
+
+</html>

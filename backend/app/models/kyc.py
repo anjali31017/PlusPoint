@@ -20,7 +20,6 @@ class KYCModel(Document):
     dob: Optional[str] = None  # YYYY-MM-DD
     name_on_id: Optional[str] = None
     id_document_path: Optional[str] = None  # encrypted / temp storage
-    reviewed_by: Optional[str] = None
     reviewed_at: Optional[datetime] = None
     rejection_reason: Optional[str] = None
     is_active: bool = True

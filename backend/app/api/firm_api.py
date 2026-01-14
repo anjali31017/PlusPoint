@@ -23,7 +23,9 @@ async def create_firm_api( firm_data: FirmCreateSchema, current_user: dict = Dep
     Create a new firm. Only KYC-verified users can create a firm.
     """
     try:
-
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
         user = await UserModel.get(ObjectId(current_user["user_id"]))
         if not user or not user.is_verified or not user.is_active:
             raise HTTPException(
@@ -70,6 +72,9 @@ async def create_firm_api( firm_data: FirmCreateSchema, current_user: dict = Dep
 @router.post("/add-publisher", response_model=BaseResponse)
 async def add_publisher(data: AddPublisherSchema, current_user: dict = Depends(get_current_user)):
     try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
         new_publisher = await firm_controller.add_publisher(data)
         response_data = {
             "status": 1,

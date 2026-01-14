@@ -53,19 +53,28 @@ class KYCController:
                          fingerprint:str, file: UploadFile, current_user:dict):
         # Implementation for creating KYC record
         try:
+            os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+            
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             ext = os.path.splitext(file.filename)[1]
 
-            filename = (
-                f"{current_user['username']}_"
-                f"{id_type}_"
-                f"{timestamp}{ext}"
-            )
+            safe_username = "".join(x for x in current_user['username'] if x.isalnum())
+            safe_id_type = "".join(x for x in id_type if x.isalnum())
+
+            filename = f"{safe_username}_{safe_id_type}_{timestamp}{ext}"
             file_path = os.path.join(settings.KYC_UPLOAD_FOLDER, filename)
+        
+            # filename = (
+            #     f"{current_user['username']}_"
+            #     f"{id_type}_"
+            #     f"{timestamp}{ext}"
+            # )
+            # file_path = os.path.join(settings.KYC_UPLOAD_FOLDER, filename)
             
             with open(file_path, "wb") as f:
                 shutil.copyfileobj(file.file, f)
-            
+                print("File saved:", file_path, os.path.exists(file_path))
+
             
             kyc = KYCModel(
                 user_id=ObjectId(current_user["user_id"]),

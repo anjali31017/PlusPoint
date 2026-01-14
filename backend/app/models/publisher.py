@@ -8,8 +8,7 @@ from app.models.firm import FirmModel
 class PublisherModel(Document):
     publisher_id: Link["UserModel"]
     firm_id: Link["FirmModel"]
-    verification_status: str = Field(default="UNDER_REVIEW")  # PENDING | APPROVED | REJECTED | SUSPENDED
-    trust_score: int = Field(default=0)
+    trust_factor: int = Field(default=0)
     violations_count: int = Field(default=0)
     is_active: bool = False
     is_deleted: bool = False

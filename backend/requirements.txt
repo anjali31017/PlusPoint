@@ -20,3 +20,4 @@ torch
 celery[redis]
 redis
 flower
+itsdangerous

@@ -20,6 +20,6 @@ class FirmSchema(BaseModel):
     # publishers: List[PublisherSchema] = []
     bio: Optional[str] = None
     verification_status: Optional[str] = None
-    trust_score: Optional[int] = None
+    trust_factor: Optional[int] = None
     violations_count: Optional[int] = None
     created_at: datetime

@@ -61,7 +61,7 @@ class UserController:
     
     async def get_user(self, id: str) -> UserModel | None:
         try:
-             return await self._find_active_user(id)
+            return await self._find_active_user(id)
         except Exception as e:
             print(str(e))
             return None

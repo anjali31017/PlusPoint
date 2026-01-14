@@ -18,6 +18,7 @@ services:
     restart: always
     volumes:
       - ./backend/app:/app/app 
+      - ./backend/images/kyc:/app/images/kyc
     ports:
       - "5000:5000"
     networks:

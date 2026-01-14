@@ -17,6 +17,8 @@ article_controller = ArticleController()
 async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
 # async def add_article(article_data: ArticleCreateSchema):
     try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
         article_data_dict = article_data.dict()
 
         article = await article_controller.create_article(
@@ -131,6 +133,9 @@ async def add_comment(
     comment_id: str | None = None,
     current_user: dict = Depends(get_current_user)):
     try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
         comment_data_dict = comment_data.dict()
 
         comment = await article_controller.create_comment(
@@ -163,6 +168,9 @@ async def add_comment(
 @router.post("/like", response_model=BaseResponse)
 async def like_article(article_id: str, current_user: dict = Depends(get_current_user)):
     try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
         success = await article_controller.like_article(article_id, current_user["user_id"])
         
         if not success:

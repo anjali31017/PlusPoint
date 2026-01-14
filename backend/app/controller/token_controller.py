@@ -60,7 +60,7 @@ async def get_current_user(authorization: str = Header(...)):
         token = authorization.split(" ")[1]
         payload = await decode_token(token)
         if not payload:
-            raise HTTPException(status_code=401, detail="Invalid access token")
+            return None
         return payload
     except Exception:
         raise HTTPException(status_code=401, detail="Could not validate credentials")

@@ -3,10 +3,15 @@ from beanie import Document, Indexed, Link
 from pydantic import BaseModel, Field
 from datetime import datetime
 from app.models.users import UserModel
-
+from enum import Enum
 # class PublisherInfo(BaseModel):
 #     publisher_user_id: Link["UserModel"]  # store MongoDB ObjectId of the user
 
+class VerificationStatus(str, Enum):
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    SUSPENDED = "SUSPENDED"
+    
 
 class FirmModel(Document):
     owner_user_id: Link["UserModel"]
@@ -14,8 +19,8 @@ class FirmModel(Document):
     firm_username: str = Indexed(str, unique=True)
     # publishers: Optional[List[PublisherInfo]] = Field(default_factory=list)
     bio: Optional[str] = None
-    verification_status: str = Field(default="UNDER_REVIEW")  # PENDING | APPROVED | REJECTED | SUSPENDED
-    trust_score: int = Field(default=0)
+    verification_status: VerificationStatus = VerificationStatus.APPROVED # PENDING | APPROVED | REJECTED | SUSPENDED
+    trust_factor: int = Field(default=0)
     violations_count: int = Field(default=0)
     is_active: bool = False
     is_deleted: bool = False

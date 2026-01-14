@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     KYC_UPLOAD_FOLDER: ClassVar[str] = os.path.join(BASE_DIR, "images", "kyc")
 
     KYC_FINGERPRINT_SECRET: str
-
+    SESSION_SECRET:str
 
     #kafka
     # KAFKA_BROKER_ID: str

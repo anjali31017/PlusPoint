@@ -6,7 +6,6 @@ from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
 from fastapi import status
 from app.schema.kyc_schema import KYCSchema
-from app.controller.token_controller import get_current_user
 from app.controller.kyc_controller import KYCController
 import os
 
@@ -50,17 +49,21 @@ async def create_kyc(
     Stores the info in UserKYCModel with status 
     """
     try:
-        print("!!!!!!!!!!!!!!!",current_user)
-        existing_kyc = await KYCModel.find_one(KYCModel.user_id == ObjectId(current_user["user_id"]))
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
+        existing_kyc = await KYCModel.find_one(KYCModel.user_id.id == ObjectId(current_user["user_id"]))
         if existing_kyc:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="KYC already done"
-                )
+            if existing_kyc.kyc_status == "VERIFIED" or existing_kyc.kyc_status == "UNDER_REVIEW":
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="KYC already done or under review"
+                    )
         
         fingerprint = kyc_controller.generate_id_fingerprint( id_type, id_last4, dob, name_on_id )
         duplicate = await KYCModel.find_one(
-            KYCModel.id_fingerprint == fingerprint
+            KYCModel.id_fingerprint == fingerprint,
+            KYCModel.kyc_status != "REJECTED"
         )
         if duplicate:
             raise HTTPException(
