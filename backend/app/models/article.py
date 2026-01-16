@@ -10,6 +10,7 @@ class ArticleModel(Document):
     publisher_id: Link["UserModel"]
     title: str
     content: str
+    content_text: Optional[str] = None
     summary: Optional[str] = None
     category: List[str] = Field(default_factory=list)
     tags: List[str] = Field(default_factory=list)
@@ -20,6 +21,14 @@ class ArticleModel(Document):
 
     class Settings:
         name = "articles"  
+        indexes = [
+        [
+            ("title", "text"),
+            ("content", "text"),
+            ("summary", "text")
+        ]
+    ]
+
 #view counts, comments, shares can be added later
 
 class ArticleLikeModel(Document):
@@ -28,3 +37,4 @@ class ArticleLikeModel(Document):
     created_at: datetime = Field(default_factory=datetime.now)
     class Settings:
         name = "likes"  
+        

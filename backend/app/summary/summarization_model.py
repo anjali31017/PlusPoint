@@ -124,12 +124,16 @@ def summarize(text):
         
 
         
-async def update_summary(article_id, final_summary):
+async def update_summary(article_id, final_summary, content_text):
     try:
         print("DBBBBBB")
         article_id = ObjectId(article_id)
         await connect_to_mongo()
-        await article_controller.update_article(article_id, {"summary": final_summary})
+        await article_controller.update_article(article_id, 
+                                                {"summary": final_summary,
+                                                "content_text": content_text,
+                                            })
+        print("DB UPDATED")
         await close_mongo_connection()
     except Exception as e:
         print("Update summary error:", e)
@@ -144,11 +148,11 @@ def end_summary(self, html_text, article_id=None):
         combined_summary_text = " ".join(chunk_summaries)
         final_summary = summarize(combined_summary_text)
         
-        print(final_summary)
+        # print(final_summary)
         # article_id = ObjectId(article_id)
         # asyncio.run(article_controller.update_article(article_id, {"summary": final_summary}))
         
-        asyncio.run(update_summary(article_id, final_summary))
+        asyncio.run(update_summary(article_id, final_summary, cleaned))
         return {
             "cleaned_text": cleaned,
             "chunks": chunks,

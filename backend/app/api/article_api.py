@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
-from app.schema.article_schema import ArticleCreateSchema, CreateCommentSchema
+from app.schema.article_schema import ArticleCreateSchema, ArticleSearchResponse, ArticleSearchResult, ArticleSearchSchema, CreateCommentSchema
 from app.kafka.producer import send_kafka_event
 from app.celery.summary_tasks import summerization_task
 from fastapi import status
@@ -186,3 +186,77 @@ async def like_article(article_id: str, current_user: dict = Depends(get_current
         raise he
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+    
+
+
+@router.post("/search", response_model=ArticleSearchResponse, status_code=status.HTTP_200_OK)
+async def search_articles(search: ArticleSearchSchema):
+    data = await article_controller.search_articles(
+        publisher_name=search.publisher_name,
+        firm_name=search.firm_name,
+        keywords=search.keywords,
+        tags=search.tags,
+        content_words=search.content_words,
+        categories=search.categories,
+        hot_topic=search.hot_topic,
+        page=search.page,
+        page_size=search.page_size
+    )
+    try:
+        # Build response with publisher and firm details
+        results = []
+        for a in data["articles"]:
+            publisher = await a.publisher_id.fetch()
+            firm = await a.firm_id.fetch()
+            results.append(
+                ArticleSearchResult(
+                    id=str(a.id),
+                    title=a.title,
+                    content=a.content,
+                    publisher={
+                        "id": str(publisher.id),
+                        "username": publisher.username,
+                        "first_name": publisher.first_name,
+                        "last_name": publisher.last_name,
+                    },
+                    firm={
+                        "id": str(firm.id),
+                        "firm_name": getattr(firm, "firm_name", ""),
+                    },
+                    tags=a.tags,
+                    categories=a.category,
+                    like_count=a.like_count,
+                    hot_topic=a.hot_topic,
+                    published_at=a.published_at
+                )
+            )
+
+        return ArticleSearchResponse(
+            total=data["total"],
+            page=search.page,
+            page_size=search.page_size,
+            results=results
+        )
+    except Exception as e:  
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+    
+# @router.post("/search", response_model=BaseResponse)
+# async def search_articles_api(search_data: ArticleSearchSchema, current_user: dict = Depends(get_current_user)):
+#     """
+#     Search articles based on publisher, firm, keyword, category, tags, hot_topic.
+#     """
+#     if current_user is None:
+#         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+
+#     try:
+#         articles = await article_controller.search_articles(search_data)
+#         if articles is None:
+#             return BaseResponse(status=1, message="No articles found", data=[])
+#         return BaseResponse(
+#             status=1,
+#             message=f"{len(articles)} articles found",
+#             data=[article.dict() for article in articles]
+#         )
+#     except Exception as e:
+#         return BaseResponse(status=0, message=f"Internal server error: {str(e)}", data=None)
