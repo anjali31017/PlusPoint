@@ -69,6 +69,8 @@ if reject then a input window saying reason
 also have a drop down for common reasons to add
 please make this i have api endpoint
 
+later wwe will do reports 
+
 http://127.0.0.1:5000/api/admin/kyc
 {
     "status": 1,
@@ -130,3 +132,10 @@ adn please save user_id in id so that when clicked we can use that internall to 
 http://127.0.0.1:5000/api/admin/kyc/{user_id}/approve
 
 
+{
+    "status": 1,
+    "message": "KYC approved",
+    "data": {
+        "kyc_id": "696800f1d775ff4ccac9b04b"
+    }
+}

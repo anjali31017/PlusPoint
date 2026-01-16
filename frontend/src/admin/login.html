@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login - Modern</title>
+  <title>Admin Login - PlusPoint</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -15,7 +15,6 @@
     .floating-input:not(:placeholder-shown)~label {
       transform: translateY(-1.8rem) scale(0.85);
       color: #ec4899;
-      /* pink accent */
       background-color: white;
       padding: 0 0.25rem;
     }
@@ -27,18 +26,8 @@
   </style>
 </head>
 
-<body class="bg-gradient-to-tr from-blue-100 via-white to-pink-100 min-h-screen flex items-center justify-center">
-
+<body class="bg-gradient-to-tr from-blue-200 via-white to-pink-200 min-h-screen flex items-center justify-center">
   <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8 space-y-6 relative overflow-hidden">
-
-    <!-- Floating circles background for soft decoration -->
-    <div
-      class="absolute -top-16 -right-16 w-36 h-36 bg-pink-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse">
-    </div>
-    <div
-      class="absolute -bottom-16 -left-16 w-40 h-40 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse">
-    </div>
-
     <h1 class="text-4xl font-extrabold text-center text-black mb-2">Welcome Back</h1>
     <p class="text-center text-gray-600 mb-6">Log in to your admin dashboard</p>
 
@@ -78,69 +67,106 @@
     </form>
   </div>
 
-  <!-- Scripts -->
   <script>
-    function togglePassword(id, btn) {
-      const input = document.getElementById(id);
-      if (input.type === "password") {
-        input.type = "text";
-        btn.textContent = "🙈";
-      } else {
-        input.type = "password";
-        btn.textContent = "👁️";
-      }
+
+
+    // Validate email format
+    function isValidEmail(email) {
+      const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return re.test(email);
     }
 
-    // Example validation + AJAX
+    // Check session on page load
     $(document).ready(function () {
-      $('#loginForm').submit(function (e) {
-        e.preventDefault();
-        $('#emailError, #passwordError').hide();
 
-        let email = $('#email').val().trim();
-        let password = $('#password').val().trim();
+      // $.ajax({
+      //   url: "http://127.0.0.1:5000/api/admin/check-session",
+      //   method: "GET",
+      //   xhrFields: { withCredentials: true }, // include cookies
+      //   success: function (res) {
+      //     if (res.status === 1) {
+      //       window.location.href = "kyc.html";
+      //     }
+      //   },
+      //   error: function (xhr) {
+      //     // Session not active or expired, stay on login
+      //   }
+      // });
+
+      // Handle login form submission
+      $("#loginForm").submit(function (e) {
+        e.preventDefault();
+
+        const email = $("#email").val().trim();
+        const password = $("#password").val().trim();
         let valid = true;
 
-        if (email === '') {
-          $('#emailError').text('Email is required').show();
-          valid = false;
-        } else if (!/^\S+@\S+\.\S+$/.test(email)) {
-          $('#emailError').text('Enter a valid email').show();
+        // Reset errors
+        $("#emailError").addClass("hidden");
+        $("#passwordError").addClass("hidden");
+
+        // Validate email
+        if (!email || !isValidEmail(email)) {
+          $("#emailError").removeClass("hidden");
           valid = false;
         }
 
-        if (password === '') {
-          $('#passwordError').text('Password is required').show();
+        // Validate password
+        // Validate password
+        if (!password) {
+          $("#passwordError").text("Password is required").removeClass("hidden");
+          valid = false;
+        } else if (password.length < 6) {
+          $("#passwordError").text("Password must be at least 6 characters").removeClass("hidden");
           valid = false;
         }
+
 
         if (!valid) return;
 
-        // Replace with your API endpoint
-
-
+        // AJAX login
         $.ajax({
-          url: 'http://127.0.0.1:5000/api/admin/login',
-          type: 'POST',
-          contentType: 'application/json',
+          url: "http://127.0.0.1:5000/api/admin/login",
+          method: "POST",
+          contentType: "application/json",
           data: JSON.stringify({ email: email, password: password }),
-          success: function (response) {
-            if (response.status === 1) {
-                window.location.href = '/src/admin/kyc-requests.html';
-
-            } else {
-              Swal.fire('Error', response.message, 'error');
-            }
+          xhrFields: { withCredentials: true },
+          success: function (res) {
+            Swal.fire({
+              icon: "success",
+              title: "Login successful!",
+              showConfirmButton: false,
+              timer: 1000
+            }).then(() => {
+              setTimeout(() => {
+                window.location.href = "kyc.html";
+              }, 100); // 100ms delay ensures cookie is saved
+            });
           },
           error: function (xhr) {
-            let msg = xhr.responseJSON?.detail || 'Login failed';
-            Swal.fire('Error', msg, 'error');
+            let message = "No response from server";
+
+            try {
+              const err = JSON.parse(xhr.responseText);
+              message = err.detail || err.message || message;
+            } catch (e) {
+              // fallback to status text
+              message = xhr.statusText || message;
+            }
+
+            Swal.fire({
+              icon: "error",
+              title: "Login failed",
+              text: message
+            });
           }
+
         });
       });
     });
   </script>
 
+  <script src="../../scripts/index.js"></script>
 </body>
 
 </html>

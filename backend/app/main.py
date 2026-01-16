@@ -59,9 +59,14 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+origins = [
+    "http://127.0.0.1:3000",  # your frontend URL, include port
+    "http://localhost:3000"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -69,7 +74,10 @@ app.add_middleware(
 
 
 
-app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET)
+app.add_middleware(
+    SessionMiddleware, 
+    secret_key=settings.SESSION_SECRET
+    )
 
 # os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
 

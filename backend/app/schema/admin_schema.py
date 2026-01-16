@@ -5,3 +5,5 @@ class AdminSchema(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
 
+class AdminRejctKYCSchema(BaseModel):
+    reason: str

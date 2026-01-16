@@ -148,19 +148,21 @@ async def reset_password_email(to_email: str, link: str) -> bool:
 
 async def KYC_status_email(to_email: str, status: str, reason: str|None) -> bool:
 
-    
-    subject = f"Your KYC Status: {status}"
-
-    if status.lower() == "accepted":
+    print(status)
+    print(status.lower())
+    subject = "KYC Status Update"
+    if status.lower() == "verified":
+        
         body = f"""
-        <p>Your KYC has been: <strong>{status}</strong></p>
+        <p>Your KYC has been: <strong>ACCEPTED</strong></p>
         <p>You now have full access to all PlusPoint features.</p>
         <p><small><em>Congratulations!</em></small></p>
         <p><span style="font-weight:900; font-size:26px; color:#1a73e8;">PlusPoint</span></p>
         """
     elif status.lower() == "rejected":
+        
         body = f"""
-        <p>Your KYC has been: <strong>{status}</strong></p>
+        <p>Your KYC has been: <strong>REJECTED</strong></p>
         <p>Please complete your KYC again.</p>
         <p><strong>Reason for rejection: </strong>{reason}</p>
         <p><small><em>Email us at anjali17103@gmail.com if there are any issues</em></small></p>

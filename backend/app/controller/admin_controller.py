@@ -7,7 +7,7 @@ from app.controller.util_controller import UtilController
 
 from fastapi import Depends, Request, HTTPException, status
 
-from app.models.kyc import KYCModel
+from app.models.kyc import KYCModel, KYCStatus
 from app.models.firm import FirmModel
 
 
@@ -77,35 +77,44 @@ class AdminController:
         
     async def approve_kyc(self, user_id: str):
         try:
-            id = ObjectId("696800f1d775ff4ccac9b04b")
-            kyc_record = await KYCModel.find( 
-                                                 KYCModel.id == id,
-                # KYCModel.user_id.id == ObjectId(user_id), 
-                # KYCModel.kyc_status == "UNDER_REVIEW"
-                                                 )
+            # id = ObjectId("696800f1d775ff4ccac9b04b")
+            # kyc_record = await KYCModel.find_one( 
+            #                                      KYCModel.id == id,
+            #     # KYCModel.user_id.id == ObjectId(user_id), 
+            #     # KYCModel.kyc_status == "UNDER_REVIEW"
+                                                #  )
             # kyc_record = await KYCModel.find(KYCModel.kyc_status == "UNDER_REVIEW")
             
-            if not kyc_record:
-                return None
+            kyc = await KYCModel.find_one(KYCModel.user_id.id == ObjectId(user_id), 
+                                          KYCModel.is_deleted == False,
+                                        #   KYCModel.kyc_status == "UNDER_REVIEW" 
+                                          )
             
-            # kyc_record.kyc_status = "VERIFIED"
-            # kyc_record.reviewed_at = datetime.now()
-            # kyc_record.updated_at = datetime.now()
-            # await kyc_record.save()
-            return kyc_record
+            if kyc is None:
+                return None
+            kyc.kyc_status = KYCStatus.VERIFIED
+            kyc.reviewed_at = datetime.now()
+            kyc.updated_at = datetime.now()
+            await kyc.save()
+            # kyc_record = KYCModel(**kyc.dict())
+            
+            # print("KYC Record in approve KYC:", kyc)
+            return kyc
         except Exception as e:
             print(str(e))
             return None
 
     async def reject_kyc(self, user_id: str, reason: str):
         try:
-            kyc_record = await KYCModel.find_one(KYCModel.user_id.id == user_id)
+            kyc_record = await KYCModel.find_one(KYCModel.user_id.id == ObjectId(user_id), KYCModel.is_deleted == False,)
             if not kyc_record:
                 return None
             kyc_record.kyc_status = "REJECTED"
             kyc_record.rejection_reason = reason
             kyc_record.reviewed_at = datetime.now()
             kyc_record.updated_at = datetime.now()
+            kyc_record.is_active = False
+            kyc_record.is_deleted = True
             await kyc_record.save()
             return kyc_record
         except Exception as e:
