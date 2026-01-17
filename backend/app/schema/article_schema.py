@@ -2,11 +2,14 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
+from app.models.article import ArticleStatus
+
 # Pydantic model for input validation
 class ArticleCreateSchema(BaseModel):
     firm_username: str  # Firm ID
     title: str
     content: str
+    status: ArticleStatus = ArticleStatus.DRAFT
     category: List[str] = []
     tags: List[str] = []
     hot_topic: bool = False

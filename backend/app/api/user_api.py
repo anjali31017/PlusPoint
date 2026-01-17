@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
 
 from app.controller.user_controller import UserController
 from app.models.users import UserModel
@@ -17,6 +17,7 @@ from app.models.kyc import KYCModel
 from app.models.firm import FirmModel
 from app.schema.firm_schema import FirmSchema
 from app.models.publisher import PublisherModel
+from app.models.article import ArticleModel
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -270,49 +271,121 @@ async def reset_password(data: ResetPasswordSchema, background_tasks: Background
 
 
 @router.get("/profile", response_model=BaseResponse)
-async def get_profile(current_user: dict = Depends(get_current_user)):
+async def get_profile(
+    user_id: str | None = Query(None, description="User ID to view; omit for self"),
+    current_user: dict = Depends(get_current_user)
+):
     try:
-        if current_user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
-        
+        # Determine which user to fetch
+        target_user_id = ObjectId(user_id) if user_id else ObjectId(current_user["user_id"])
+
         # 1. Fetch user details
-        user = await UserModel.find_one(UserModel.id == ObjectId(current_user['user_id']), UserModel.is_deleted == False)
+        user = await UserModel.find_one(
+            UserModel.id == target_user_id,
+            UserModel.is_deleted == False
+        )
         if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        
+            raise HTTPException(status_code=404, detail="User not found")
         user_data = UserProfileSchema(**user.dict())
-        
+
         # 2. Fetch KYC status
-        kyc = await KYCModel.find_one(KYCModel.user_id.id == ObjectId(current_user["user_id"]), KYCModel.is_deleted == False)
-        
-        
+        kyc = await KYCModel.find_one(
+            KYCModel.user_id.id == target_user_id,
+            KYCModel.is_deleted == False
+        )
         kyc_status = kyc.kyc_status if kyc else "PENDING"
-        
-        # 3. Check if user owns any firm
-        firm = await FirmModel.find_one(FirmModel.owner_user_id.id == ObjectId(current_user["user_id"]), FirmModel.is_deleted == False, FirmModel.is_active == True)
-        firm_data =  FirmModel(**firm.dict()) if firm else None
-        
-        
-        publisher = await PublisherModel.find_one(PublisherModel.publisher_id.id == ObjectId(current_user["user_id"]), PublisherModel.is_deleted == False)
-        publisher_data = PublisherModel(**publisher.dict()) if publisher else None
+
+        # 3. Check firm ownership
+        firm = await FirmModel.find_one(
+            FirmModel.owner_user_id.id == target_user_id,
+            FirmModel.is_deleted == False,
+            FirmModel.is_active == True
+        )
+        firm_data = {
+            "id": str(firm.id),
+            "firm_name": firm.firm_name,
+            "firm_username": firm.firm_username,
+            "bio": firm.bio,
+            "articles_count": await ArticleModel.find({"firm_id": firm.id}).count()
+        } if firm else None
+
+        # 4. Check publisher
+        publisher = await PublisherModel.find_one(
+            PublisherModel.publisher_id.id == target_user_id,
+            PublisherModel.is_deleted == False
+        )
+        publisher_data = {
+            "id": str(publisher.id),
+            "publisher_name": publisher.publisher_name,
+            "articles_count": await ArticleModel.find({"publisher_id": publisher.id}).count()
+        } if publisher else None
+
+        # 5. Determine if viewing self
+        is_self = target_user_id == ObjectId(current_user["user_id"])
+
         data = {
+            "is_self": is_self,
             "user_data": user_data,
             "kyc_status": kyc_status,
             "firm_data": firm_data,
-            "publisher_data": publisher_data  
+            "publisher_data": publisher_data
         }
-        
-        # 4. Return structured response
+
         return {
             "status": 1,
-            "message": "User profile fetched successfully",
+            "message": "Profile fetched successfully",
             "data": data
         }
-    
+
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# @router.get("/profile", response_model=BaseResponse)
+# async def get_profile(current_user: dict = Depends(get_current_user)):
+#     try:
+#         if current_user is None:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
+#         # 1. Fetch user details
+#         user = await UserModel.find_one(UserModel.id == ObjectId(current_user['user_id']), UserModel.is_deleted == False)
+#         if not user:
+#             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        
+#         user_data = UserProfileSchema(**user.dict())
+        
+#         # 2. Fetch KYC status
+#         kyc = await KYCModel.find_one(KYCModel.user_id.id == ObjectId(current_user["user_id"]), KYCModel.is_deleted == False)
+        
+        
+#         kyc_status = kyc.kyc_status if kyc else "PENDING"
+        
+#         # 3. Check if user owns any firm
+#         firm = await FirmModel.find_one(FirmModel.owner_user_id.id == ObjectId(current_user["user_id"]), FirmModel.is_deleted == False, FirmModel.is_active == True)
+#         firm_data =  FirmModel(**firm.dict()) if firm else None
+        
+        
+#         publisher = await PublisherModel.find_one(PublisherModel.publisher_id.id == ObjectId(current_user["user_id"]), PublisherModel.is_deleted == False)
+#         publisher_data = PublisherModel(**publisher.dict()) if publisher else None
+#         data = {
+#             "user_data": user_data,
+#             "kyc_status": kyc_status,
+#             "firm_data": firm_data,
+#             "publisher_data": publisher_data  
+#         }
+        
+#         # 4. Return structured response
+#         return {
+#             "status": 1,
+#             "message": "User profile fetched successfully",
+#             "data": data
+#         }
+    
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 

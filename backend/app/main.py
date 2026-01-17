@@ -17,8 +17,10 @@ from app.api.firm_api import router as firm_router
 from app.api.article_api import router as article_router
 from app.sse.sse_endpoint import router as sse_router
 from app.kafka.producer import start_producer, stop_producer
-from app.kafka.consumer import KafkaConsumerService
+from app.kafka.consumer.article_consumer import KafkaArticleService
 from starlette.middleware.sessions import SessionMiddleware
+
+from app.kafka.consumer.moderation_consumer import ModerationKafkaConsumer
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,7 +32,8 @@ async def lifespan(app: FastAPI):
         print(f"Directory created at: {settings.KYC_UPLOAD_FOLDER}")
         
     await start_producer()
-    consumer_task = asyncio.create_task(KafkaConsumerService.consume_articles())
+    article_consumer = asyncio.create_task(KafkaArticleService.consume_articles())
+    # moderation_consumer = asyncio.create_task(ModerationKafkaConsumer.start())
     
     if not settings.KYC_FINGERPRINT_SECRET:
         print("KYC_FINGERPRINT_SECRET not set in environment variables.")
@@ -41,8 +44,11 @@ async def lifespan(app: FastAPI):
     yield
     
     print("Shutting down application...")
-    KafkaConsumerService.is_running = False
-    await KafkaConsumerService.shutdown()
+    KafkaArticleService.is_running = False
+    await KafkaArticleService.shutdown()
+    
+    # ModerationKafkaConsumer.is_running = False
+    # await ModerationKafkaConsumer.shutdown()
     
     # try:
     #     await consumer_task.cancel()

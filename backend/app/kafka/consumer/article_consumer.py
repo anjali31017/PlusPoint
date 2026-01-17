@@ -8,7 +8,7 @@ from app.sse.sse_endpoint import sse_connection_manager
 
 
 
-class KafkaConsumerService:
+class KafkaArticleService:
     is_running = True
     consumer = None
 
@@ -21,7 +21,7 @@ class KafkaConsumerService:
                 print("Attempting to connect Kafka Consumer...")
 
                 cls.consumer = AIOKafkaConsumer(
-                    'article_published',
+                    "article.published",
                     bootstrap_servers="kafka_pluspoint_1:9092",
                     # bootstrap_servers=[
                     #     'kafka_pluspoint_1:9092',
@@ -44,8 +44,8 @@ class KafkaConsumerService:
                         print("Message received from Kafka")
                         post = msg.value
 
-                        if post.get("event_type") != "article_published":
-                            continue
+                        # if post.get("event_type") != "article_published":
+                        #     continue
 
                         firm_id = post["firm_id"]
                         publisher_id = post["publisher_id"]
@@ -70,7 +70,47 @@ class KafkaConsumerService:
                             all_subscribers = list(set(all_subscribers))
                         
                         
-                        # firm_subscriptions = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
+                        
+                        if not all_subscribers:
+                            continue 
+                        
+                        message = {
+                            "type": "new_article",
+                            "data": article
+                        }
+                        # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", message)
+                        if all_subscribers:
+                            # print(f"Sending notifications to subscribers: {all_subscribers}")
+                            await asyncio.gather(*[
+                                # article_notification_manager.send_personal_message(message, sid)
+                                sse_connection_manager.send_to_user(sid, message)
+                                for sid in all_subscribers
+                            ])
+                            print("Notifications sent to subscribers.")
+
+                    except Exception as process_err:
+                        print(f"Error processing message: {process_err}")
+
+            except Exception as conn_err:
+                print(f"Kafka connection failed: {conn_err}")
+                print("Retrying in 5 seconds...")
+                await asyncio.sleep(5)
+            except Exception as e:
+                print(f"Kafka consumer error: {e}")
+                if cls.consumer:
+                    await cls.consumer.stop()
+                await asyncio.sleep(3)
+
+    @classmethod
+    async def shutdown(cls):
+        cls.is_running = False
+        if cls.consumer:
+            try:
+                await asyncio.wait_for(cls.consumer.stop(), timeout=5)
+            except asyncio.TimeoutError:
+                print("Kafka consumer stop timed out")  
+            
+            # firm_subscriptions = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
                         # print(f"Firm Subscriptions: {firm_subscriptions}")
                         # subscriber_ids = [sub.subscriber_id.id for sub in firm_subscriptions]
                         # firm_iddddd = 
@@ -127,37 +167,8 @@ class KafkaConsumerService:
                         #     for sub in (firm_subscribers + publisher_subscribers)
                         # }
                         
-                        if not all_subscribers:
-                            continue 
                         
-                        message = {
-                            "type": "new_article",
-                            "data": article
-                        }
-                        # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", message)
-                        if all_subscribers:
-                            # print(f"Sending notifications to subscribers: {all_subscribers}")
-                            await asyncio.gather(*[
-                                # article_notification_manager.send_personal_message(message, sid)
-                                sse_connection_manager.send_to_user(sid, message)
-                                for sid in all_subscribers
-                            ])
-                            print("Notifications sent to subscribers.")
-
-                    except Exception as process_err:
-                        print(f"Error processing message: {process_err}")
-
-            except Exception as conn_err:
-                print(f"Kafka connection failed: {conn_err}")
-                print("Retrying in 5 seconds...")
-                await asyncio.sleep(5)
-            except Exception as e:
-                print(f"Kafka consumer error: {e}")
-                if cls.consumer:
-                    await cls.consumer.stop()
-                await asyncio.sleep(3)
-
-
+                        
             # finally:
             #     if cls.consumer:
             #         try:
@@ -180,14 +191,7 @@ class KafkaConsumerService:
 #     await note.save()
 
 
-    @classmethod
-    async def shutdown(cls):
-        cls.is_running = False
-        if cls.consumer:
-            try:
-                await asyncio.wait_for(cls.consumer.stop(), timeout=5)
-            except asyncio.TimeoutError:
-                print("Kafka consumer stop timed out")  
+
 
 # class KafkaConsumerService:
 #     async def consume_posts():

@@ -1,6 +1,6 @@
 
 from bson import ObjectId
-from app.models.article import ArticleModel, ArticleLikeModel
+from app.models.article import ArticleModel, ArticleLikeModel, ArticleStatus
 from app.models.firm import FirmModel
 from app.models.users import UserModel
 from datetime import datetime
@@ -19,24 +19,29 @@ class ArticleController:
             if not firm:
                 raise HTTPException(status_code=404, detail="Firm not found")
             obj_id = ObjectId(publisher_id)
-            is_publisher_in_firm = PublisherModel.find_one(
+            
+            publisher = await PublisherModel.find_one(
                 PublisherModel.publisher_id.id == obj_id,
                 PublisherModel.firm_id.id == firm.id,
                 PublisherModel.is_deleted == False,
             )
-
-            if not is_publisher_in_firm:
+            if not publisher:
                 raise HTTPException(status_code=400, detail="User is not associated with the provided firm")
+            
+            trust_score = (publisher.trust_factor + firm.trust_factor) / 2
             
             article = ArticleModel(
                 firm_id=firm,
                 publisher_id=publisher_id,
                 title=article_data["title"],
                 content=article_data["content"],
+                status=ArticleStatus.PENDING_REVIEW if trust_score < 40 else article_data["status"],
                 category=article_data["category"],
                 tags=article_data["tags"],
                 hot_topic=article_data["hot_topic"],
-                published_at=datetime.now()
+                trust_score_snapshot = trust_score,
+                moderation_required=True if trust_score < 40 else False,
+                published_at=datetime.now() if article_data["status"] == ArticleStatus.PUBLISHED else None
             )
 
             await article.insert()

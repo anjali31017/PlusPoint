@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException 
 from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
@@ -9,18 +10,60 @@ from app.kafka.producer import send_kafka_event
 from app.celery.summary_tasks import summerization_task
 from fastapi import status
 
-from app.models.article import ArticleModel
+from app.models.article import ArticleModel, ArticleStatus
 from app.models.firm import FirmModel
 from app.models.users import UserModel
 from app.schema.search_output_schema import MultiSectionSearchResponse
+from app.models.publisher import PublisherModel
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
 article_controller = ArticleController()
 
+# @router.post("/create", response_model=BaseResponse)
+# async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
+#     """
+#      Create article
+#      Always save as DRAFT
+#     """
+#     try:
+#         if current_user is None:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+#         article_data_dict = article_data.dict()
+
+#         article = await article_controller.create_article(
+#             article_data_dict, 
+#             current_user["user_id"]
+            
+#         )
+
+#         if article is None:
+#             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create article")
+
+        
+#         summary_reponse = summerization_task.delay(article.content, str(article.id))
+
+#         return {
+#             "status": 1,
+#             "message": "Article created successfully",
+#             "data": {
+#                 "article_id":str(article.id),
+#             }
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+
+
+
 @router.post("/create", response_model=BaseResponse)
 async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
 # async def add_article(article_data: ArticleCreateSchema):
+
     try:
         if current_user is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
@@ -36,9 +79,20 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create article")
         # article_notification_manager.send_personal_message("hello", "692052180cbaa9500904c230")
         
+        if article.status == "DRAFT":
+            return {
+                "status": 1,
+                "message": "Article created as draft successfully",
+                "data": {
+                    "article_id":str(article.id),
+                }
+            }
+        if article.status == "PENDING_REVIEW":
+            raise HTTPException(status_code=status.HTTP_202_ACCEPTED, detail="Article sent for moderation")
+
         # final, clean Kafka event
         kafka_article_event = {
-            "event_type": "article_published",
+            "event_type": "article.published",
             "firm_id": str(article.firm_id.id),
             "publisher_id": current_user["user_id"],
             "article_id": str(article.id),
@@ -52,35 +106,19 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
         }
         
         # publish event
-        event  = await send_kafka_event("article_published", kafka_article_event)
+        event  = await send_kafka_event("article.published", kafka_article_event)
         
         if event is None:
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to send Kafka event")
         
-        # firm_obj_id = ObjectId(str(article.firm_id.id))
-        # publisher_obj_id = ObjectId(current_user["user_id"])
-        # firm_subscriptions = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
-        # publisher_subscriptions = await SubscriptionModel.find(SubscriptionModel.publisher_id.id == publisher_obj_id).to_list()
         
-        # all_subscriptions = [str(sub.subscriber_id.ref.id) for sub in firm_subscriptions] + [str(sub.subscriber_id.ref.id) for sub in publisher_subscriptions]
-        # all_subscriptions = list(set(all_subscriptions))  # Remove duplicates
-        # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", {"msg": "Hello!"})
-        
-        
-        # summary_reponse = multi_stage_summary.delay(article.content, article.id)
         summary_reponse = summerization_task.delay(article.content, str(article.id))
-        
-        # await article_controller.update_article(article.id, {"summary": "demodata summary"})
-        
-    #     db_entry = article_controller.update_article(article.id, {
-    #     "summary": summary_reponse["final_summary"]
-    # })
+
         return {
             "status": 1,
             "message": "Article created successfully",
             "data": {
                 "article_id":str(article.id),
-                # "summary": summary_reponse,
             }
         }
 
@@ -89,47 +127,178 @@ async def add_article(article_data: ArticleCreateSchema, current_user: dict = De
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
+# @router.post("/publish/{article_id}", response_model=BaseResponse)
+# async def publish_article(article_id: str, current_user: dict = Depends(get_current_user)):
+
+#     try:
+#         if current_user is None:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
+#         article = await ArticleModel.get(ObjectId(article_id))
+
+#         if not article or article.is_deleted:
+#             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Article not found")
+
+#         publisher = await PublisherModel.find_one(
+#             PublisherModel.publisher_id.id == ObjectId(current_user["user_id"]),
+#             PublisherModel.firm_id.id == article.firm_id.id
+#         )
+#         if not publisher:
+#             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized")
+
+#         trust_score = publisher.trust_factor
+#         article.trust_score_snapshot = trust_score
+    
+#         if trust_score < 40:
+#             article.status = ArticleStatus.PENDING_REVIEW
+#             article.moderation_required = True
+#             await article.save()
+
+#             await send_kafka_event(
+#                 "moderation.requested",
+#                 {
+#                     "article_id": str(article.id),
+#                     "publisher_id": current_user["user_id"],
+#                     "firm_id": str(article.firm_id.id),
+#                     "trust_score": trust_score,
+#                     "trigger": "pre_publish"
+#                 }
+#             )
+#             return {
+#                 "status": 1,
+#                 "message": "Article sent for moderation (pre-publish)",
+#                 "data": {"article_id": str(article.id)}
+#             }
+        
+#         # MEDIUM / HIGH TRUST → PUBLISH + POST MODERATION
+#         article.status = ArticleStatus.PUBLISHED
+#         article.published_at = datetime.now()
+#         article.moderation_required = True
+#         await article.save()
+    
+#         # final, clean Kafka event
+#         # kafka_article_event = {
+#         #     "event_type": "article_published",
+#         #     "firm_id": str(article.firm_id.id),
+#         #     "publisher_id": current_user["user_id"],
+#         #     "article_id": str(article.id),
+#         #     "article_title": article.title,
+#         #     "firm_username": article.firm_id.firm_username,
+#         #     "publisher_username": current_user["username"],
+#         #     "published_at": (
+#         #         article.published_at.isoformat() 
+#         #         if article.published_at else datetime.now().isoformat()
+#         #     )
+#         # }
+        
+#         # Kafka: article published
+#         await send_kafka_event(
+#             "article.published",
+#             {
+#                 "article_id": str(article.id),
+#                 "firm_id": str(article.firm_id.id),
+#                 "publisher_id": current_user["user_id"],
+#                 "published_at": article.published_at.isoformat()
+#             }
+#         )
+
+#         # Kafka: post-publish moderation
+#         await send_kafka_event(
+#             "moderation.requested",
+#             {
+#                 "article_id": str(article.id),
+#                 "publisher_id": current_user["user_id"],
+#                 "firm_id": str(article.firm_id.id),
+#                 "trust_score": trust_score,
+#                 "trigger": "post_publish"
+#             }
+#         )
+    
+        
+
+#         return {
+#             "status": 1,
+#             "message": "Article published successfully",
+#             "data": {"article_id": str(article.id)}
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
 
 # @router.post("/create", response_model=BaseResponse)
-# async def add_article(article_data: ArticleCreateSchema,  current_user: dict = Depends(get_current_user)):
+# async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
+# # async def add_article(article_data: ArticleCreateSchema):
+#     """
+#      Create article
+#      Always save as DRAFT
+#     """
 #     try:
+#         if current_user is None:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
 #         article_data_dict = article_data.dict()
 
-#         article = await article_controller.create_article(article_data_dict, current_user["user_id"])
-        
-#         if article is None:
-#             raise HTTPException(status_code=500, detail="Failed to create article")
-        
-#         kafka_article_event = {
-#             "firm_id": str(article.firm_id.id),
-#             # "publisher_id": article.publisher_id.id,
-#             "publisher_id": current_user["user_id"],
-#             "article_id": str(article.id),
-#             "article_title": article.title,
-#             "article_firm": article.firm_id.firm_username,
-#             "article_publisher": current_user["username"],
-#             # "published_at": article.published_at
-#         }
-#         await send_kafka_event("article_published",kafka_article_event )
-        
-#         response_data = {
-#             "status": 1,
-#             "message": "Article created successfully",
-#             "data": {
-#                 "article_id": str(article.id),
-#                 # "data":article
-#                 "details": kafka_article_event
-#             }
-#         }
-#         return response_data
+#         article = await article_controller.create_article(
+#             article_data_dict, 
+#             current_user["user_id"]
+#             # "692051620cbaa9500904c22d"
+#         )
 
-#     except HTTPException as he:
-#         raise he
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e)) 
-    
-# @router.post("/{article_id}/comment/{comment_id}", response_model=BaseResponse)
-# @router.post("/{article_id}/comment", response_model=BaseResponse)
+#         if article is None:
+#             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create article")
+        # article_notification_manager.send_personal_message("hello", "692052180cbaa9500904c230")
+        
+        # if article.status != "published":
+        #     return {
+        #         "status": 1,
+        #         "message": "Article created as draft successfully",
+        #         "data": {
+        #             "article_id":str(article.id),
+        #         }
+        #     }
+        # # final, clean Kafka event
+        # kafka_article_event = {
+        #     "event_type": "article_published",
+        #     "firm_id": str(article.firm_id.id),
+        #     "publisher_id": current_user["user_id"],
+        #     "article_id": str(article.id),
+        #     "article_title": article.title,
+        #     "firm_username": article.firm_id.firm_username,
+        #     "publisher_username": current_user["username"],
+        #     "published_at": (
+        #         article.published_at.isoformat() 
+        #         if article.published_at else datetime.now().isoformat()
+        #     )
+        # }
+        
+        # # publish event
+        # event  = await send_kafka_event("article_published", kafka_article_event)
+        
+        # if event is None:
+        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to send Kafka event")
+        
+        
+    #     summary_reponse = summerization_task.delay(article.content, str(article.id))
+
+    #     return {
+    #         "status": 1,
+    #         "message": "Article created successfully",
+    #         "data": {
+    #             "article_id":str(article.id),
+    #         }
+    #     }
+
+    # except HTTPException:
+    #     raise
+    # except Exception as e:
+    #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+
+
 
 @router.post("/comment", response_model=BaseResponse)
 async def add_comment(

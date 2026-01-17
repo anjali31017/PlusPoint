@@ -8,7 +8,7 @@ from app.models.firm import FirmModel
 class PublisherModel(Document):
     publisher_id: Link["UserModel"]
     firm_id: Link["FirmModel"]
-    trust_factor: int = Field(default=0)
+    trust_factor: int = Field(default=100)
     violations_count: int = Field(default=0)
     is_active: bool = False
     is_deleted: bool = False
