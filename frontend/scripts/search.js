@@ -66,7 +66,7 @@ $(document).ready(function () {
         if (section === "publishers") {
             html = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 ${data.map(p => `
-                    <a href="profile.html?publisher_id=${p.id}" target="_blank"
+                    <a href="profile.html?user_id=${p.id}" target="_blank"
                        class="p-4 bg-purple-50 rounded-xl shadow-sm block">
                         <p class="font-semibold">${p.first_name ?? ""} ${p.last_name ?? ""}</p>
                         <p class="text-sm text-gray-500">@${p.username}</p>

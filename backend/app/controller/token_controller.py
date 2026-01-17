@@ -5,6 +5,7 @@ from jose import jwt, JWTError
 
 from app.config import settings
 from app.models.token import RefreshTokenModel
+from fastapi import status
 
 async def create_access_token(data: dict):
     try:
@@ -57,6 +58,8 @@ async def create_token_pair(user: dict):
 
 async def get_current_user(authorization: str = Header(...)):
     try:
+        if not authorization:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing token")
         token = authorization.split(" ")[1]
         payload = await decode_token(token)
         if not payload:

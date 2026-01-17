@@ -51,6 +51,12 @@ http://localhost:8090/ --- kafka ui
 
 
 
+curl -X PUT "http://localhost:5000/api/user/profile" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjk2NjIyOWVlZWQ2OTE2YzUzYzFjYjI2IiwidXNlcm5hbWUiOiJicnlhcl9jYXJ2ZXJfMTY5MDEzMDIyIiwicm9sZSI6WyJFIiwiRiIsIlAiXSwiZXhwIjoxNzY4NzM5MDIwfQ.xQolzQM-Bbc_Su4xfCBS9kAdJi9ptwsGqfIUGM5Rqzs" \
+  -F "first_name=John" \
+  -F "last_name=Doe" \
+  -F "bio=This is a test bio" \
+  -F "profile_picture=@grnd.jpg;type=image/jpg"
 
 
 

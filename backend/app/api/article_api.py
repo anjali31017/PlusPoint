@@ -415,84 +415,7 @@ async def search_multi_section(search: ArticleSearchSchema):
                 })
 
 
-        # # -------------------
-        # # Publishers Section
-        # # -------------------
-        # matched_publishers = await UserModel.find({
-        #     "$or": [
-        #         {"username": {"$regex": text, "$options": "i"}},
-        #         {"first_name": {"$regex": text, "$options": "i"}},
-        #         {"last_name": {"$regex": text, "$options": "i"}},
-        #     ]
-        # }).to_list()
 
-        # publisher_results = []
-        # for p in matched_publishers:
-        #     article_count = await ArticleModel.find({"publisher_id": p.id}).count()
-        #     publisher_results.append({
-        #         "id": str(p.id),
-        #         "username": p.username,
-        #         "first_name": p.first_name,
-        #         "last_name": p.last_name,
-        #         "profile_picture_url": p.profile_picture_url,
-        #         "articles_count": article_count
-        #     })
-
-        # # -------------------
-        # # Firms Section
-        # # -------------------
-        # matched_firms = await FirmModel.find({"firm_name": {"$regex": text, "$options": "i"}}).to_list()
-        # firm_results = []
-        # for f in matched_firms:
-        #     article_count = await ArticleModel.find({"firm_id": f.id}).count()
-        #     firm_results.append({
-        #         "id": str(f.id),
-        #         "firm_name": f.firm_name,
-        #         "firm_username": f.firm_username,
-        #         "bio": f.bio,
-        #         "articles_count": article_count
-        #     })
-
-        # -------------------
-        # Articles Section (QuickTake & Coverage)
-        # -------------------
-        # article_filters = {"$or": [
-        #     {"title": {"$regex": text, "$options": "i"}},
-        #     {"summary": {"$regex": text, "$options": "i"}},
-        #     {"content": {"$regex": text, "$options": "i"}},
-        #     {"tags": text},  # simple tag match
-        # ]} if text else {}
-
-        # if search.tags:
-        #     article_filters["tags"] = {"$in": search.tags}
-        # if search.categories:
-        #     article_filters["category"] = {"$in": search.categories}
-        # if search.hot_topic is not None:
-        #     article_filters["hot_topic"] = search.hot_topic
-
-        # article_filters = {}
-
-        # # Text search
-        # if search.search_text:
-        #     text = search.search_text
-        #     article_filters["$or"] = [
-        #         {"title": {"$regex": text, "$options": "i"}},
-        #         {"summary": {"$regex": text, "$options": "i"}},
-        #         {"content": {"$regex": text, "$options": "i"}},
-        #         {"tags": text},  # simple match
-        #     ]
-
-        # # Tags filter
-        # if search.tags:
-        #     article_filters["tags"] = {"$in": search.tags}
-
-        # # Categories filter
-        # if search.categories:
-        #     article_filters["category"] = {"$in": search.categories}
-
-        # # Hot topic filter
-        # if search.hot_topic is not None:
-        #     article_filters["hot_topic"] = search.hot_topic
         
         article_filters = {}
 
@@ -521,8 +444,10 @@ async def search_multi_section(search: ArticleSearchSchema):
 
         # Hot topic filter
         if search.hot_topic is not None:
-            article_filters["hot_topic"] = search.hot_topic
-    
+            article_filters["hot_topic"] = True
+
+        article_filters["moderation_required"] = False
+        article_filters["status"] = ArticleStatus.PUBLISHED
         skip = (page - 1) * page_size
         articles = await ArticleModel.find(article_filters).sort("-published_at").skip(skip).limit(page_size).to_list()
 

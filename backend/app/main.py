@@ -22,34 +22,39 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.kafka.consumer.moderation_consumer import ModerationKafkaConsumer
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting application...")
     await connect_to_mongo()
-    
-    if not os.path.exists(settings.KYC_UPLOAD_FOLDER):
-        os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
-        print(f"Directory created at: {settings.KYC_UPLOAD_FOLDER}")
-        
+
+    # if not os.path.exists(settings.KYC_UPLOAD_FOLDER):
+    #     os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+    #     print(f"Directory created at: {settings.KYC_UPLOAD_FOLDER}")
+    print(settings.BASE_DIR)
+    print(settings.KYC_UPLOAD_FOLDER)
+    print(settings.PROFILE_UPLOAD_FOLDER)
+
+    # os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+    # os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
+    print("created folders")
     await start_producer()
     article_consumer = asyncio.create_task(KafkaArticleService.consume_articles())
     # moderation_consumer = asyncio.create_task(ModerationKafkaConsumer.start())
-    
+
     if not settings.KYC_FINGERPRINT_SECRET:
         print("KYC_FINGERPRINT_SECRET not set in environment variables.")
         raise RuntimeError("KYC_FINGERPRINT_SECRET not set")
 
-
-
     yield
-    
+
     print("Shutting down application...")
     KafkaArticleService.is_running = False
     await KafkaArticleService.shutdown()
-    
+
     # ModerationKafkaConsumer.is_running = False
     # await ModerationKafkaConsumer.shutdown()
-    
+
     # try:
     #     await consumer_task.cancel()
     # except:
@@ -57,17 +62,13 @@ async def lifespan(app: FastAPI):
     # await asyncio.gather(consumer_task, return_exceptions=True)
     await stop_producer()
     await close_mongo_connection()
-    
 
-app = FastAPI(
-    title=settings.APP_NAME,
-    debug=settings.DEBUG,
-    lifespan=lifespan
-)
+
+app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG, lifespan=lifespan)
 
 origins = [
     "http://127.0.0.1:3000",  # your frontend URL, include port
-    "http://localhost:3000"
+    "http://localhost:3000",
 ]
 
 app.add_middleware(
@@ -79,18 +80,19 @@ app.add_middleware(
 )
 
 
-
-app.add_middleware(
-    SessionMiddleware, 
-    secret_key=settings.SESSION_SECRET
-    )
+app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET)
 
 # os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+
+# os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+# os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
+
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     print(f"API Call: {request.method} {request.url.path}")
     return await call_next(request)
+
 
 @app.middleware("http")
 async def db_session_middleware(request: Request, call_next):
@@ -108,72 +110,61 @@ async def db_session_middleware(request: Request, call_next):
             return await call_next(request)
         except ConnectionError:
             return JSONResponse(
-                status_code=503,
-                content={"detail": "Database connection error"}
+                status_code=503, content={"detail": "Database connection error"}
             )
 
 
 app.include_router(
-    user_router, 
-    prefix=f"{settings.API_PREFIX}", 
+    user_router,
+    prefix=f"{settings.API_PREFIX}",
     tags=["users"],
-
 )
 
 app.include_router(
-    token_router, 
-    prefix=f"{settings.API_PREFIX}", 
+    token_router,
+    prefix=f"{settings.API_PREFIX}",
     tags=["token"],
-
 )
 
 app.include_router(
-    admin_router, 
-    prefix=f"{settings.API_PREFIX}", 
+    admin_router,
+    prefix=f"{settings.API_PREFIX}",
     tags=["admin"],
-
 )
 
 app.include_router(
-    firm_router, 
-    prefix=f"{settings.API_PREFIX}", 
+    firm_router,
+    prefix=f"{settings.API_PREFIX}",
     tags=["firm"],
-
 )
 
 
 app.include_router(
-    article_router, 
-    prefix=f"{settings.API_PREFIX}", 
+    article_router,
+    prefix=f"{settings.API_PREFIX}",
     tags=["article"],
-
 )
 
 
 app.include_router(
-    kyc_router, 
-    prefix=f"{settings.API_PREFIX}", 
+    kyc_router,
+    prefix=f"{settings.API_PREFIX}",
     tags=["kyc"],
-
 )
 
 
 app.include_router(
-    websocket_router, 
-    prefix=f"{settings.WS_PREFIX}", 
+    websocket_router,
+    prefix=f"{settings.WS_PREFIX}",
     tags=["websocket"],
-
 )
 
 
-app.include_router(
-    sse_router
-
-)
+app.include_router(sse_router)
 
 # app.include_router(
-#     email_otp_router, 
-#     prefix=f"{settings.API_PREFIX}", 
+#     email_otp_router,
+#     prefix=f"{settings.API_PREFIX}",
 #     tags=["email-otp"],
 
 # )
@@ -196,11 +187,9 @@ app.include_router(
 #             await request.state.db.close()
 
 
-
-
 # app.include_router(
-#     oauth_router, 
-#     prefix=f"{settings.API_PREFIX}", 
+#     oauth_router,
+#     prefix=f"{settings.API_PREFIX}",
 #     tags=["oauth"],
 
 # )

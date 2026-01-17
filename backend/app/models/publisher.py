@@ -10,9 +10,9 @@ class PublisherModel(Document):
     firm_id: Link["FirmModel"]
     trust_factor: int = Field(default=100)
     violations_count: int = Field(default=0)
-    is_active: bool = False
+    is_active: bool = True
     is_deleted: bool = False
-    is_verified: bool = False
+    is_verified: bool = True
     verified_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)
 

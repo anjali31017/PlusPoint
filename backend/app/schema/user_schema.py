@@ -1,4 +1,5 @@
 from typing import Optional
+from beanie import PydanticObjectId
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
@@ -10,6 +11,7 @@ class UserCreateSchema(BaseModel):
     password: str = Field(..., min_length=6)
 
 class UserProfileSchema(BaseModel):
+    id: PydanticObjectId
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None
@@ -17,8 +19,13 @@ class UserProfileSchema(BaseModel):
     role : Optional[list[str]] = None
     bio: Optional[str] = None
     profile_picture_url: Optional[str] = None
-    bio: Optional[str] = None
     created_at: datetime
+
+class UserProfileEditSchema(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    bio: Optional[str] = None
+    profile_picture_url: Optional[str] = None
     
 class LoginSchema(BaseModel):
     email: str

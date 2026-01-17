@@ -1,10 +1,13 @@
 from datetime import datetime, timedelta
+import os
+import shutil
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, Depends, File, Form, HTTPException, BackgroundTasks, Query, UploadFile
+from app.config import settings
 
 from app.controller.user_controller import UserController
 from app.models.users import UserModel
-from app.schema.user_schema import ForgotPasswordSchema, LogoutSchema, ResetPasswordSchema, UserCreateSchema, LoginSchema, UserProfileSchema
+from app.schema.user_schema import ForgotPasswordSchema, LogoutSchema, ResetPasswordSchema, UserCreateSchema, LoginSchema, UserProfileEditSchema, UserProfileSchema
 from app.controller.token_controller import create_token_pair, get_current_user
 from app.models.token import RefreshTokenModel
 from app.schema.base_schema import BaseResponse
@@ -14,10 +17,12 @@ from fastapi import status
 
 from app.controller.util_controller import UtilController
 from app.models.kyc import KYCModel
-from app.models.firm import FirmModel
+from app.models.firm import FirmModel, VerificationStatus
 from app.schema.firm_schema import FirmSchema
 from app.models.publisher import PublisherModel
 from app.models.article import ArticleModel
+
+
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -270,77 +275,167 @@ async def reset_password(data: ResetPasswordSchema, background_tasks: Background
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+
 @router.get("/profile", response_model=BaseResponse)
 async def get_profile(
-    user_id: str | None = Query(None, description="User ID to view; omit for self"),
+    user_id: str | None = Query(None),
     current_user: dict = Depends(get_current_user)
 ):
     try:
-        # Determine which user to fetch
+        # 1. Resolve target user
         target_user_id = ObjectId(user_id) if user_id else ObjectId(current_user["user_id"])
 
-        # 1. Fetch user details
         user = await UserModel.find_one(
             UserModel.id == target_user_id,
             UserModel.is_deleted == False
         )
+
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
+
         user_data = UserProfileSchema(**user.dict())
 
-        # 2. Fetch KYC status
+        # 2. KYC status
         kyc = await KYCModel.find_one(
-            KYCModel.user_id.id == target_user_id,
+            KYCModel.user_id.id == user.id,
             KYCModel.is_deleted == False
         )
         kyc_status = kyc.kyc_status if kyc else "PENDING"
 
-        # 3. Check firm ownership
-        firm = await FirmModel.find_one(
-            FirmModel.owner_user_id.id == target_user_id,
+        # 3. Firms OWNED by user
+        owned_firms = await FirmModel.find(
+            FirmModel.owner_user_id.id == user.id,
             FirmModel.is_deleted == False,
-            FirmModel.is_active == True
-        )
-        firm_data = {
-            "id": str(firm.id),
-            "firm_name": firm.firm_name,
-            "firm_username": firm.firm_username,
-            "bio": firm.bio,
-            "articles_count": await ArticleModel.find({"firm_id": firm.id}).count()
-        } if firm else None
+            FirmModel.is_active == True,
+            FirmModel.verification_status == VerificationStatus.APPROVED,
+        ).to_list()
 
-        # 4. Check publisher
-        publisher = await PublisherModel.find_one(
-            PublisherModel.publisher_id.id == target_user_id,
-            PublisherModel.is_deleted == False
-        )
-        publisher_data = {
-            "id": str(publisher.id),
-            "publisher_name": publisher.publisher_name,
-            "articles_count": await ArticleModel.find({"publisher_id": publisher.id}).count()
-        } if publisher else None
+        owned_firms_data = []
+        for firm in owned_firms:
 
-        # 5. Determine if viewing self
-        is_self = target_user_id == ObjectId(current_user["user_id"])
+            owned_firms_data.append({
+                "id": str(firm.id),
+                "firm_name": firm.firm_name,
+                "firm_username": firm.firm_username,
+                "bio": firm.bio,
+                "trust_factor": firm.trust_factor,
+                
+            })
 
-        data = {
-            "is_self": is_self,
-            "user_data": user_data,
-            "kyc_status": kyc_status,
-            "firm_data": firm_data,
-            "publisher_data": publisher_data
-        }
+        # 4. Firms where user is PUBLISHER
+        publisher_entries = await PublisherModel.find(
+            PublisherModel.publisher_id.id == user.id,
+            PublisherModel.is_deleted == False,
+            PublisherModel.is_active == True
+        ).to_list()
+
+        publisher_firms_data = []
+        for entry in publisher_entries:
+            firm = await entry.firm_id.fetch()
+
+            publisher_firms_data.append({
+                # "publisher_id": str(entry.publisher_id),
+                "firm_id": str(firm.id),
+                "firm_name": firm.firm_name,
+                "firm_username": firm.firm_username,
+                "trust_factor": entry.trust_factor
+            })
+
+        # 5. Self check
+        is_self = str(target_user_id) == str(current_user["user_id"])
 
         return {
             "status": 1,
             "message": "Profile fetched successfully",
-            "data": data
+            "data": {
+                "is_self": is_self,
+                "user": user_data,
+                "kyc_status": kyc_status,
+                "owned_firms": owned_firms_data,
+                "publisher_firms": publisher_firms_data
+            }
         }
 
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
+
+# @router.get("/profile", response_model=BaseResponse)
+# async def get_profile(
+#     user_id: str | None = Query(None),
+#     current_user: dict = Depends(get_current_user)
+# ):
+#     try:
+#         # Determine which user to fetch
+#         target_user_id = ObjectId(user_id) if user_id else ObjectId(current_user["user_id"])
+
+#         # 1. Fetch user details
+#         user = await UserModel.find_one(
+#             UserModel.id == target_user_id,
+#             UserModel.is_deleted == False
+#         )
+#         if not user:
+#             raise HTTPException(status_code=404, detail="User not found")
+#         user_data = UserProfileSchema(**user.dict())
+
+#         # 2. Fetch KYC status
+#         kyc = await KYCModel.find_one(
+#             KYCModel.user_id.id == target_user_id,
+#             KYCModel.is_deleted == False
+#         )
+#         kyc_status = kyc.kyc_status if kyc else "PENDING"
+
+#         # 3. Check firm ownership
+#         firm = await FirmModel.find(
+#             FirmModel.owner_user_id.id == target_user_id,
+#             FirmModel.is_deleted == False,
+#             FirmModel.is_active == True
+#         ).to_list()
+        
+#         firm_data = {
+#             "id": str(firm.id),
+#             "firm_name": firm.firm_name,
+#             "firm_username": firm.firm_username,
+#             "bio": firm.bio,
+#             "articles_count": await ArticleModel.find({"firm_id": firm.id}).count()
+#         } if firm else None
+
+#         # 4. Check publisher
+#         publisher = await PublisherModel.find(
+#             PublisherModel.publisher_id.id == target_user_id,
+#             PublisherModel.is_deleted == False
+#         ).to_list()
+        
+#         publisher_data = {
+#             "id": str(publisher.id),
+#             # "publisher_name": publisher.publisher_name,
+#             "articles_count": await ArticleModel.find({"publisher_id": publisher.id}).count()
+#         } if publisher else None
+
+#         # 5. Determine if viewing self
+#         is_self = target_user_id == ObjectId(current_user["user_id"])
+
+#         data = {
+#             "is_self": is_self,
+#             "user_data": user_data,
+#             "kyc_status": kyc_status,
+#             "firm_data": firm_data,
+#             "publisher_data": publisher_data
+#         }
+
+#         return {
+#             "status": 1,
+#             "message": "Profile fetched successfully",
+#             "data": data
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))
     
 # @router.get("/profile", response_model=BaseResponse)
 # async def get_profile(current_user: dict = Depends(get_current_user)):
@@ -416,38 +511,257 @@ async def get_profile(
 #     except Exception as e:
 #         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
   
-  
-  
+
 @router.put("/profile", response_model=BaseResponse)
 async def update_profile(
-    payload: UserProfileSchema,
-    current_user: dict = Depends(get_current_user)
+    first_name: str | None = Form(None),
+    last_name: str | None = Form(None),
+    bio: str | None = Form(None),
+    profile_picture: UploadFile | None = File(None),
+    current_user: dict = Depends(get_current_user)  # optional, can hardcode for testing
 ):
     try:
-        if current_user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
-        
-        update_data = payload.dict()
+        # --------- Temporary current_user for testing ----------
+        # current_user = {"user_id": "6966229eeed6916c53c1cb26", "username":"bryar_carver_169013022"}
 
-        # Remove keys where value is None (optional step)
-        # update_data = {k: v for k, v in update_data.items() if v is not None}
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue"
+            )
 
-        updated_user = await user_controller.update_user(current_user['user_id'], update_data)
+        # --------- Prepare update payload ----------
+        update_data = {k: v for k, v in {
+            "first_name": first_name,
+            "last_name": last_name,
+            "bio": bio
+        }.items() if v is not None}
 
+        # --------- Handle profile picture ----------
+        if profile_picture:
+            # Ensure folder exists
+            # os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
+
+            ext = os.path.splitext(profile_picture.filename)[1].lower()
+            if ext not in [".jpg", ".jpeg", ".png"]:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Only JPG, JPEG, PNG files are allowed"
+                )
+
+            username = current_user["username"]
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+            filename = f"{username}_{timestamp}{ext}"
+            file_path = os.path.join(settings.PROFILE_UPLOAD_FOLDER, filename)
+
+            with open(file_path, "wb") as buffer:
+                shutil.copyfileobj(profile_picture.file, buffer)
+
+            update_data["profile_picture_url"] = f"images/profile/{filename}"
+
+        # --------- Update user in DB ----------
+        updated_user = await user_controller.update_user(
+            current_user["user_id"],
+            update_data
+        )
         if not updated_user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-        data = UserProfileSchema(**updated_user.dict())
+        # --------- Return response ----------
         return {
             "status": 1,
             "message": "Profile updated successfully",
-            "data": data
+            "data": UserProfileEditSchema(**updated_user.dict())
         }
 
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+
+# @router.put("/profile", response_model=BaseResponse)
+# async def update_profile(
+#     first_name: str | None = Form(None),
+#     last_name: str | None = Form(None),
+#     bio: str | None = Form(None),
+#     profile_picture: UploadFile | None = File(None),
+#     # current_user: dict = Depends(get_current_user)
+# ):
+#     try:
+#         current_user = {
+#             "user_id": "6966229eeed6916c53c1cb26",
+#             "username":"bryar_carver_169013022",
+            
+#         }
+#         print(profile_picture)
+#         # ---------- AUTH ----------
+#         if not current_user:
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED,
+#                 detail="Invalid access token, Login to continue"
+#             )
+
+#         # ---------- PAYLOAD ----------
+#         update_data = {
+#             "first_name": first_name,
+#             "last_name": last_name,
+#             "bio": bio
+#         }
+
+#         # Remove None values
+#         update_data = {k: v for k, v in update_data.items() if v is not None}
+
+#         # ---------- PROFILE IMAGE ----------
+#         if profile_picture:
+#             os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
+            
+#             ext = os.path.splitext(profile_picture.filename)[1].lower()
+
+#             if ext not in [".jpg", ".jpeg", ".png"]:
+#                 raise HTTPException(
+#                     status_code=status.HTTP_400_BAD_REQUEST,
+#                     detail="Only JPG, JPEG, PNG files are allowed"
+#                 )
+
+#             username = current_user["username"]
+#             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+
+#             filename = f"{username}_{timestamp}{ext}"
+#             file_path = os.path.join(settings.PROFILE_UPLOAD_FOLDER, filename)
+
+#             with open(file_path, "wb") as buffer:
+#                 shutil.copyfileobj(profile_picture.file, buffer)
+
+#             # Save relative path to DB
+#             update_data["profile_picture_url"] = f"images/profile/{filename}"
+
+#         # ---------- UPDATE USER ----------
+#         updated_user = await user_controller.update_user(
+#             current_user["user_id"],
+#             update_data
+#         )
+
+#         if not updated_user:
+#             raise HTTPException(
+#                 status_code=status.HTTP_404_NOT_FOUND,
+#                 detail="User not found"
+#             )
+
+#         # ---------- RESPONSE ----------
+#         return {
+#             "status": 1,
+#             "message": "Profile updated successfully",
+#             "data": UserProfileEditSchema(**updated_user.dict())
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=str(e)
+#         )
+        
+        
+          
+
+# @router.put("/profile", response_model=BaseResponse)
+# async def update_profile(
+#     first_name: str | None = Form(None),
+#     last_name: str | None = Form(None),
+#     bio: str | None = Form(None),
+#     profile_picture: UploadFile | None = File(None),
+#     current_user: dict = Depends(get_current_user)
+# ):
+#     try:
+#         if not current_user:
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED,
+#                 detail="Invalid access token, Login to continue"
+#             )
+
+#         update_data = {
+#             "first_name": first_name,
+#             "last_name": last_name,
+#             "bio": bio
+#         }
+
+#         # Remove None values
+#         update_data = {k: v for k, v in update_data.items() if v is not None}
+
+#         # Handle profile picture upload
+#         if profile_picture:
+#             file_ext = os.path.splitext(profile_picture.filename)[1]
+#             username = current_user["username"]
+#             timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+
+#             filename = f"{username}_{timestamp}{file_ext}"
+#             file_path = os.path.join(IMAGES_DIR, filename)
+
+#             with open(file_path, "wb") as buffer:
+#                 shutil.copyfileobj(profile_picture.file, buffer)
+
+#             update_data["profile_picture_url"] = file_path
+
+#         updated_user = await user_controller.update_user(
+#             current_user["user_id"], update_data
+#         )
+
+#         if not updated_user:
+#             raise HTTPException(
+#                 status_code=status.HTTP_404_NOT_FOUND,
+#                 detail="User not found"
+#             )
+
+#         return {
+#             "status": 1,
+#             "message": "Profile updated successfully",
+#             "data": UserProfileEditSchema(**updated_user.dict())
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+#             detail=str(e)
+#         )
+
+
+
+
+# @router.put("/profile", response_model=BaseResponse)
+# async def update_profile(
+#     payload: UserProfileEditSchema,
+#     current_user: dict = Depends(get_current_user)
+# ):
+#     try:
+#         if current_user is None:
+#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
+#         update_data = payload.dict()
+
+#         # Remove keys where value is None (optional step)
+#         # update_data = {k: v for k, v in update_data.items() if v is not None}
+
+#         updated_user = await user_controller.update_user(current_user['user_id'], update_data)
+
+#         if not updated_user:
+#             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+#         data = UserProfileEditSchema(**updated_user.dict())
+#         return {
+#             "status": 1,
+#             "message": "Profile updated successfully",
+#             "data": data
+#         }
+
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
   
 
 @router.post("/logout", response_model=BaseResponse)

@@ -41,7 +41,7 @@ class ArticleController:
                 hot_topic=article_data["hot_topic"],
                 trust_score_snapshot = trust_score,
                 moderation_required=True if trust_score < 40 else False,
-                published_at=datetime.now() if article_data["status"] == ArticleStatus.PUBLISHED else None
+                published_at=datetime.now() 
             )
 
             await article.insert()
