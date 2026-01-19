@@ -79,9 +79,17 @@ python -c "import secrets; print(secrets.token_hex(32))"
 
 
 
+docker exec -it <container_id> ls -ld /app/images/kyc
 
 
+chmod -R 777 /app/images
+# OR better
+chown -R appuser:appuser /app/images
 
+
+- ./backend/images/profile:/usr/share/nginx/html/src/images/profile
+    - ./backend/images/kyc:/usr/share/nginx/html/src/images/kyc
+    
 
 
 

@@ -7,6 +7,10 @@ from app.models.firm import FirmModel
 from app.models.subscription import SubscriptionModel
 from app.controller.email_controller import is_user_blocked
 from app.controller.util_controller import UtilController
+from app.models.article import ArticleModel
+from app.models.comment import CommentModel
+from app.models.kyc import KYCModel
+from app.models.publisher import PublisherModel
 
 util_controller = UtilController()
 
@@ -50,6 +54,7 @@ class UserController:
     async def _find_active_user(self, user_id: str) -> UserModel | None:
         try:
             obj_id = ObjectId(user_id)
+            print(obj_id)
             return await UserModel.find_one(
                 UserModel.id == obj_id,
                 UserModel.is_deleted == False
@@ -139,3 +144,93 @@ class UserController:
         except Exception as e:
             print("Error subscribing to publisher:", e)
             raise HTTPException(status_code=500, detail="Internal server error")
+        
+        
+    async def delete_user(self, current_user :dict):
+        try:
+            print(current_user)
+            user = await self.get_user(current_user["user_id"])
+            print(user)
+            if user is None:
+                return None
+        
+            # ------------------ Delete subscriptions ------------------
+            subscriptions = await SubscriptionModel.find(
+                SubscriptionModel.subscriber_id.id == user.id
+            ).to_list()
+            for sub in subscriptions:
+                await sub.delete()
+            
+            # ------------------ Delete publishers ------------------
+            publishers = await PublisherModel.find(
+                PublisherModel.publisher_id.id == user.id,
+                PublisherModel.is_deleted == False
+            ).to_list()
+            for pub in publishers:
+                pub.is_deleted = True
+                pub.is_active = False
+                await pub.save()
+            
+            publisher_firms = await PublisherModel.find(
+                PublisherModel.firm_id.id == user.id,
+                PublisherModel.is_deleted == False
+            ).to_list()
+            for pub_firm in publisher_firms:
+                pub_firm.is_deleted = True
+                pub_firm.is_active = False
+                await pub_firm.save()
+            
+            # ------------------ Delete KYC ------------------
+            kycs = await KYCModel.find(
+                KYCModel.user_id.id == user.id,
+                KYCModel.is_deleted == False
+            ).to_list()
+            for kyc in kycs:
+                kyc.is_deleted = True
+                kyc.is_active = False
+                await kyc.save()
+            
+            # ------------------ Delete Firms ------------------
+            firms = await FirmModel.find(
+                FirmModel.owner_user_id.id == user.id,
+                FirmModel.is_deleted == False
+            ).to_list()
+            for firm in firms:
+                firm.is_deleted = True
+                firm.is_active = False
+                await firm.save()
+            
+            # ------------------ Delete Comments ------------------
+            comments = await CommentModel.find(
+                CommentModel.user_id.id == user.id,
+                CommentModel.is_deleted == False
+            ).to_list()
+            for comment in comments:
+                comment.is_deleted = True
+                await comment.save()
+            
+            # ------------------ Delete Articles ------------------
+            publisher_articles = await ArticleModel.find(
+                ArticleModel.publisher_id.id == user.id,
+                ArticleModel.is_deleted == False
+            ).to_list()
+            for article in publisher_articles:
+                article.is_deleted = True
+                await article.save()
+            
+            firm_articles = await ArticleModel.find(
+                ArticleModel.firm_id.id == user.id,
+                ArticleModel.is_deleted == False
+            ).to_list()
+            for article in firm_articles:
+                article.is_deleted = True
+                await article.save()
+            
+            # ------------------ Delete User ------------------
+            user.is_deleted = True
+            user.is_active = False
+            await user.save()
+            
+            return True
+        except Exception as e:
+            return str(e)

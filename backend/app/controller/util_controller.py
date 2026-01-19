@@ -43,7 +43,7 @@ class UtilController:
             # Generate a random 10-digit number
             # random_number = random.randint(10**9, 10**10 - 1)
             
-            num_digits = random.randint(5, 10)
+            num_digits = random.randint(3, 6)
             random_number = random.randint(10**(num_digits - 1), 10**num_digits - 1)
             if firmname:
                 username = firmname.lower().replace(" ", "_") +"_"+ str(random_number)

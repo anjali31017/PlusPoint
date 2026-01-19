@@ -18,9 +18,8 @@ from fastapi import status
 from app.controller.util_controller import UtilController
 from app.models.kyc import KYCModel
 from app.models.firm import FirmModel, VerificationStatus
-from app.schema.firm_schema import FirmSchema
 from app.models.publisher import PublisherModel
-from app.models.article import ArticleModel
+
 
 
 
@@ -537,8 +536,9 @@ async def update_profile(
             "bio": bio
         }.items() if v is not None}
 
+        print(profile_picture)
         # --------- Handle profile picture ----------
-        if profile_picture:
+        if profile_picture and profile_picture.filename:
             # Ensure folder exists
             # os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
 
@@ -553,7 +553,7 @@ async def update_profile(
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{username}_{timestamp}{ext}"
             file_path = os.path.join(settings.PROFILE_UPLOAD_FOLDER, filename)
-
+            print("@@@@@@@@@@@@@",file_path)
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(profile_picture.file, buffer)
 
@@ -814,3 +814,25 @@ async def protected_route(current_user: dict = Depends(get_current_user)):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
         
     return {"msg": f"Hello user {current_user['user_id']} with roles {current_user['role']}"}
+
+
+
+@router.post("/delete/account", response_model=BaseResponse)
+async def delete_account(current_user:dict = Depends(get_current_user)):
+    try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
+        result = await user_controller.delete_user(current_user)
+        if result is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User Not Found")
+        
+        return {
+            "status": 1,
+            "message": "Account deleted successfully",
+            "data": "User Deleted"
+        }
+            
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        

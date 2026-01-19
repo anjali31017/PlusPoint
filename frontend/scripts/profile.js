@@ -37,21 +37,23 @@ $(document).ready(async function () {
             user = data.user;
             isSelf = data.is_self;
 
+                        //             ${isSelf ? `
+                        // <label for="profile-pic-input"
+                        //     class="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700">
+                        //     <i data-lucide="camera" class="w-4 h-4"></i>
+                        // </label>
+                        // <input type="file" id="profile-pic-input" class="hidden" accept="image/*">
+                        // ` : ""}
             // -----------------------------
             // Profile HTML
             // -----------------------------
+            console.log(user.profile_picture_url)
             const html = `
                 <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row items-center md:items-start gap-6 w-full">
                     <div class="relative w-28 h-28 mx-auto md:mx-0 flex-shrink-0">
-                        <img id="profile-avatar" src="${user.profile_picture_url || '../images/profile.jpg'}"
+                        <img id="profile-avatar" src="${user.profile_picture_url || '../media/profile.jpg'}"
                              class="w-full h-full object-cover rounded-full border-4 border-purple-200">
-                        ${isSelf ? `
-                        <label for="profile-pic-input"
-                            class="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700">
-                            <i data-lucide="camera" class="w-4 h-4"></i>
-                        </label>
-                        <input type="file" id="profile-pic-input" class="hidden" accept="image/*">
-                        ` : ""}
+
                     </div>
 
                     <div class="flex-1 min-w-0">
@@ -122,6 +124,31 @@ $(document).ready(async function () {
     // =====================================================
     // Render firms
     // =====================================================
+    // function renderFirms(container, firms, isPublisher) {
+    //     const $el = $(container);
+    //     $el.empty();
+
+    //     if (!firms.length) {
+    //         $el.html(`<p class="text-gray-500">No firms found</p>`);
+    //         return;
+    //     }
+
+    //     firms.forEach(f => {
+    //         const cardClass = isPublisher
+    //             ? "bg-blue-50 hover:bg-blue-100 border border-blue-100"
+    //             : "bg-purple-50 hover:bg-purple-100 border border-purple-100";
+
+    //         $el.append(`
+    //             <a href="firm.html?id=${isPublisher ? f.firm_id : f.id}" target="_blank"
+    //                class="block p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
+    //                 <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
+    //                 <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>
+    //                 ${isPublisher ? `<p class="text-xs text-blue-600 mt-1">Trust: ${f.trust_factor}</p>` : ""}
+    //             </a>
+    //         `);
+    //     });
+    // }
+
     function renderFirms(container, firms, isPublisher) {
         const $el = $(container);
         $el.empty();
@@ -136,14 +163,22 @@ $(document).ready(async function () {
                 ? "bg-blue-50 hover:bg-blue-100 border border-blue-100"
                 : "bg-purple-50 hover:bg-purple-100 border border-purple-100";
 
+            // 🔹 URL logic
+            const href = isPublisher
+                ? `firm.html?firm_id=${f.firm_id}&publisher_id=${user.id}`
+                : `firm.html?firm_id=${f.id}`;
+
             $el.append(`
-                <a href="firm.html?id=${isPublisher ? f.firm_id : f.id}" target="_blank"
-                   class="block p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
-                    <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
-                    <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>
-                    ${isPublisher ? `<p class="text-xs text-blue-600 mt-1">Trust: ${f.trust_factor}</p>` : ""}
-                </a>
-            `);
+            <a href="${href}" target="_blank"
+               class="block p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
+                <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
+                <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>
+
+                <p class="text-xs mt-1 ${isPublisher ? 'text-blue-600' : 'text-purple-600'}">
+                    Trust: ${f.trust_factor ?? 'N/A'}
+                </p>
+            </a>
+        `);
         });
     }
 

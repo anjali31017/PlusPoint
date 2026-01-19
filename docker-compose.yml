@@ -170,6 +170,8 @@ services:
       - "3000:80"       # Map localhost:3000 → Nginx
     volumes:
       - ./frontend:/usr/share/nginx/html
+      - ./backend/images/profile:/usr/share/nginx/html/src/images/profile
+      - ./backend/images/kyc:/usr/share/nginx/html/src/images/kyc
     networks:
       - pluspoint_network
 

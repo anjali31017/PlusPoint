@@ -62,7 +62,7 @@
 
   <main class="flex-1 h-screen overflow-y-auto bg-white content-scroll">
     <header class="flex justify-between items-center p-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-purple-100">
-      <h2 class="text-2xl font-bold text-gray-800">Home Feed</h2>
+      <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
       <div class="flex items-center space-x-2 md:space-x-5">
         <button class="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all relative">
           <i data-lucide="bell" class="w-6 h-6"></i>
@@ -78,18 +78,7 @@
 
     <div id="content-wrapper" class="p-6 md:p-10 max-w-6xl mx-auto pb-32 md:pb-10">
       
-      <div id="main-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div class="group bg-white rounded-[2.5rem] p-4 border border-gray-100 hover:border-purple-200 hover:shadow-2xl transition-all duration-500">
-          <div class="h-52 bg-purple-50 rounded-[2rem] mb-4 overflow-hidden relative">
-            <img src="../images/Gemini_Generated_Image_8gsg6n8gsg6n8gsg.png" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-            <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-purple-700">NEWSWIRE</div>
-          </div>
-          <div class="px-2">
-            <h4 class="text-lg font-bold text-gray-800 leading-snug group-hover:text-purple-700 transition-colors">Welcome to PlusPoint</h4>
-            <p class="text-sm text-gray-500 mt-2">The latest in decentralized news and global updates.</p>
-          </div>
-        </div>
-      </div>
+
 
       </div>
   </main>
@@ -117,7 +106,13 @@
     $(document).ready(function() {
       lucide.createIcons();
       $('body').fadeIn(400); // Smoothly show the page
+
+
+      
+      
     });
   </script>
+  <script src="../scripts/settings.js"></script>
+    <script src="../scripts/auth.js"></script>
 </body>
 </html>

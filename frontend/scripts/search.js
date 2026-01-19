@@ -70,7 +70,7 @@ $(document).ready(function () {
                        class="p-4 bg-purple-50 rounded-xl shadow-sm block">
                         <p class="font-semibold">${p.first_name ?? ""} ${p.last_name ?? ""}</p>
                         <p class="text-sm text-gray-500">@${p.username}</p>
-                        <p class="text-xs text-gray-400 mt-1">${p.articles_count} articles</p>
+
                     </a>
                 `).join('')}
             </div>`;

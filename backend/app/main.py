@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from app.config import settings
 import asyncio
 import os
@@ -84,8 +85,12 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET)
 
 # os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
 
-# os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
-# os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
+
+
+# app.mount("/images/profile", StaticFiles(directory="/app/images/profile"), name="profile_images")
+# app.mount("/images/kyc", StaticFiles(directory="/app/images/kyc"), name="kyc_images")
 
 
 @app.middleware("http")

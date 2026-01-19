@@ -27,8 +27,8 @@ class Settings(BaseSettings):
     
     
     BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
-    KYC_UPLOAD_FOLDER: str = os.path.join(BASE_DIR,"images", "kyc")
-    PROFILE_UPLOAD_FOLDER: str = os.path.join(BASE_DIR, "images", "profile")
+    KYC_UPLOAD_FOLDER: str = os.path.join(BASE_DIR, "app","images", "kyc")
+    PROFILE_UPLOAD_FOLDER: str = os.path.join(BASE_DIR, "app", "images", "profile")
 
     KYC_FINGERPRINT_SECRET: str
     SESSION_SECRET:str
