@@ -1,11 +1,15 @@
 import asyncio
 from datetime import datetime
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, Query 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
-from app.schema.article_schema import ArticleCreateSchema, ArticleSearchSchema, CreateCommentSchema
+from app.schema.article_schema import (
+    ArticleCreateSchema,
+    ArticleSearchSchema,
+    CreateCommentSchema,
+)
 from app.kafka.producer import send_kafka_event
 from app.celery.summary_tasks import summerization_task
 from fastapi import status
@@ -21,109 +25,126 @@ router = APIRouter(prefix="/article", tags=["Article"])
 article_controller = ArticleController()
 
 
-
-
 @router.post("/create", response_model=BaseResponse)
-async def add_article(article_data: ArticleCreateSchema, current_user: dict = Depends(get_current_user)):
-# async def add_article(article_data: ArticleCreateSchema):
+async def add_article(
+    article_data: ArticleCreateSchema,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
+    # async def add_article(article_data: ArticleCreateSchema):
 
     try:
         if current_user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue",
+            )
         article_data_dict = article_data.dict()
 
         article = await article_controller.create_article(
-            article_data_dict, 
-            current_user["user_id"]
+            article_data_dict,
+            current_user["user_id"],
             # "692051620cbaa9500904c22d"
         )
 
         if article is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create article")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create article",
+            )
         # article_notification_manager.send_personal_message("hello", "692052180cbaa9500904c230")
-        
+
         if article.status == "DRAFT":
             return {
                 "status": 1,
                 "message": "Article created as draft successfully",
                 "data": {
-                    "article_id":str(article.id),
-                }
+                    "article_id": str(article.id),
+                },
             }
         if article.status == "PENDING_REVIEW":
-            raise HTTPException(status_code=status.HTTP_202_ACCEPTED, detail="Article sent for moderation")
+            raise HTTPException(
+                status_code=status.HTTP_202_ACCEPTED,
+                detail="Article sent for moderation",
+            )
 
         # final, clean Kafka event
         kafka_article_event = {
             "event_type": "article.published",
             "firm_id": str(article.firm_id.id),
-            "publisher_id": current_user["user_id"],
             "article_id": str(article.id),
             "article_title": article.title,
             "firm_username": article.firm_id.firm_username,
-            "publisher_username": current_user["username"],
             "published_at": (
-                article.published_at.isoformat() 
-                if article.published_at else datetime.now().isoformat()
-            )
+                article.published_at.isoformat()
+                if article.published_at
+                else datetime.now().isoformat()
+            ),
         }
-        
+        background_tasks.add_task(
+            send_kafka_event,
+            "article.published", 
+            kafka_article_event
+        )
         # publish event
-        event  = await send_kafka_event("article.published", kafka_article_event)
-        
-        if event is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to send Kafka event")
-        
-        
+        # event  = await send_kafka_event("article.published", kafka_article_event)
+
+        # if event is None:
+        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to send Kafka event")
+
         summary_reponse = summerization_task.delay(article.content, str(article.id))
 
         return {
             "status": 1,
             "message": "Article created successfully",
             "data": {
-                "article_id":str(article.id),
-            }
+                "article_id": str(article.id),
+            },
         }
 
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-
-
-
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
 
 
 @router.post("/comment", response_model=BaseResponse)
 async def add_comment(
-    comment_data: CreateCommentSchema, 
-    article_id: str | None = None, 
+    comment_data: CreateCommentSchema,
+    article_id: str | None = None,
     comment_id: str | None = None,
-    current_user: dict = Depends(get_current_user)):
+    current_user: dict = Depends(get_current_user),
+):
     try:
         if current_user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
-        
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue",
+            )
+
         comment_data_dict = comment_data.dict()
 
         comment = await article_controller.create_comment(
-            comment_data_dict, 
-            article_id, 
-            comment_id,
-            current_user["user_id"])
-        
+            comment_data_dict, article_id, comment_id, current_user["user_id"]
+        )
+
         if comment is None:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create comment")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create comment",
+            )
         response_data = {
             "status": 1,
             "message": "Comment added successfully",
-            "data": comment
-            #{
-                # "comment_id": str(comment["id"]),
-                # "article_id": str(comment.article_id.id),
-                # "parent_comment_id": str(comment.parent_comment_id) if comment.parent_comment_id else None,
-                # "content": comment.content,
-                # "posted_at": comment.posted_at
+            "data": comment,
+            # {
+            # "comment_id": str(comment["id"]),
+            # "article_id": str(comment.article_id.id),
+            # "parent_comment_id": str(comment.parent_comment_id) if comment.parent_comment_id else None,
+            # "content": comment.content,
+            # "posted_at": comment.posted_at
             # }
         }
         return response_data
@@ -131,34 +152,58 @@ async def add_comment(
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+
 @router.post("/like", response_model=BaseResponse)
-async def like_article(article_id: str, current_user: dict = Depends(get_current_user)):
+async def like_article(
+    background_tasks: BackgroundTasks,
+    article_id: str = Query(None),
+    current_user: dict = Depends(get_current_user),
+):
     try:
         if current_user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
-        
-        success = await article_controller.like_article(article_id, current_user["user_id"])
-        
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue",
+            )
+
+        success = await article_controller.like_article(
+            article_id, current_user["user_id"]
+        )
+
         if not success:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to like article")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to like article",
+            )
+
+        if success["status"] == "liked":
+            background_tasks.add_task(
+                send_kafka_event,  # function itself, no parentheses
+                "article.like",  # first argument
+                success["data"],  # second argument
+            )
+
         response_data = {
             "status": 1,
-            "message": "Article liked successfully",
-            "data": success
+            "message": (
+                "Article unliked"
+                if success["status"] == "un-liked"
+                else "Article liked"
+            ),
+            "data": success,
         }
         return response_data
 
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
-    
-
-
-
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
 
 
 @router.post("/search", response_model=MultiSectionSearchResponse)
@@ -173,44 +218,49 @@ async def search_multi_section(search: ArticleSearchSchema):
         # -------------------
         publisher_results = []
         if text:  # only search if text is not empty
-            matched_publishers = await UserModel.find({
-                "$or": [
-                    {"username": {"$regex": text, "$options": "i"}},
-                    {"first_name": {"$regex": text, "$options": "i"}},
-                    {"last_name": {"$regex": text, "$options": "i"}},
-                ]
-            }).to_list()
+            matched_publishers = await UserModel.find(
+                {
+                    "$or": [
+                        {"username": {"$regex": text, "$options": "i"}},
+                        {"first_name": {"$regex": text, "$options": "i"}},
+                        {"last_name": {"$regex": text, "$options": "i"}},
+                    ]
+                }
+            ).to_list()
 
             for p in matched_publishers:
                 article_count = await ArticleModel.find({"publisher_id": p.id}).count()
-                publisher_results.append({
-                    "id": str(p.id),
-                    "username": p.username,
-                    "first_name": p.first_name,
-                    "last_name": p.last_name,
-                    "profile_picture_url": p.profile_picture_url,
-                    "articles_count": article_count
-                })
+                publisher_results.append(
+                    {
+                        "id": str(p.id),
+                        "username": p.username,
+                        "first_name": p.first_name,
+                        "last_name": p.last_name,
+                        "profile_picture_url": p.profile_picture_url,
+                        "articles_count": article_count,
+                    }
+                )
 
         # -------------------
         # Firms Section
         # -------------------
         firm_results = []
         if text:  # only search if text is not empty
-            matched_firms = await FirmModel.find({"firm_name": {"$regex": text, "$options": "i"}}).to_list()
+            matched_firms = await FirmModel.find(
+                {"firm_name": {"$regex": text, "$options": "i"}}
+            ).to_list()
             for f in matched_firms:
                 article_count = await ArticleModel.find({"firm_id": f.id}).count()
-                firm_results.append({
-                    "id": str(f.id),
-                    "firm_name": f.firm_name,
-                    "firm_username": f.firm_username,
-                    "bio": f.bio,
-                    "articles_count": article_count
-                })
+                firm_results.append(
+                    {
+                        "id": str(f.id),
+                        "firm_name": f.firm_name,
+                        "firm_username": f.firm_username,
+                        "bio": f.bio,
+                        "articles_count": article_count,
+                    }
+                )
 
-
-
-        
         article_filters = {}
 
         # Text search (title, summary, content)
@@ -243,7 +293,13 @@ async def search_multi_section(search: ArticleSearchSchema):
         article_filters["moderation_required"] = False
         article_filters["status"] = ArticleStatus.PUBLISHED
         skip = (page - 1) * page_size
-        articles = await ArticleModel.find(article_filters).sort("-published_at").skip(skip).limit(page_size).to_list()
+        articles = (
+            await ArticleModel.find(article_filters)
+            .sort("-published_at")
+            .skip(skip)
+            .limit(page_size)
+            .to_list()
+        )
 
         quick_take_results = []
         coverage_results = []
@@ -257,7 +313,9 @@ async def search_multi_section(search: ArticleSearchSchema):
                 "first_name": publisher.first_name,
                 "last_name": publisher.last_name,
                 "profile_picture_url": publisher.profile_picture_url,
-                "articles_count": await ArticleModel.find({"publisher_id": publisher.id}).count()
+                "articles_count": await ArticleModel.find(
+                    {"publisher_id": publisher.id}
+                ).count(),
             }
 
             firm_obj = {
@@ -265,33 +323,37 @@ async def search_multi_section(search: ArticleSearchSchema):
                 "firm_name": firm.firm_name,
                 "firm_username": firm.firm_username,
                 "bio": firm.bio,
-                "articles_count": await ArticleModel.find({"firm_id": firm.id}).count()
+                "articles_count": await ArticleModel.find({"firm_id": firm.id}).count(),
             }
 
             # QuickTake = summary
             if a.summary:
-                quick_take_results.append({
+                quick_take_results.append(
+                    {
+                        "id": str(a.id),
+                        "title": a.title,
+                        "summary": a.summary,
+                        "publisher": publisher_obj,
+                        "firm": firm_obj,
+                        "tags": a.tags,
+                        "categories": a.category,
+                        "published_at": a.published_at,
+                    }
+                )
+
+            # Coverage = full content
+            coverage_results.append(
+                {
                     "id": str(a.id),
                     "title": a.title,
-                    "summary": a.summary,
+                    "content": a.content,
                     "publisher": publisher_obj,
                     "firm": firm_obj,
                     "tags": a.tags,
                     "categories": a.category,
-                    "published_at": a.published_at
-                })
-
-            # Coverage = full content
-            coverage_results.append({
-                "id": str(a.id),
-                "title": a.title,
-                "content": a.content,
-                "publisher": publisher_obj,
-                "firm": firm_obj,
-                "tags": a.tags,
-                "categories": a.category,
-                "published_at": a.published_at
-            })
+                    "published_at": a.published_at,
+                }
+            )
 
         return {
             "publishers": publisher_results,
@@ -302,27 +364,28 @@ async def search_multi_section(search: ArticleSearchSchema):
                 "publishers": len(publisher_results),
                 "firms": len(firm_results),
                 "quick_take": len(quick_take_results),
-                "coverage": len(coverage_results)
-            }
+                "coverage": len(coverage_results),
+            },
         }
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-    
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
 
 
-@router.get("/fetch", response_model=BaseResponse)
-async def get_article_details(article_id: str | None = Query(None),
-    current_user: dict = Depends(get_current_user)
-    ):
-    try:
-        article = await article_controller.get_article_by_id(article_id)
-        if not article:
-            raise HTTPException(status_code=404, detail="Article not found")
+# @router.get("/fetch", response_model=BaseResponse)
+# async def get_article_details(article_id: str | None = Query(None),
+#     current_user: dict = Depends(get_current_user)
+#     ):
+#     try:
+#         article = await article_controller.get_article_by_id(article_id)
+#         if not article:
+#             raise HTTPException(status_code=404, detail="Article not found")
 
-        return {
-            "status": 1,
-            "message": "Article fetched successfully",
-            "data": article,
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+#         return {
+#             "status": 1,
+#             "message": "Article fetched successfully",
+#             "data": article,
+#         }
+#     except Exception as e:
+#         raise HTTPException(status_code=500, detail=str(e))

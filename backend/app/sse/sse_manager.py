@@ -25,11 +25,12 @@ class SSEManager:
         except Exception as e:
             print(f"Error disconnecting user {user_id}: {e}")
 
-    async def send_to_user(self, user_id: str, message: dict):
+    async def send_to_user(self, user_id: str, message: dict, type: str):
         try:
             notification_data = {
-                    "user_id": user_id,
+                    "send_to": user_id,
                     "message": message,
+                    "type": type,
                     "sent": True
                 }
             if user_id in self.connections:

@@ -6,15 +6,17 @@ from app.models.firm import FirmModel
 from app.models.users import UserModel
 from enum import Enum
 
+
 class ArticleStatus(str, Enum):
     DRAFT = "DRAFT"
     PENDING_REVIEW = "PENDING_REVIEW"
     PUBLISHED = "PUBLISHED"
     REJECTED = "REJECTED"
     ARCHIVED = "ARCHIVED"
-    
+
+
 class ArticleModel(Document):
-    firm_id : Link["FirmModel"]
+    firm_id: Link["FirmModel"]
     publisher_id: Link["UserModel"]
     title: str
     content: str
@@ -31,21 +33,46 @@ class ArticleModel(Document):
     published_at: Optional[datetime] = None
 
     class Settings:
-        name = "articles"  
+        name = "articles"
         indexes = [
-        [
-            ("title", "text"),
-            ("content", "text"),
-            ("summary", "text")
+            [("title", "text"), ("content", "text"), ("summary", "text")]
         ]
-    ]
 
-#view counts, comments, shares can be added later
+
+# view counts, comments, shares can be added later
+
 
 class ArticleLikeModel(Document):
-    article_id : Link["ArticleModel"]
+    article_id: Link["ArticleModel"]
     user_id: Link["UserModel"]
     created_at: datetime = Field(default_factory=datetime.now)
+
+    
     class Settings:
-        name = "likes"  
-        
+        name = "article_likes"
+        indexes = [
+            [("article_id", 1), ("user_id", 1)]
+        ]
+
+
+# class ArticleLikeModel(Document):
+#     article_id: Link["ArticleModel"]
+#     user_id: Link["UserModel"]
+#     created_at: datetime = Field(default_factory=datetime.now)
+
+#     class Settings:
+#         name = "article_likes"
+#         indexes = [
+#             {
+#                 "keys": [("article_id.id", 1), ("user_id.id", 1)],
+#                 "unique": True
+#             }
+#         ]
+
+
+# kafka_like_event = {
+#     "firm_id": str(article.firm_id.id),
+#     "article_id": str(article.id),
+#     "article_title": article.title,
+#     "user_id": u_id,
+# }

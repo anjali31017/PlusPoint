@@ -4,6 +4,7 @@ from bson import ObjectId
 from app.models.subscription import SubscriptionModel
 from app.config import settings
 from app.sse.sse_endpoint import sse_connection_manager
+from app.models.notification import NotificationStatus
 
 
 
@@ -44,46 +45,33 @@ class KafkaArticleService:
                         print("Message received from Kafka")
                         post = msg.value
 
-                        # if post.get("event_type") != "article_published":
-                        #     continue
-
                         firm_id = post["firm_id"]
-                        publisher_id = post["publisher_id"]
                         
                         firm_obj_id = ObjectId(firm_id)
-                        publisher_obj_id = ObjectId(publisher_id)
                         article = {
                             "article_id": post["article_id"],
                             "article_title": post["article_title"],
                             "article_firm": post["firm_username"],
-                            "article_publisher": post["publisher_username"],
                             "published_at": post["published_at"]
                         }
                         
                         firm_subscribers = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
-                        publisher_subscribers = await SubscriptionModel.find(SubscriptionModel.publisher_id.id == publisher_obj_id).to_list()
                         firm_subscribers_id = [str(sub.subscriber_id.ref.id) for sub in firm_subscribers]
-                        publisher_subscribers_id = [str(sub.subscriber_id.ref.id) for sub in publisher_subscribers]
                         all_subscribers = []
-                        if firm_subscribers is not None or publisher_subscribers is not None:
-                            all_subscribers = firm_subscribers_id + publisher_subscribers_id
-                            all_subscribers = list(set(all_subscribers))
+                        if firm_subscribers is not None:
+                            all_subscribers = list(set(firm_subscribers_id))
                         
-                        
+                            print("@@@@@@@@@@@@@@@@@@@@@@", all_subscribers)
                         
                         if not all_subscribers:
                             continue 
                         
-                        message = {
-                            "type": "new_article",
-                            "data": article
-                        }
-                        # await sse_connection_manager.send_to_user("692052180cbaa9500904c230", message)
+
                         if all_subscribers:
-                            # print(f"Sending notifications to subscribers: {all_subscribers}")
+                            print(f"Sending notifications to subscribers: {all_subscribers}")
                             await asyncio.gather(*[
                                 # article_notification_manager.send_personal_message(message, sid)
-                                sse_connection_manager.send_to_user(sid, message)
+                                sse_connection_manager.send_to_user(sid, article, NotificationStatus.ARTICLE)
                                 for sid in all_subscribers
                             ])
                             print("Notifications sent to subscribers.")

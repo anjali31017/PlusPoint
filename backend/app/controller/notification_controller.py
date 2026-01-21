@@ -1,4 +1,5 @@
 
+from bson import ObjectId
 from app.models.notification import NotificationModel
 
 
@@ -7,9 +8,10 @@ class NotificationController:
     async def save_notification(self, notification_data : dict) -> NotificationModel | None:
         try:
             notification = NotificationModel(
-                user_id= notification_data["user_id"],
+                send_to= ObjectId(notification_data["send_to"]),
                 message= notification_data["message"],
-                sent= notification_data["sent"]
+                sent= notification_data["sent"],
+                type=notification_data["type"]
             )
             await notification.insert()
             return notification

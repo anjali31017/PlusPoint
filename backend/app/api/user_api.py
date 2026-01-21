@@ -442,16 +442,15 @@ async def logout(data: LogoutSchema):
 @router.post("/subscribe", response_model=BaseResponse)
 async def subscribe_to_entity(
     firm_username: str | None = None,
-    publisher_username: str | None = None,
     current_user: dict = Depends(get_current_user)
 ):
     if current_user is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
         
-    if not firm_username and not publisher_username:
+    if not firm_username:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Either firm_username or publisher_username is required")
 
-    response = await user_controller.subscribe(firm_username, publisher_username, current_user["user_id"])
+    response = await user_controller.subscribe(firm_username, current_user["user_id"])
     return {
         "status": 1,
         "message": "request successfully",

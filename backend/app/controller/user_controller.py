@@ -87,12 +87,10 @@ class UserController:
             print("Error updating user:", e)
             return None
 
-    async def subscribe(self, firm_username:str|None, publisher_username: str|None, subscriber_id: str) -> bool:
+    async def subscribe(self, firm_username:str|None, subscriber_id: str) -> bool:
         try:
             firm = None
-            publisher = None
             firm_data = None
-            pub_data = None
             
             if firm_username:
                 firm = await FirmModel.find_one(
@@ -103,17 +101,6 @@ class UserController:
                 firm_data = firm.id
                 if not firm:
                     raise HTTPException(status_code=404, detail="Firm not found")
-
-            if publisher_username:
-                publisher = await UserModel.find_one(
-                    UserModel.username == publisher_username,
-                    UserModel.role == UserRole.publisher,
-                    UserModel.is_active == True,
-                    UserModel.is_deleted == False,
-                    )
-                pub_data =  publisher.id
-                if not publisher:
-                    raise HTTPException(status_code=404, detail="Publisher (user) not found")
             
             subscriber = await UserModel.get(ObjectId(subscriber_id))
             if not subscriber:
@@ -124,7 +111,6 @@ class UserController:
             subscription = await SubscriptionModel.find_one(
                 SubscriptionModel.subscriber_id.id == subscriber.id,
                 SubscriptionModel.firm_id.id == firm_data,
-                SubscriptionModel.publisher_id.id == pub_data
                 )
 
             if subscription:
@@ -133,7 +119,7 @@ class UserController:
                 # raise HTTPException(status_code=200, detail="Already subscribed")
             
             subscription = SubscriptionModel(
-                subscriber_id=subscriber, firm_id=firm_data, publisher_id=pub_data
+                subscriber_id=subscriber, firm_id=firm_data
             )
 
             await subscription.insert()

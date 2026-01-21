@@ -22,37 +22,38 @@ from app.kafka.consumer.article_consumer import KafkaArticleService
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.kafka.consumer.moderation_consumer import ModerationKafkaConsumer
+from app.kafka.consumer.like_consumer import KafkaLikeService
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Starting application...")
     await connect_to_mongo()
-
-    # if not os.path.exists(settings.KYC_UPLOAD_FOLDER):
-    #     os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
-    #     print(f"Directory created at: {settings.KYC_UPLOAD_FOLDER}")
-    print(settings.BASE_DIR)
-    print(settings.KYC_UPLOAD_FOLDER)
-    print(settings.PROFILE_UPLOAD_FOLDER)
-
-    # os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
-    # os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
-    print("created folders")
     await start_producer()
+    
     article_consumer = asyncio.create_task(KafkaArticleService.consume_articles())
+    like_consumer = asyncio.create_task(KafkaLikeService.consume_likes())
+    
     # moderation_consumer = asyncio.create_task(ModerationKafkaConsumer.start())
 
-    if not settings.KYC_FINGERPRINT_SECRET:
-        print("KYC_FINGERPRINT_SECRET not set in environment variables.")
-        raise RuntimeError("KYC_FINGERPRINT_SECRET not set")
 
-    yield
+    try:
+        yield
 
-    print("Shutting down application...")
-    KafkaArticleService.is_running = False
-    await KafkaArticleService.shutdown()
+    finally:
+        
+        print("Shutting down application...")
+        KafkaArticleService.is_running = False
+        await KafkaArticleService.shutdown()
 
+        KafkaLikeService.is_running = False
+        await KafkaLikeService.shutdown()
+
+        article_consumer.cancel()
+        like_consumer.cancel()
+        
+        await asyncio.gather(article_consumer, like_consumer, return_exceptions=True)
+        
     # ModerationKafkaConsumer.is_running = False
     # await ModerationKafkaConsumer.shutdown()
 
@@ -61,10 +62,13 @@ async def lifespan(app: FastAPI):
     # except:
     #     print("Kafka consumer task cancellation failed or was already cancelled.")
     # await asyncio.gather(consumer_task, return_exceptions=True)
-    await stop_producer()
-    await close_mongo_connection()
+    
+        await stop_producer()
+        await close_mongo_connection()
 
-
+        print("Application shutdown complete.")
+        
+        
 app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG, lifespan=lifespan)
 
 origins = [

@@ -5,9 +5,10 @@ from app.models.article import ArticleModel, ArticleLikeModel, ArticleStatus
 from app.models.firm import FirmModel
 from app.models.users import UserModel
 from datetime import datetime
-from fastapi import HTTPException
-
+from fastapi import BackgroundTasks, HTTPException
+from pymongo.errors import DuplicateKeyError
 from app.models.comment import CommentModel
+from app.kafka.producer import send_kafka_event
 
 
 
@@ -99,11 +100,7 @@ class ArticleController:
             return None 
 
 
-    async def like_article(
-        self, 
-        a_id: str,
-        u_id:str
-        ) -> ArticleLikeModel:
+    async def like_article( self, a_id: str, u_id:str) -> ArticleLikeModel:
         try:
             article = await ArticleModel.get(ObjectId(a_id))
             if not article:
@@ -117,102 +114,198 @@ class ArticleController:
                 ArticleLikeModel.user_id.id == user.id,
                 ArticleLikeModel.article_id.id == article.id
                 )
-
+            print(liked)
             if liked:
                 await liked.delete()
-                return "un-liked"
+                await article.update({"$inc": {"like_count": -1}})
+                response = {
+                    "status": "un-liked",
+                    "data" : None
+                }
+                return response
 
-            like = ArticleLikeModel(
-                article_id=a_id,
-                user_id=u_id
-                )
-            
+            like = ArticleLikeModel( article_id=a_id, user_id=u_id)
             await like.insert()
-            return "liked"
+            await article.update({"$inc": {"like_count": 1}})
+            
+            firm = await article.firm_id.fetch()
+            publisher = await article.publisher_id.fetch()
+            kafka_like_event = {
+                "publisher_id": str(publisher.id),
+                "firm_id": str(firm.id),
+                "article_id": str(article.id),
+                "article_title": article.title,
+                "user_id": u_id,
+                
+            }
+            # background_tasks.add_task(
+            #     send_kafka_event("article.like", {
+            #     "publisher_id": str(article.publisher_id.id),
+            #     "firm_id": str(article.firm_id.id),
+            #     "article_id": str(article.id),
+            #     "article_title": article.title,
+            #     "user_id": u_id,
+            # })
+            # )
+            
+            response = {
+                    "status": "liked",
+                    "data" : kafka_like_event
+                }
+            return response
         except Exception as e:
             print(f"Error while liking article: {str(e)}")
             return False
 
 
-    @staticmethod
-    async def get_articles_by_firm(
-        firm_id: ObjectId,
-        include_publisher: bool = True,
-        status: Optional[str] = "PUBLISHED",
-    ) -> List[dict]:
-        try:
-            query = [
-                ArticleModel.firm_id.id == firm_id,
-                ArticleModel.is_deleted == False,
-            ]
-            if status:
-                query.append(ArticleModel.status == status)
 
-            articles = await ArticleModel.find(*query).sort(-ArticleModel.published_at).to_list()
-            result = []
 
-            for article in articles:
-                article_dict = {
-                    "id": str(article.id),
-                    "title": article.title,
-                    "summary": article.summary,
-                    "content_text": article.content_text,
-                    "published_at": article.published_at,
-                }
+    # async def like_article(self, a_id: str, u_id: str):
+    #     article_id = ObjectId(a_id)
+    #     user_id = ObjectId(u_id)
 
-                if include_publisher:
-                    await article.fetch_link(ArticleModel.publisher_id)
-                    article_dict["publisher"] = {
-                        "username": article.publisher_id.username,
-                        "first_name": article.publisher_id.first_name,
-                        "last_name": article.publisher_id.last_name,
-                        "profile_picture_url": article.publisher_id.profile_picture_url,
-                    }
+    #     article = await ArticleModel.get(article_id)
+    #     if not article:
+    #         raise HTTPException(status_code=404, detail="Article not found")
 
-                result.append(article_dict)
+    #     user = await UserModel.get(user_id)
+    #     if not user:
+    #         raise HTTPException(status_code=404, detail="User not found")
 
-            return result
-        except Exception as e:
-            return str(e)
+    #     try:
+    #         # TRY LIKE
+    #         # print("!!!!!!!!!!!!!!!!!!!! Entering like")
+    #         like = ArticleLikeModel(
+    #             article_id=article.id,
+    #             user_id=user.id
+    #         )
+    #         await like.insert()
+    #         # print(like)
+    #         # ATOMIC increment
+    #         await ArticleModel.find_one(
+    #             ArticleModel.id == article.id,
+    #         ).update({"$inc": {"like_count": 1}})
+    #         # print("Finddddddddddddddddd")
+    #         action = "liked"
+
+    #         # print("ARTICLEEEEE", article)
+    #     except DuplicateKeyError:
+    #         # ALREADY LIKED → UNLIKE
+    #         print("!!!!!!!!!!!!!!!!!!!! Entering duplicate")
+    #         await ArticleLikeModel.find_one(
+    #             ArticleLikeModel.article_id == article.id,
+    #             ArticleLikeModel.user_id == user.id
+    #         ).delete()
+
+    #         await ArticleModel.find_one(
+    #             ArticleModel.id == article.id
+    #         ).update({"$inc": {"like_count": -1}})
+
+            
+    #         action = "un-liked"
+    #         data = None
+            
+    #     # Emit Kafka event ONLY for LIKE (optional)
+    #     if action == "liked":
+    #         firm = await article.firm_id.fetch()
+    #         publisher = await article.publisher_id.fetch()
+    #         data = {
+    #             "publisher_id": str(publisher.id),
+    #             "firm_id": str(firm.id),
+    #             "article_id": str(article.id),
+    #             "article_title": article.title,
+    #             "user_id": u_id,
+                
+    #         }
+
+    #     response = {
+    #         "status": action,
+    #         "data": data
+    #     }
+    #     return response
+
+
+
+
+    # @staticmethod
+    # async def get_articles_by_firm(
+    #     firm_id: ObjectId,
+    #     include_publisher: bool = True,
+    #     status: Optional[str] = "PUBLISHED",
+    # ) -> List[dict]:
+    #     try:
+    #         query = [
+    #             ArticleModel.firm_id.id == firm_id,
+    #             ArticleModel.is_deleted == False,
+    #         ]
+    #         if status:
+    #             query.append(ArticleModel.status == status)
+
+    #         articles = await ArticleModel.find(*query).sort(-ArticleModel.published_at).to_list()
+    #         result = []
+
+    #         for article in articles:
+    #             article_dict = {
+    #                 "id": str(article.id),
+    #                 "title": article.title,
+    #                 "summary": article.summary,
+    #                 "content_text": article.content_text,
+    #                 "published_at": article.published_at,
+    #             }
+
+    #             if include_publisher:
+    #                 await article.fetch_link(ArticleModel.publisher_id)
+    #                 article_dict["publisher"] = {
+    #                     "username": article.publisher_id.username,
+    #                     "first_name": article.publisher_id.first_name,
+    #                     "last_name": article.publisher_id.last_name,
+    #                     "profile_picture_url": article.publisher_id.profile_picture_url,
+    #                 }
+
+    #             result.append(article_dict)
+
+    #         return result
+    #     except Exception as e:
+    #         return str(e)
         
-    @staticmethod
-    async def get_article_by_id(
-        article_id: str,
-        include_publisher: bool = True,
-    ) -> Optional[dict]:
-        try:
-            if isinstance(article_id, str):
-                if not ObjectId.is_valid(article_id):
-                    return None  # Invalid ID
-                article_id = ObjectId(article_id)
+    # @staticmethod
+    # async def get_article_by_id(
+    #     article_id: str,
+    #     include_publisher: bool = True,
+    # ) -> Optional[dict]:
+    #     try:
+    #         if isinstance(article_id, str):
+    #             if not ObjectId.is_valid(article_id):
+    #                 return None  # Invalid ID
+    #             article_id = ObjectId(article_id)
 
-            # Use find_one() — returns a single document, not a cursor
-            article = await ArticleModel.find_one(
-                ArticleModel.id == article_id,
-                ArticleModel.is_deleted == False
-            )
+    #         # Use find_one() — returns a single document, not a cursor
+    #         article = await ArticleModel.find_one(
+    #             ArticleModel.id == article_id,
+    #             ArticleModel.is_deleted == False
+    #         )
 
-            if not article:
-                return None
+    #         if not article:
+    #             return None
 
-            # Include publisher info
-            article_dict = {
-                "id": str(article.id),
-                "title": article.title,
-                "summary": article.summary,
-                "content_text": article.content_text,
-                "published_at": article.published_at,
-            }
+    #         # Include publisher info
+    #         article_dict = {
+    #             "id": str(article.id),
+    #             "title": article.title,
+    #             "summary": article.summary,
+    #             "content_text": article.content_text,
+    #             "published_at": article.published_at,
+    #         }
 
-            if include_publisher:
-                await article.fetch_link(ArticleModel.publisher_id)
-                article_dict["publisher"] = {
-                    "username": article.publisher_id.username,
-                    "first_name": article.publisher_id.first_name,
-                    "last_name": article.publisher_id.last_name,
-                    "profile_picture_url": article.publisher_id.profile_picture_url,
-                }
+    #         if include_publisher:
+    #             await article.fetch_link(ArticleModel.publisher_id)
+    #             article_dict["publisher"] = {
+    #                 "username": article.publisher_id.username,
+    #                 "first_name": article.publisher_id.first_name,
+    #                 "last_name": article.publisher_id.last_name,
+    #                 "profile_picture_url": article.publisher_id.profile_picture_url,
+    #             }
 
-            return article_dict
-        except Exception as e:
-            return str(e)
+    #         return article_dict
+    #     except Exception as e:
+    #         return str(e)
