@@ -10,7 +10,7 @@ from app.controller.util_controller import UtilController
 from app.models.article import ArticleModel
 from app.models.comment import CommentModel
 from app.models.kyc import KYCModel
-from app.models.publisher import PublisherModel
+
 
 util_controller = UtilController()
 
@@ -161,24 +161,6 @@ class UserController:
             for sub in subscriptions:
                 await sub.delete()
             
-            # ------------------ Delete publishers ------------------
-            publishers = await PublisherModel.find(
-                PublisherModel.publisher_id.id == user.id,
-                PublisherModel.is_deleted == False
-            ).to_list()
-            for pub in publishers:
-                pub.is_deleted = True
-                pub.is_active = False
-                await pub.save()
-            
-            publisher_firms = await PublisherModel.find(
-                PublisherModel.firm_id.id == user.id,
-                PublisherModel.is_deleted == False
-            ).to_list()
-            for pub_firm in publisher_firms:
-                pub_firm.is_deleted = True
-                pub_firm.is_active = False
-                await pub_firm.save()
             
             # ------------------ Delete KYC ------------------
             kycs = await KYCModel.find(

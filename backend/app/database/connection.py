@@ -1,5 +1,5 @@
 
-from app.models.publisher import PublisherModel
+
 from app.models.admin import AdminModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
@@ -34,7 +34,6 @@ async def connect_to_mongo():
                 RefreshTokenModel,
                 NotificationModel,
                 KYCModel,
-                PublisherModel,
                 AdminModel,
                 ])
             print("Connected to MongoDB with Beanie")

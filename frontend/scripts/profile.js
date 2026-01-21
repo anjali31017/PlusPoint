@@ -37,13 +37,6 @@ $(document).ready(async function () {
             user = data.user;
             isSelf = data.is_self;
 
-                        //             ${isSelf ? `
-                        // <label for="profile-pic-input"
-                        //     class="absolute bottom-0 right-0 bg-purple-600 text-white p-2 rounded-full cursor-pointer hover:bg-purple-700">
-                        //     <i data-lucide="camera" class="w-4 h-4"></i>
-                        // </label>
-                        // <input type="file" id="profile-pic-input" class="hidden" accept="image/*">
-                        // ` : ""}
             // -----------------------------
             // Profile HTML
             // -----------------------------
@@ -64,24 +57,23 @@ $(document).ready(async function () {
                             <span id="kyc-badge" class="text-sm font-bold px-3 py-1 rounded-full text-center md:text-left"></span>
                         </div>
                         <p id="profile-username" class="text-gray-500 mt-1 text-center md:text-left">@${user.username}</p>
-                        <p id="profile-email" class="text-gray-500 mt-1 text-center md:text-left">${user.email || ""}</p>
                         <p id="profile-bio" class="text-gray-600 mt-2 text-center md:text-left">${user.bio || ""}</p>
 
-                        ${isSelf ? `<button id="editProfileBtn"
-                            class="mt-4 px-5 py-2 bg-purple-600 text-white rounded-full hover:bg-purple-700 transition w-full md:w-auto">
-                            Edit Profile
-                        </button>` : ""}
+                        ${isSelf ? `
+                            <div id="profile-actions" class="mt-4 flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                                <button id="editProfileBtn"
+                                    class="px-5 py-2 bg-cyan-600 text-white rounded-full hover:bg-cyan-700 transition">
+                                    Edit Profile
+                                </button>
+                            </div>
+                        ` : ""}
                     </div>
                 </div>
 
-                <div class="mt-10 grid md:grid-cols-2 gap-10">
+                <div class="mt-10 grid md:grid-cols-1 gap-10">
                     <div>
                         <h3 class="text-xl font-semibold text-gray-800 mb-4">Owned Firms</h3>
-                        <div id="owned-firms" class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 gap-6"></div>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold text-gray-800 mb-4">Publisher Access</h3>
-                        <div id="publisher-firms" class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 gap-6"></div>
+                        <div id="owned-firms" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-6"></div>
                     </div>
                 </div>
             `;
@@ -96,19 +88,189 @@ $(document).ready(async function () {
                 $kyc.addClass("bg-green-100 text-green-700");
             else if (data.kyc_status === "PENDING")
                 $kyc.addClass("bg-yellow-100 text-yellow-700");
+            else if (data.kyc_status === "UNDER_REVIEW")
+                $kyc.addClass("bg-sky-100 text-sky-700");
+            else if (data.kyc_status === "REJECTED")
+                $kyc.addClass("bg-red-100 text-red-700");
             else
                 $kyc.addClass("bg-red-100 text-red-700");
 
             // -----------------------------
-            // Follow / Unfollow
+            // KYC Action Buttons (Self only)
             // -----------------------------
-            if (!isSelf) updateFollowBtn(data.is_following);
+            if (
+                isSelf &&
+                (data.kyc_status === "PENDING" || data.kyc_status === "REJECTED")
+            ) {
+                $("#profile-actions").append(`
+        <a href="kyc.html"
+           class="px-5 py-2 bg-rose-400 text-white rounded-full hover:bg-rose-700 transition text-center">
+            Complete KYC
+        </a>
+
+    `);
+            }
+
+
+            // -----------------------------
+            // Register Firm Button (KYC VERIFIED)
+            // -----------------------------
+            if (isSelf && data.kyc_status === "VERIFIED") {
+                $("#profile-actions").append(`
+        <button id="registerFirmBtn"
+            class="px-5 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-700 transition">
+            Register Firm
+        </button>
+
+    `);
+            }
+
+
+
+
+            // =====================================================
+            // Register Firm modal
+            // =====================================================
+            $(document).on("click", "#registerFirmBtn", function () {
+                openRegisterFirmModal();
+            });
+
+            function openRegisterFirmModal() {
+                const $modal = $(`
+        <div class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center px-4">
+            <div class="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl animate-fade-in">
+                <h3 class="text-2xl font-bold text-gray-800 mb-1">Register Firm</h3>
+                <p class="text-sm text-gray-500 mb-5">
+                    Create a firm under your verified account
+                </p>
+
+                <form id="registerFirmForm" class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Firm Name</label>
+                        <input name="firm_name" required
+                            class="w-full mt-1 border rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-400 focus:outline-none">
+                        <p class="text-xs text-red-500 mt-1 hidden error-firm-name"></p>
+                    </div>
+
+                    <div>
+                        <label class="text-sm font-medium text-gray-700">Bio</label>
+                        <textarea name="bio" rows="3" maxlength="250"
+                            class="w-full mt-1 border rounded-xl px-4 py-2 focus:ring-2 focus:ring-emerald-400 focus:outline-none"></textarea>
+                        <p class="text-xs text-gray-400 mt-1">Max 250 characters</p>
+                        <p class="text-xs text-red-500 hidden error-bio"></p>
+                    </div>
+
+                    <div class="flex items-start gap-2">
+                        <input type="checkbox" id="agreeTerms"
+                            class="mt-1 w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                        <label for="agreeTerms" class="text-sm text-gray-600">
+                            I agree to the
+                            <a href="terms.html#registerFirm"
+                            target="_blank"
+                            class="text-emerald-600 underline hover:text-emerald-700">
+                                Terms & Conditions
+                            </a>
+                        </label>
+                    </div>
+                    <p class="text-xs text-red-500 hidden error-terms">
+                        You must agree to the terms and conditions
+                    </p>
+
+                    <div class="flex justify-end gap-3 pt-4">
+                        <button type="button" id="closeFirmModal"
+                            class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition">
+                            Cancel
+                        </button>
+                        <button type="submit"
+                            class="px-5 py-2 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">
+                            Register
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    `);
+
+                $("body").append($modal);
+
+                $("#closeFirmModal").on("click", () => $modal.remove());
+
+                // Submit
+                $("#registerFirmForm").on("submit", async function (e) {
+                    e.preventDefault();
+
+
+                    const agreed = $("#agreeTerms").is(":checked");
+                    $(".error-terms").addClass("hidden");
+
+                    if (!agreed) {
+                        $(".error-terms")
+                            .text("You must agree to the terms and conditions")
+                            .removeClass("hidden");
+                        $submitBtn.prop("disabled", false).text("Register");
+                        return;
+                    }
+
+                    const $registerBtn = $("#registerFirmForm button[type='submit']");
+                    $registerBtn.prop("disabled", true).addClass("opacity-60");
+
+                    $("#agreeTerms").on("change", function () {
+                        $registerBtn.prop("disabled", !this.checked)
+                            .toggleClass("opacity-60", !this.checked);
+                    });
+
+
+                    const firm_name = $(this).find("[name='firm_name']").val().trim();
+                    const bio = $(this).find("[name='bio']").val().trim();
+
+                    $(".error-firm-name, .error-bio").addClass("hidden");
+
+                    if (firm_name.length < 2) {
+                        $(".error-firm-name")
+                            .text("Firm name must be at least 2 characters")
+                            .removeClass("hidden");
+                        return;
+                    }
+
+                    const $submitBtn = $(this).find("button[type='submit']");
+                    $submitBtn.prop("disabled", true).text("Registering...");
+
+                    try {
+                        const res = await ajaxWithJWT({
+                            url: "http://127.0.0.1:5000/api/firm/register",
+                            method: "POST",
+                            contentType: "application/json",
+                            data: JSON.stringify({
+                                firm_name,
+                                bio
+                            })
+                        });
+
+                        if (res.status !== 1) throw new Error(res.message);
+
+                        Swal.fire("Success", "Firm registered successfully", "success");
+                        $modal.remove();
+                        fetchProfile(); // refresh firms list
+
+                    } catch (err) {
+                        Swal.fire("Error", err.message || "Failed to register firm", "error");
+                    } finally {
+                        $submitBtn.prop("disabled", false).text("Register");
+                    }
+                });
+            }
+
+
+
+            // // -----------------------------
+            // // Follow / Unfollow
+            // // -----------------------------
+            // if (!isSelf) updateFollowBtn(data.is_following);
 
             // -----------------------------
             // Firms
             // -----------------------------
             renderFirms("#owned-firms", data.owned_firms, false);
-            renderFirms("#publisher-firms", data.publisher_firms, true);
 
             lucide.createIcons();
             $loader.hide();
@@ -124,6 +286,38 @@ $(document).ready(async function () {
     // =====================================================
     // Render firms
     // =====================================================
+
+
+    function renderFirms(container, firms) {
+        const $el = $(container);
+        $el.empty();
+
+        if (!firms.length) {
+            $el.html(`<p class="text-gray-500">No firms found</p>`);
+            return;
+        }
+
+        firms.forEach(f => {
+            // Single card style
+            const cardClass = "bg-white hover:bg-indigo-50 border border-purple-200";
+
+            // Simplified URL
+            const href = `firm.html?firm_id=${f.id}`;
+
+            $el.append(`
+            <a href="${href}" target="_blank"
+                class="w-full p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
+                <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
+                <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>
+                <p class="text-xs mt-1 text-purple-600">
+                    Trust: ${f.trust_factor ?? 'N/A'}
+                </p>
+            </a>
+        `);
+        });
+    }
+
+
     // function renderFirms(container, firms, isPublisher) {
     //     const $el = $(container);
     //     $el.empty();
@@ -138,49 +332,23 @@ $(document).ready(async function () {
     //             ? "bg-blue-50 hover:bg-blue-100 border border-blue-100"
     //             : "bg-purple-50 hover:bg-purple-100 border border-purple-100";
 
+    //         // 🔹 URL logic
+    //         const href = isPublisher
+    //             ? `firm.html?firm_id=${f.firm_id}&publisher_id=${user.id}`
+    //             : `firm.html?firm_id=${f.id}`;
+
     //         $el.append(`
-    //             <a href="firm.html?id=${isPublisher ? f.firm_id : f.id}" target="_blank"
-    //                class="block p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
+    //             <a href="${href}" target="_blank"
+    //                 class="w-full p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
     //                 <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
     //                 <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>
-    //                 ${isPublisher ? `<p class="text-xs text-blue-600 mt-1">Trust: ${f.trust_factor}</p>` : ""}
+    //                 <p class="text-xs mt-1 ${isPublisher ? 'text-blue-600' : 'text-purple-600'}">
+    //                     Trust: ${f.trust_factor ?? 'N/A'}
+    //                 </p>
     //             </a>
-    //         `);
+    //             `);
     //     });
     // }
-
-    function renderFirms(container, firms, isPublisher) {
-        const $el = $(container);
-        $el.empty();
-
-        if (!firms.length) {
-            $el.html(`<p class="text-gray-500">No firms found</p>`);
-            return;
-        }
-
-        firms.forEach(f => {
-            const cardClass = isPublisher
-                ? "bg-blue-50 hover:bg-blue-100 border border-blue-100"
-                : "bg-purple-50 hover:bg-purple-100 border border-purple-100";
-
-            // 🔹 URL logic
-            const href = isPublisher
-                ? `firm.html?firm_id=${f.firm_id}&publisher_id=${user.id}`
-                : `firm.html?firm_id=${f.id}`;
-
-            $el.append(`
-            <a href="${href}" target="_blank"
-               class="block p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
-                <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
-                <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>
-
-                <p class="text-xs mt-1 ${isPublisher ? 'text-blue-600' : 'text-purple-600'}">
-                    Trust: ${f.trust_factor ?? 'N/A'}
-                </p>
-            </a>
-        `);
-        });
-    }
 
     // =====================================================
     // Follow / Subscribe

@@ -77,10 +77,10 @@ $(document).ready(function () {
         } else if (section === "firms") {
             html = `<div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                 ${data.map(f => `
-                    <a href="profile.html?firm_id=${f.id}" target="_blank"
+                    <a href="firm.html?firm_id=${f.id}" target="_blank"
                        class="p-4 bg-blue-50 rounded-xl shadow-sm block">
                         <p class="font-semibold">${f.firm_name}</p>
-                        <p class="text-xs text-gray-500 mt-1">${f.articles_count} articles</p>
+                        <p class="text-sm text-gray-500">@${f.firm_username}</p>
                     </a>
                 `).join('')}
             </div>`;

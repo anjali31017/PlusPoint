@@ -11,7 +11,7 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen">
-<!-- <body class="bg-gradient-to-tr from-blue-200 via-white to-pink-200 min-h-screen"> -->
+  <!-- <body class="bg-gradient-to-tr from-blue-200 via-white to-pink-200 min-h-screen"> -->
 
   <!-- NAVIGATION BAR -->
   <nav class="bg-white shadow-md">
@@ -130,7 +130,11 @@
                   <p><strong>ID Type:</strong> ${kyc.id_type}</p>
                   <p><strong>Last 4 of ID:</strong> ${kyc.id_last4}</p>
                   <p><strong>Status:</strong> <span class="font-semibold text-blue-600">${kyc.kyc_status}</span></p>
-                  <img src="${kyc.id_document_path}" alt="ID Document" class="mt-2 w-48 border rounded">
+                </div>
+                <div class="flex-1">
+                  <a href="${kyc.id_document_path}" target="_blank" rel="noopener noreferrer"> 
+                    <img src="${kyc.id_document_path}" alt="ID Document" class="mt-2 w-48 border rounded cursor-zoom-in">
+                  </a>
                 </div>
                 <div class="flex flex-col gap-2">
                   <select class="border px-3 py-2 rounded rejectionReason">

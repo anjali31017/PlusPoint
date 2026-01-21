@@ -9,6 +9,7 @@ from fastapi import Depends, Request, HTTPException, status
 
 from app.models.kyc import KYCModel, KYCStatus
 from app.models.firm import FirmModel
+from app.models.users import UserModel
 
 
 def admin_required(request: Request):
@@ -85,6 +86,11 @@ class AdminController:
                                                 #  )
             # kyc_record = await KYCModel.find(KYCModel.kyc_status == "UNDER_REVIEW")
             
+            user = await UserModel.find_one(UserModel.id == ObjectId(user_id), UserModel.is_deleted == False)
+
+            if user is None:
+                return None
+            
             kyc = await KYCModel.find_one(KYCModel.user_id.id == ObjectId(user_id), 
                                           KYCModel.is_deleted == False,
                                         #   KYCModel.kyc_status == "UNDER_REVIEW" 
@@ -92,10 +98,16 @@ class AdminController:
             
             if kyc is None:
                 return None
+            
             kyc.kyc_status = KYCStatus.VERIFIED
             kyc.reviewed_at = datetime.now()
             kyc.updated_at = datetime.now()
             await kyc.save()
+            
+            user.status = True
+            await user.save()
+
+            
             # kyc_record = KYCModel(**kyc.dict())
             
             # print("KYC Record in approve KYC:", kyc)

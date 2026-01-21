@@ -39,7 +39,12 @@ async def decode_token(token: str):
     
 async def create_token_pair(user: dict):
     try:
-        token_data = {"user_id": str(user.id), "username": user.username , "role": [r.value for r in user.role]}
+        token_data = {
+            "user_id": str(user.id), 
+            "username": user.username , 
+            "role": [r.value for r in user.role], 
+            "status": user.status,
+            }
         access_token = await create_access_token(token_data)
         refresh_token = await create_refresh_token(token_data)
 

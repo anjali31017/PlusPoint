@@ -6,11 +6,10 @@ from app.models.users import UserModel, UserRole
 from app.controller.util_controller import UtilController
 from typing import Optional
 
-from app.models.publisher import PublisherModel
 
 class FirmController:
     
-    async def create_firm(self, firm_data: dict, user:dict, user_id: str) -> Optional[FirmModel]:
+    async def create_firm(self, firm_data: FirmModel, user:UserModel, user_id: str) -> Optional[FirmModel]:
         """
         Create a firm for a user. Returns FirmModel on success, None on failure.
         No HTTPException raised here.
@@ -39,17 +38,6 @@ class FirmController:
             if not registered_firm:
                 return None
 
-            # 5️⃣ Add creator as publisher
-            # pub_data = {
-            #     "firm_id": registered_firm.id,
-            #     "publisher_id": user.id,
-            # }
-            # print("PUBBBBBBDATAAA ",pub_data)
-            await self.add_publisher(firm , user)
-            # registered_firm.publishers = [
-            #     await self.add_publisher(AddPublisherSchema(**pub_data))
-            # ]
-            # await registered_firm.save()
 
             # 6️⃣ Assign roles
             if UserRole.founder not in user.role:
@@ -65,47 +53,6 @@ class FirmController:
             return None
         
         
-    async def add_publisher(self, firm, user):
-        try:
-            # # Fetch publisher by username
-            # publisher = await UserModel.find_one(UserModel.username == data.publisher_username)
-            # if not publisher:
-            #     raise HTTPException(status_code=404, detail="Publisher (user) not found")
-
-            # # Fetch firm by username
-            # firm = await FirmModel.find_one(FirmModel.firm_username == data.firm_username)
-            # if not firm:
-            #     raise HTTPException(status_code=404, detail="Firm not found")
-
-
-            existing_entry = await PublisherModel.find_one(
-                            PublisherModel.firm_id.id == firm.id, 
-                            PublisherModel.publisher_id.id == user.id, 
-                            PublisherModel.is_active == True,
-                            PublisherModel.is_deleted == False
-                        )
-            if existing_entry:
-                raise HTTPException(status_code=400, detail="Publisher already associated with firm")
-
-            publisher_entry = PublisherModel(
-                publisher_id=user,
-                firm_id=firm,
-                is_active=True
-                )   
-            await publisher_entry.insert()
-        
-            # Ensure the user has the publisher role
-            if UserRole.publisher not in user.role:
-                user.role.append(UserRole.publisher)
-                await user.save()
-
-            return publisher_entry
-
-        except HTTPException as e:
-            raise e
-        except Exception as e:
-            print("Error adding publisher to firm:", e)
-            raise HTTPException(status_code=500, detail="Internal server error")
 
         
    # async def register_firm(self, firm_data) -> bool:

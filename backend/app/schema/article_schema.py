@@ -29,6 +29,18 @@ class ArticleSearchSchema(BaseModel):
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=10, ge=1, le=100)
 
+
+class ArticleOutSchema(BaseModel):
+    id: str
+    title: str
+    summary: Optional[str]
+    tags: List[str]
+    category: List[str]
+    published_at: Optional[datetime]
+    publisher: Optional[dict]
+    
+    
+    
 # class ArticleSearchSchema(BaseModel):
 #     publisher_name: Optional[str] = None
 #     firm_name: Optional[str] = None

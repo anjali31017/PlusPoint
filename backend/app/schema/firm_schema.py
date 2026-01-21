@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, Field
 
+from app.schema.article_schema import ArticleOutSchema
+
 # class PublisherSchema(BaseModel):
 #     publisher_user_id: str
 
@@ -23,3 +25,18 @@ class FirmSchema(BaseModel):
     trust_factor: Optional[int] = None
     violations_count: Optional[int] = None
     created_at: datetime
+    
+    
+class FirmDetailsOutSchema(BaseModel):
+    id: str
+    firm_name: str
+    firm_username: str
+    bio: Optional[str]
+    verification_status: str
+    trust_factor: int
+    violations_count: int
+    is_verified: bool
+    created_at: datetime
+    owner: dict  # minimal owner info
+    articles: List[ArticleOutSchema]
+    is_self: bool  # tag for FE

@@ -30,6 +30,7 @@ class UserModel(Document):
     otp_blocked_until: Optional[datetime] = None
     reset_token: Optional[str] = None
     reset_token_expiry: Optional[datetime] = None   
+    status: bool = False
     is_verified: bool = False
     is_active: bool = False
     is_deleted: bool = False

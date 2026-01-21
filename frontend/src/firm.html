@@ -1,59 +1,109 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile - PlusPoint</title>
+  <title>Firm - PlusPoint</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
-    .content-scroll { scrollbar-width: thin; scrollbar-color: #E9D5FF transparent; }
-    .content-scroll::-webkit-scrollbar { width: 6px; }
-    .content-scroll::-webkit-scrollbar-thumb { background: #E9D5FF; border-radius: 10px; }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    body { display: none; }
+    .content-scroll {
+      scrollbar-width: thin;
+      scrollbar-color: #E9D5FF transparent;
+    }
+
+    .content-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .content-scroll::-webkit-scrollbar-thumb {
+      background: #E9D5FF;
+      border-radius: 10px;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+
+    body {
+      display: none;
+      font-family: sans-serif;
+      background: #f9fafb;
+    }
+
+    .card {
+      transition: all 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .badge {
+      transition: all 0.2s;
+    }
   </style>
 </head>
+
 <body class="bg-white min-h-screen flex flex-col md:flex-row overflow-hidden font-sans text-gray-900">
 
-  <aside class="hidden md:flex flex-col w-72 bg-gradient-to-tr from-blue-100 to-purple-200 h-screen sticky top-0 border-r border-gray-100 z-20">
+  <aside
+    class="hidden md:flex flex-col w-72 bg-gradient-to-tr from-blue-100 to-purple-200 h-screen sticky top-0 border-r border-gray-100 z-20">
     <div class="p-5 flex flex-col items-center">
-      <h1 class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-blue-600 tracking-tighter">PlusPoint</h1>
+      <h1
+        class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-blue-600 tracking-tighter">
+        PlusPoint</h1>
     </div>
     <nav class="flex-1 overflow-y-auto px-6 py-4 space-y-2 no-scrollbar">
       <div class="space-y-1 mb-8">
-        <a href="home.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+        <a href="home.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="home" class="w-5 h-5"></i><span>HOME</span>
         </a>
-        <a href="search.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+        <a href="search.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="search" class="w-5 h-5"></i><span>SEARCH</span>
         </a>
-        <a href="quickTake.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+        <a href="quickTake.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="compass" class="w-5 h-5"></i><span>QUICK TAKE</span>
         </a>
-        <a href="coverage.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+        <a href="coverage.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="newspaper" class="w-5 h-5"></i><span>COVERAGE</span>
         </a>
-        <a href="trending.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+        <a href="trending.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="trending-up" class="w-5 h-5"></i><span>TRENDING</span>
         </a>
-        <a href="newswire.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+        <a href="newswire.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="rss" class="w-5 h-5"></i><span>NEWSWIRE</span>
         </a>
       </div>
       <div class="pt-6 border-t border-purple-300/30 space-y-1">
         <p class="text-[10px] font-bold text-gray-500 ml-4 mb-2 tracking-[0.2em]">PERSONAL</p>
-        <a href="favorites.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
-  <i data-lucide="heart" class="w-5 h-5"></i>
-  <span>FAVORITES</span>
-</a>
-        <a href="profile.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl bg-purple-50 text-purple-700 font-bold shadow-sm">
+        <a href="favorites.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="heart" class="w-5 h-5"></i>
+          <span>FAVORITES</span>
+        </a>
+        <a href="profile.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="user" class="w-5 h-5"></i><span>PROFILE</span>
         </a>
-        <a href="settings.html" class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+        <a href="settings.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="settings" class="w-5 h-5"></i><span>SETTINGS</span>
         </a>
       </div>
@@ -61,67 +111,44 @@
   </aside>
 
   <main class="flex-1 h-screen overflow-y-auto bg-white content-scroll">
-    <header class="flex justify-between items-center p-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-purple-100">
-      <h2 class="text-2xl font-bold text-gray-800">Profile Feed</h2>
+    <header
+      class="flex justify-between items-center p-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-purple-100">
+      <h2 class="text-2xl font-bold text-gray-800">Firm</h2>
       <div class="flex items-center space-x-2 md:space-x-5">
-        <button class="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all relative">
+        <button
+          class="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all relative">
           <i data-lucide="bell" class="w-6 h-6"></i>
           <span class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
         </button>
         <div class="flex items-center pl-4 border-l border-purple-100">
-            <a href="profile.html" class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all">
-                <i data-lucide="user" class="w-7 h-7"></i>
-            </a>
+          <a href="profile.html"
+            class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all">
+            <i data-lucide="user" class="w-7 h-7"></i>
+          </a>
         </div>
       </div>
     </header>
 
-    <div id="content-wrapper" class="p-6 md:p-10 max-w-6xl mx-auto pb-32 md:pb-10">
-      
-    <!-- Add this inside <main id="content-wrapper"> where the profile should appear -->
-<div id="profile-wrapper" class="space-y-10 max-w-5xl mx-auto">
-    <!-- Loader -->
-    <div id="profile-loader" class="flex justify-center py-10">
-        <div class="loader border-t-4 border-purple-600 w-10 h-10 rounded-full animate-spin"></div>
+
+
+
+
+<div class="max-w-6xl mx-auto py-8 px-4">
+    <div id="firm-info" class="mb-8"></div>
+    <div id="firm-actions" class="flex flex-wrap gap-4 mb-6"></div>
+    <div id="articles-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+    <div id="loading-spinner" class="text-center py-4 hidden">
+        <i data-lucide="loader" class="w-8 h-8 animate-spin text-purple-600"></i>
     </div>
-
-    <!-- Profile Content -->
-    <div id="profile-content" class="hidden space-y-8">
-        <!-- User Info -->
-        <div class="bg-white rounded-2xl p-6 shadow-md flex flex-col md:flex-row items-center md:items-start gap-6">
-            <img id="profile-avatar" src="" alt="Avatar" class="w-28 h-28 rounded-full object-cover bg-purple-100">
-            <div class="flex-1">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <h2 id="profile-name" class="text-2xl font-bold text-gray-800"></h2>
-                    <span id="kyc-badge" class="text-sm font-bold px-3 py-1 rounded-full"></span>
-                </div>
-                <p id="profile-username" class="text-gray-500 mt-1"></p>
-                <p id="profile-email" class="text-gray-500 mt-1"></p>
-                <p id="profile-bio" class="text-gray-600 mt-2"></p>
-            </div>
-        </div>
-
-        <!-- Owned Firms -->
-        <div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Owned Firms</h3>
-            <div id="owned-firms" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
-        </div>
-
-        <!-- Publisher Firms -->
-        <div>
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Publisher Access</h3>
-            <div id="publisher-firms" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
-        </div>
-    </div>
+    <div id="no-articles" class="text-center py-8 text-gray-500 hidden">No articles found</div>
 </div>
 
 
 
-
-      </div>
   </main>
 
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-purple-100 flex justify-around items-center px-2 py-3 z-50">
+  <nav
+    class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-purple-100 flex justify-around items-center px-2 py-3 z-50">
     <a href="home.html" class="flex flex-col items-center text-purple-700">
       <i data-lucide="home" class="w-6 h-6"></i>
       <span class="text-[10px] font-bold mt-1">HOME</span>
@@ -140,15 +167,56 @@
     </a>
   </nav>
 
-  <!-- <script>
-    $(document).ready(function() {
+  <script>
+    $(document).ready(function () {
+      $('body').fadeIn(300);
       lucide.createIcons();
-      $('body').fadeIn(400); // Smoothly show the page
     });
-  </script> -->
+  </script>
 
   <!-- Include JS at the bottom of body -->
-<script src="../scripts/profile.js"></script>
-<script src="../scripts/auth.js"></script>
+  <script src="../scripts/firm.js"></script>
+  <script src="../scripts/auth.js"></script>
 </body>
+<script src="../scripts/index.js"></script>
+
 </html>
+
+
+
+
+
+
+<!-- 
+
+     <div class="max-w-6xl mx-auto py-8 px-4">
+
+
+    <div class="bg-white rounded-xl shadow p-6 mb-6 flex justify-between items-start">
+      <div>
+        <h1 id="firmName" class="text-2xl font-bold text-purple-700 mb-2"></h1>
+        <p id="firmBio" class="text-gray-600 mb-2"></p>
+        <p class="text-sm text-gray-500">Verification: <span id="firmVerification"></span> | Trust: <span id="firmTrust"></span> | Violations: <span id="firmViolations"></span></p>
+      </div>
+      <div>
+        <button id="reportFirmBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl flex items-center space-x-2">
+          <span>Report</span>
+        </button>
+        
+      </div>
+    </div>
+
+
+
+    <div id="publishersSection" class="mb-6">
+      <h2 class="text-xl font-bold mb-4 text-gray-800">Publishers</h2>
+      <div id="publishersContainer" class="grid md:grid-cols-3 gap-4"></div>
+    </div>
+
+    
+
+    <h2 class="text-xl font-bold mb-4 text-gray-800">Articles</h2>
+    <div id="articlesContainer" class="grid md:grid-cols-2 gap-4 mb-6"></div>
+
+
+  </div> -->

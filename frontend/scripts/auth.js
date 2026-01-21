@@ -52,31 +52,6 @@ async function refreshToken() {
 
 
 
-// async function refreshToken() {
-//     const refresh_token = localStorage.getItem("refresh_token");
-//     if (!refresh_token) {
-//         redirectToLogin();
-//         return;
-//     }
-
-//     return $.ajax({
-//         url: "http://127.0.0.1:5000/api/token/refresh",
-//         method: "POST",
-//         contentType: "application/json",
-//         data: JSON.stringify({ refresh_token }),
-//     }).then(res => {
-//         if (res.status === 1 && res.data) {
-//             setTokens(res.data.access_token, res.data.refresh_token);
-//             return res.data.access_token;
-//         } else {
-//             redirectToLogin();
-//             throw new Error("Failed to refresh token");
-//         }
-//     }).catch(() => {
-//         redirectToLogin();
-//     });
-// }
-
 // Wrapper for AJAX requests with automatic JWT refresh
 async function ajaxWithJWT(options) {
     let token = getAccessToken();
