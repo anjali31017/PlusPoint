@@ -372,6 +372,34 @@ async def search_multi_section(search: ArticleSearchSchema):
         )
 
 
+
+
+@router.get("/article", response_model=BaseResponse)
+async def get_single_article(
+    article_id: str = Query(...),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        if current_user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue",
+            )
+
+        article_data = await article_controller.get_article_by_id(article_id)
+
+        return {
+            "status": 1,
+            "message": "Article fetched successfully",
+            "data": article_data.dict()
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+
 # @router.get("/fetch", response_model=BaseResponse)
 # async def get_article_details(article_id: str | None = Query(None),
 #     current_user: dict = Depends(get_current_user)

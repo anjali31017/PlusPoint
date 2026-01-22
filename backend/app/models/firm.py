@@ -24,6 +24,7 @@ class FirmModel(Document):
     violations_count: int = Field(default=0)
     follow_count: int = 0
     report_count: int = 0
+    endorse_count: int = 0
     is_active: bool = True
     is_deleted: bool = False
     is_verified: bool = False

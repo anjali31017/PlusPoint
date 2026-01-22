@@ -9,6 +9,7 @@ from fastapi import BackgroundTasks, HTTPException
 from pymongo.errors import DuplicateKeyError
 from app.models.comment import CommentModel
 from app.kafka.producer import send_kafka_event
+from app.schema.article_schema import ArticleOutSchema
 
 
 
@@ -114,7 +115,7 @@ class ArticleController:
                 ArticleLikeModel.user_id.id == user.id,
                 ArticleLikeModel.article_id.id == article.id
                 )
-            print(liked)
+            # print(liked)
             if liked:
                 await liked.delete()
                 await article.update({"$inc": {"like_count": -1}})
@@ -158,8 +159,37 @@ class ArticleController:
             return False
 
 
+    async def get_article_by_id(self, article_id: str) -> ArticleOutSchema:
+        try:
+            article = await ArticleModel.find_one(
+                ArticleModel.id == ObjectId(article_id),
+                ArticleModel.is_deleted == False
+            )
+            if not article:
+                raise HTTPException(status_code=404, detail="Article not found")
+            
+            publisher = await article.publisher_id.fetch()
+            publisher_info = {
+                "id": str(publisher.id),
+                "username": publisher.username,
+                "first_name": publisher.first_name,
+                "last_name": publisher.last_name,
+            } if publisher else None
 
-
+            return ArticleOutSchema(
+                id=str(article.id),
+                title=article.title,
+                summary=article.summary,
+                like_count=article.like_count,
+                tags=article.tags,
+                category=article.category,
+                published_at=article.published_at,
+                publisher=publisher_info
+            )
+        except Exception as e:
+            print(f"Error while liking article: {str(e)}")
+            return False
+        
     # async def like_article(self, a_id: str, u_id: str):
     #     article_id = ObjectId(a_id)
     #     user_id = ObjectId(u_id)

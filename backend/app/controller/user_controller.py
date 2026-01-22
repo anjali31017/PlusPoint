@@ -11,6 +11,7 @@ from app.models.article import ArticleModel
 from app.models.comment import CommentModel
 from app.models.kyc import KYCModel
 from app.models.report import ReportModel
+from app.models.endorse import EndorsementModel
 
 
 util_controller = UtilController()
@@ -131,7 +132,53 @@ class UserController:
             print("Error updating user:", e)
             return None
 
-    
+
+    async def endorse_firm_article(self, firm_id: str|None, article_id: str|None,  current_user:dict ):
+        try:
+            user = await UserModel.find_one( UserModel.id == ObjectId(current_user["user_id"]), UserModel.is_deleted == False)
+            if not user:
+                return None
+            
+            firm = None
+            article = None
+
+            if firm_id:
+                firm = await FirmModel.find_one( FirmModel.id == ObjectId(firm_id), FirmModel.is_deleted == False)
+                if not firm:
+                    return None
+                
+            if article_id:
+                article = await ArticleModel.find_one( ArticleModel.id == ObjectId(article_id), ArticleModel.is_deleted == False)
+                if not article:
+                    return None
+
+            
+            endorsed = await EndorsementModel.find_one(
+                EndorsementModel.user_id.id == user.id,
+                EndorsementModel.firm_id.id == (firm.id if firm else None),
+                EndorsementModel.article_id.id == (article.id if article else None),
+                )
+            if endorsed:
+                await endorsed.delete()
+                if article:
+                    await article.update({"$inc": {"endorse_count": -1}})
+                if firm:
+                    await firm.update({"$inc": {"endorse_count": -1}})
+                return "removed"
+            
+            endorse = EndorsementModel(user_id=user, firm_id=firm, article_id=article)
+            await endorse.insert()
+
+            if firm:   
+                await firm.update({"$inc": {"endorse_count": 1}})
+            if article:
+                await article.update({"$inc": {"endorse_count": 1}})
+            
+            return "endorsed"
+            
+        except Exception as e:
+            print("Error updating user:", e)
+            return None
     
     
     async def delete_user(self, current_user :dict):

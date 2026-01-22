@@ -45,6 +45,7 @@ async def create_token_pair(user: dict):
             "role": [r.value for r in user.role], 
             "status": user.status,
             }
+
         access_token = await create_access_token(token_data)
         refresh_token = await create_refresh_token(token_data)
 

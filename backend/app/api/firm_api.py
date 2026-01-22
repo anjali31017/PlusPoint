@@ -16,6 +16,8 @@ from app.models.article import ArticleModel
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleOutSchema
 from app.kafka.producer import send_kafka_event
+from app.models.subscription import SubscriptionModel
+from app.models.endorse import EndorsementModel
 
 
 router = APIRouter(prefix="/firm", tags=["Firm"])
@@ -187,37 +189,57 @@ async def get_firm_details(
             ArticleModel.is_deleted == False
         ).sort("-published_at").skip(skip).limit(page_size)
 
+        # articles = []
+        # async for article in articles_cursor:
+        #     # Resolve the publisher link
+        #     publisher = await article.publisher_id.fetch()
+        #     publisher_info = {
+        #         "id": str(publisher.id),
+        #         "username": publisher.username,
+        #         "first_name":publisher.first_name,
+        #         "last_name":publisher.last_name,
+        #     } if publisher else None
+
+        #     articles.append(ArticleOutSchema(
+        #         id=str(article.id),
+        #         title=article.title,
+        #         summary=article.summary,
+        #         like_count=article.like_count,
+        #         tags=article.tags,
+        #         category=article.category,
+        #         published_at=article.published_at,
+        #         publisher=publisher_info
+        #     ))
         articles = []
+        
         async for article in articles_cursor:
-            # Resolve the publisher link
-            publisher = await article.publisher_id.fetch()
-            publisher_info = {
-                "id": str(publisher.id),
-                "username": publisher.username,
-                "first_name":publisher.first_name,
-                "last_name":publisher.last_name,
-            } if publisher else None
-
-            articles.append(ArticleOutSchema(
-                id=str(article.id),
-                title=article.title,
-                summary=article.summary,
-                like_count=article.like_count,
-                tags=article.tags,
-                category=article.category,
-                published_at=article.published_at,
-                publisher=publisher_info
-            ))
-
+            article_id = str(article.id)
+            article_data = await article_controller.get_article_by_id(article_id)
+            articles.append(article_data)
+    
         # Check if current user is the owner
         
         is_self = False
         if owner and current_user:
             is_self = str(current_user["user_id"]) == str(owner.id)
 
+        following_details = await SubscriptionModel.find_one(
+            SubscriptionModel.subscriber_id.id == ObjectId(current_user["user_id"]),
+            SubscriptionModel.firm_id.id == firm.id
+        )
+        following = True if following_details else False
+        
+        endorsement_details = await EndorsementModel.find_one(
+            EndorsementModel.user_id.id == ObjectId(current_user["user_id"]),
+            EndorsementModel.firm_id.id == firm.id
+        )
+        endorsed = True if endorsement_details else False
+        
         # Build final response
         response_data = FirmDetailsOutSchema(
             id=str(firm.id),
+            following=following,
+            endorsed=endorsed,
             firm_name=firm.firm_name,
             firm_username=firm.firm_username,
             bio=firm.bio,

@@ -29,6 +29,8 @@ class FirmSchema(BaseModel):
     
 class FirmDetailsOutSchema(BaseModel):
     id: str
+    following: bool
+    endorsed: bool
     firm_name: str
     firm_username: str
     bio: Optional[str]

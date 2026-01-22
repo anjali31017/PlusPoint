@@ -29,6 +29,7 @@ class ArticleModel(Document):
     moderation_required: bool = False
     like_count: int = 0
     report_count: int = 0
+    endorse_count: int = 0
     hot_topic: bool = False
     is_deleted: bool = False
     published_at: Optional[datetime] = None
