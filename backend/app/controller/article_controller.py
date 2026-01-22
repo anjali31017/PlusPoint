@@ -47,7 +47,7 @@ class ArticleController:
         
     async def update_article( self, article_id: str, update_data: dict) -> ArticleModel | None:
         try:
-            article = await ArticleModel.get(ObjectId(article_id))
+            article = await ArticleModel.find_one(ArticleModel.id == ObjectId(article_id), ArticleModel.is_deleted == False)
             if not article:
                 raise HTTPException(status_code=404, detail="Article not found")
             
@@ -72,15 +72,15 @@ class ArticleController:
         user_id: str
         ) -> ArticleModel | None:
         try:
-            article = await ArticleModel.get(ObjectId(article_id))
+            article = await ArticleModel.find_one(ArticleModel.id == ObjectId(article_id), ArticleModel.is_deleted == False)
             if not article:
                 raise HTTPException(status_code=404, detail="Article not found")
-            user = await UserModel.get(ObjectId(user_id))
+            user = await UserModel.find_one(UserModel.id == ObjectId(user_id), UserModel.is_deleted == False)
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
             
             if parent_comment_id:
-                parent_comment = await CommentModel.get(ObjectId(parent_comment_id))
+                parent_comment = await CommentModel.find_one(CommentModel.id == ObjectId(parent_comment_id), CommentModel.is_deleted == False)
                 if not parent_comment:
                     raise HTTPException(status_code=404, detail="Parent comment not found")
 
@@ -102,11 +102,11 @@ class ArticleController:
 
     async def like_article( self, a_id: str, u_id:str) -> ArticleLikeModel:
         try:
-            article = await ArticleModel.get(ObjectId(a_id))
+            article = await ArticleModel.find_one(ArticleModel.id == ObjectId(a_id), ArticleModel.is_deleted == False)
             if not article:
                 raise HTTPException(status_code=404, detail="Article not found")
 
-            user = await UserModel.get(ObjectId(u_id))
+            user = await UserModel.find_one(UserModel.id == ObjectId(u_id), UserModel.is_deleted == False)
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
 

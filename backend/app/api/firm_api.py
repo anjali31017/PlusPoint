@@ -1,6 +1,6 @@
 from typing import Optional
 from bson import ObjectId
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
 # from app.controller.user_controller import UserController
 from app.controller.token_controller import get_current_user
@@ -15,6 +15,7 @@ from app.models.firm import FirmModel
 from app.models.article import ArticleModel
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleOutSchema
+from app.kafka.producer import send_kafka_event
 
 
 router = APIRouter(prefix="/firm", tags=["Firm"])
@@ -38,7 +39,7 @@ async def create_firm_api(
                 detail="Invalid access token, Login to continue",
             )
 
-        user = await UserModel.get(ObjectId(current_user["user_id"]))
+        user = await UserModel.find_one( UserModel.id ==ObjectId(current_user["user_id"]), UserModel.is_deleted == False)
         if not user or not user.is_verified or not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="User Not found"
@@ -108,6 +109,41 @@ async def add_publisher(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
+
+@router.post("/follow", response_model=BaseResponse)
+async def subscribe_to_entity(
+    background_tasks: BackgroundTasks,
+    firm_id: str | None = None,
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        if current_user is None:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+            
+        if not firm_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="firm_username is required")
+
+        success = await firm_controller.subscribe(firm_id, current_user["user_id"])
+        
+        if success["status"] == "followed":
+            background_tasks.add_task(
+                send_kafka_event,  
+                "article.follow",  
+                success["data"],  
+            )
+
+        response_data = {
+            "status": 1,
+            "message": (
+                "Firm unfollowed" if success["status"] == "un-followed" else "Firm followed"
+            ),
+            "data": success,
+        }
+        return response_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 # @router.get("/details", response_model=BaseResponse)
 # async def get_firm_details(
@@ -325,7 +361,7 @@ async def get_firm_details(
             raise HTTPException(status_code=400, detail="firm_id is required")
         
         # Fetch firm by ID
-        firm = await FirmModel.get(ObjectId(firm_id))
+        firm = await FirmModel.find_one( FirmModel.id == ObjectId(firm_id), FirmModel.is_deleted == False)
         if not firm or firm.is_deleted or not firm.is_active:
             raise HTTPException(status_code=404, detail="Firm not found")
         
@@ -363,6 +399,7 @@ async def get_firm_details(
                 id=str(article.id),
                 title=article.title,
                 summary=article.summary,
+                like_count=article.like_count,
                 tags=article.tags,
                 category=article.category,
                 published_at=article.published_at,
@@ -384,6 +421,7 @@ async def get_firm_details(
             verification_status=firm.verification_status.value,
             trust_factor=firm.trust_factor,
             violations_count=firm.violations_count,
+            follow_count=firm.follow_count,
             is_verified=firm.is_verified,
             created_at=firm.created_at,
             owner=owner_info,

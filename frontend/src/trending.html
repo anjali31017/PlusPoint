@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="../media/pluspoint_logo.png">
   <title>Trending - PlusPoint</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -62,7 +63,12 @@
 
   <main class="flex-1 h-screen overflow-y-auto bg-white content-scroll">
     <header class="flex justify-between items-center p-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-purple-100">
-      <h2 class="text-2xl font-bold text-gray-800">Home Feed</h2>
+      <!-- <h2 class="text-2xl font-bold text-gray-800">Home Feed</h2> -->
+<h2 class="flex items-center gap-3 text-2xl font-bold text-gray-800">
+        <img src="../media/pluspoint_logo.png" alt="PLUSPOINT" class="w-8 h-8">
+        TRENDING
+      </h2>
+
       <div class="flex items-center space-x-2 md:space-x-5">
         <button class="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all relative">
           <i data-lucide="bell" class="w-6 h-6"></i>

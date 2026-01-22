@@ -18,6 +18,7 @@ from fastapi import status
 from app.controller.util_controller import UtilController
 from app.models.kyc import KYCModel
 from app.models.firm import FirmModel, VerificationStatus
+from app.kafka.producer import send_kafka_event
 
 
 
@@ -439,23 +440,8 @@ async def logout(data: LogoutSchema):
     
 
 
-@router.post("/subscribe", response_model=BaseResponse)
-async def subscribe_to_entity(
-    firm_username: str | None = None,
-    current_user: dict = Depends(get_current_user)
-):
-    if current_user is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
-        
-    if not firm_username:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Either firm_username or publisher_username is required")
 
-    response = await user_controller.subscribe(firm_username, current_user["user_id"])
-    return {
-        "status": 1,
-        "message": "request successfully",
-        "data": response
-    }
+        
 
 @router.get("/protected")
 async def protected_route(current_user: dict = Depends(get_current_user)):

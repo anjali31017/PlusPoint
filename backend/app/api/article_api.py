@@ -191,8 +191,7 @@ async def like_article(
             "status": 1,
             "message": (
                 "Article unliked"
-                if success["status"] == "un-liked"
-                else "Article liked"
+                if success["status"] == "un-liked" else "Article liked"
             ),
             "data": success,
         }

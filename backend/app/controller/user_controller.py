@@ -87,50 +87,7 @@ class UserController:
             print("Error updating user:", e)
             return None
 
-    async def subscribe(self, firm_username:str|None, subscriber_id: str) -> bool:
-        try:
-            firm = None
-            firm_data = None
-            
-            if firm_username:
-                firm = await FirmModel.find_one(
-                    FirmModel.firm_username == firm_username,
-                    FirmModel.is_deleted == False,
-                    FirmModel.is_active == True,
-                    )
-                firm_data = firm.id
-                if not firm:
-                    raise HTTPException(status_code=404, detail="Firm not found")
-            
-            subscriber = await UserModel.get(ObjectId(subscriber_id))
-            if not subscriber:
-                raise HTTPException(status_code=404, detail="Subscriber (user) not found")
-            
-                
-                
-            subscription = await SubscriptionModel.find_one(
-                SubscriptionModel.subscriber_id.id == subscriber.id,
-                SubscriptionModel.firm_id.id == firm_data,
-                )
-
-            if subscription:
-                await subscription.delete()
-                return "unsubscribed"
-                # raise HTTPException(status_code=200, detail="Already subscribed")
-            
-            subscription = SubscriptionModel(
-                subscriber_id=subscriber, firm_id=firm_data
-            )
-
-            await subscription.insert()
-            return "subscribed"
-
-        except HTTPException as e:
-            raise e
-        except Exception as e:
-            print("Error subscribing to publisher:", e)
-            raise HTTPException(status_code=500, detail="Internal server error")
-        
+    
         
     async def delete_user(self, current_user :dict):
         try:

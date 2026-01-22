@@ -22,6 +22,7 @@ class FirmModel(Document):
     verification_status: VerificationStatus = VerificationStatus.APPROVED # PENDING | APPROVED | REJECTED | SUSPENDED
     trust_factor: int = Field(default=100)
     violations_count: int = Field(default=0)
+    follow_count: int = 0
     is_active: bool = True
     is_deleted: bool = False
     is_verified: bool = False

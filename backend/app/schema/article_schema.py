@@ -34,6 +34,7 @@ class ArticleOutSchema(BaseModel):
     id: str
     title: str
     summary: Optional[str]
+    like_count: int
     tags: List[str]
     category: List[str]
     published_at: Optional[datetime]

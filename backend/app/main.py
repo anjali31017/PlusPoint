@@ -23,6 +23,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from app.kafka.consumer.moderation_consumer import ModerationKafkaConsumer
 from app.kafka.consumer.like_consumer import KafkaLikeService
+from app.kafka.consumer.follow_consumer import KafkaFollowService
 
 
 @asynccontextmanager
@@ -33,6 +34,7 @@ async def lifespan(app: FastAPI):
     
     article_consumer = asyncio.create_task(KafkaArticleService.consume_articles())
     like_consumer = asyncio.create_task(KafkaLikeService.consume_likes())
+    follow_consumer = asyncio.create_task(KafkaFollowService.consume_follow())
     
     # moderation_consumer = asyncio.create_task(ModerationKafkaConsumer.start())
 
@@ -49,10 +51,14 @@ async def lifespan(app: FastAPI):
         KafkaLikeService.is_running = False
         await KafkaLikeService.shutdown()
 
+        KafkaFollowService.is_running = False
+        await KafkaFollowService.shutdown()
+        
         article_consumer.cancel()
         like_consumer.cancel()
+        follow_consumer.cancel()
         
-        await asyncio.gather(article_consumer, like_consumer, return_exceptions=True)
+        await asyncio.gather(article_consumer, like_consumer, follow_consumer, return_exceptions=True)
         
     # ModerationKafkaConsumer.is_running = False
     # await ModerationKafkaConsumer.shutdown()
