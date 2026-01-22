@@ -19,6 +19,7 @@ from app.controller.util_controller import UtilController
 from app.models.kyc import KYCModel
 from app.models.firm import FirmModel, VerificationStatus
 from app.kafka.producer import send_kafka_event
+from app.models.report import ReportReasonRequestSchema
 
 
 
@@ -451,6 +452,59 @@ async def protected_route(current_user: dict = Depends(get_current_user)):
     return {"msg": f"Hello user {current_user['user_id']} with roles {current_user['role']}"}
 
 
+
+
+
+@router.post("/report", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def report(
+    reason: ReportReasonRequestSchema,
+    firm_id: str|None = Query(None),
+    article_id: str|None = Query(None),
+    current_user: dict = Depends(get_current_user),
+    ):
+    try:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue"
+            )
+        
+        if not firm_id and not article_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Either firm_id or article_id is required"
+            )
+
+        result = await user_controller.report_firm_article(firm_id, article_id, reason.reason, current_user)
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="failed to report, Try again!"
+            )
+        
+        if result is False:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Already reported"
+            )
+            
+        return {
+            "status":1,
+            "message": "reported successfully",
+            "data": None
+        }
+    
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+        
+        
+        
+        
 
 @router.post("/delete/account", response_model=BaseResponse)
 async def delete_account(current_user:dict = Depends(get_current_user)):

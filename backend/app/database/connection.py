@@ -1,6 +1,7 @@
 
 
 from app.models.admin import AdminModel
+from app.models.report import ReportModel
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from app.config import settings
@@ -35,6 +36,7 @@ async def connect_to_mongo():
                 NotificationModel,
                 KYCModel,
                 AdminModel,
+                ReportModel,
                 ])
             print("Connected to MongoDB with Beanie")
     except Exception as e:
