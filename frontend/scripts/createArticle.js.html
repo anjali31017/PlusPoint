@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="../media/pluspoint_logo.png">
+  <title>Create Article - PlusPoint</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+   <script src="https://cdn.tiny.cloud/1/uxh471978q9jgw7y107j4cuzopr9tsqh5ytfj1ajjhywc89m/tinymce/6/tinymce.min.js" referrerpolicy="origin"></script>
+ <style>
+    body { font-family: sans-serif; background: #f9fafb; }
+    .content-scroll { scrollbar-width: thin; scrollbar-color: #E9D5FF transparent; }
+    .content-scroll::-webkit-scrollbar { width: 6px; }
+    .content-scroll::-webkit-scrollbar-thumb { background: #E9D5FF; border-radius: 10px; }
+  </style>
+</head>
+
+<body class="bg-white min-h-screen flex flex-col md:flex-row overflow-hidden font-sans text-gray-900">
+
+  <aside
+    class="hidden md:flex flex-col w-72 bg-gradient-to-tr from-blue-100 to-purple-200 h-screen sticky top-0 border-r border-gray-100 z-20">
+    <div class="p-5 flex flex-col items-center">
+      <h1
+        class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-blue-600 tracking-tighter">
+        PlusPoint</h1>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-6 py-4 space-y-2 no-scrollbar">
+      <div class="space-y-1 mb-8">
+        <a href="home.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="home" class="w-5 h-5"></i><span>HOME</span>
+        </a>
+        <a href="search.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="search" class="w-5 h-5"></i><span>SEARCH</span>
+        </a>
+        <a href="quickTake.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="compass" class="w-5 h-5"></i><span>QUICK TAKE</span>
+        </a>
+        <a href="coverage.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="newspaper" class="w-5 h-5"></i><span>COVERAGE</span>
+        </a>
+        <a href="trending.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="trending-up" class="w-5 h-5"></i><span>TRENDING</span>
+        </a>
+        <a href="newswire.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="rss" class="w-5 h-5"></i><span>NEWSWIRE</span>
+        </a>
+      </div>
+      <div class="pt-6 border-t border-purple-300/30 space-y-1">
+        <p class="text-[10px] font-bold text-gray-500 ml-4 mb-2 tracking-[0.2em]">PERSONAL</p>
+        <a href="favorites.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="heart" class="w-5 h-5"></i>
+          <span>FAVORITES</span>
+        </a>
+        <a href="profile.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="user" class="w-5 h-5"></i><span>PROFILE</span>
+        </a>
+        <a href="settings.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="settings" class="w-5 h-5"></i><span>SETTINGS</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="flex-1 h-screen overflow-y-auto bg-white content-scroll">
+    <header
+      class="flex justify-between items-center p-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-purple-100">
+    
+
+        <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-800">
+        <img src="../media/pluspoint_logo.png" alt="PLUSPOINT" class="w-8 h-8">
+        CREATE ARTICLE
+      </h2>
+
+
+      <div class="flex items-center space-x-2 md:space-x-5">
+        <button
+          class="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all relative">
+          <i data-lucide="bell" class="w-6 h-6"></i>
+          <span class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+        </button>
+        <div class="flex items-center pl-4 border-l border-purple-100">
+          <a href="profile.html"
+            class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all">
+            <i data-lucide="user" class="w-7 h-7"></i>
+          </a>
+        </div>
+      </div>
+    </header>
+
+
+
+
+  <!-- Main Content -->
+  <!-- <main class="flex-1 h-screen overflow-y-auto content-scroll p-6"> -->
+<div class="flex-1 h-screen overflow-y-auto content-scroll p-6">
+
+    <!-- Article Form -->
+    <div class="space-y-4 max-w-4xl">
+
+      <!-- Title -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Title</label>
+        <input type="text" id="title" placeholder="Enter article title"
+               class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+      </div>
+
+      <!-- Category -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Category (comma separated)</label>
+        <input type="text" id="category" placeholder="Technology, AI, Innovation"
+               class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+      </div>
+
+      <!-- Tags -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Tags (comma separated)</label>
+        <input type="text" id="tags" placeholder="AI, Future, Tech"
+               class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500">
+      </div>
+
+      <!-- Hot Topic -->
+      <div class="flex items-center space-x-2">
+        <input type="checkbox" id="hot_topic" class="h-5 w-5 accent-purple-600">
+        <label for="hot_topic" class="text-gray-700 font-semibold">Mark as Hot Topic</label>
+      </div>
+
+      <!-- TinyMCE Editor -->
+      <div>
+        <label class="block text-gray-700 font-semibold mb-1">Content</label>
+        <textarea id="editor"></textarea>
+      </div>
+
+      <!-- Buttons -->
+      <div class="flex space-x-3 mt-4">
+        <button id="saveDraft" class="px-6 py-3 bg-gray-400 hover:bg-gray-500 text-white rounded-lg transition-all">Save Draft</button>
+        <button id="publish" class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-all">Publish</button>
+      </div>
+
+    </div>
+</div>
+  <!-- </main> -->
+  </main>
+  <nav
+    class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-purple-100 flex justify-around items-center px-2 py-3 z-50">
+    <a href="home.html" class="flex flex-col items-center text-purple-700">
+      <i data-lucide="home" class="w-6 h-6"></i>
+      <span class="text-[10px] font-bold mt-1">HOME</span>
+    </a>
+    <a href="search.html" class="flex flex-col items-center text-gray-400">
+      <i data-lucide="search" class="w-6 h-6"></i>
+      <span class="text-[10px] font-medium mt-1">SEARCH</span>
+    </a>
+    <a href="quickTake.html" class="flex flex-col items-center text-gray-400">
+      <i data-lucide="compass" class="w-6 h-6"></i>
+      <span class="text-[10px] font-medium mt-1">QUICK TAKE</span>
+    </a>
+    <a href="newswire.html" class="flex flex-col items-center text-gray-400">
+      <i data-lucide="rss" class="w-6 h-6"></i>
+      <span class="text-[10px] font-medium mt-1">NEWS</span>
+    </a>
+  </nav>
+
+  <script src="../scripts/auth.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      lucide.createIcons();
+
+      // Extract firm_id from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const firm_id = urlParams.get('firm_id');
+
+      // Initialize TinyMCE
+      tinymce.init({
+        selector: '#editor',
+        height: 500,
+        plugins: 'print preview paste importcss searchreplace autolink autosave save directionality code visualblocks visualchars fullscreen image link media template codesample table charmap hr pagebreak nonbreaking anchor insertdatetime advlist lists wordcount imagetools textpattern help emoticons',
+        toolbar: 'undo redo | bold italic underline strikethrough | fontselect fontsizeselect formatselect | alignleft aligncenter alignright alignjustify | outdent indent |  numlist bullist | forecolor backcolor removeformat | pagebreak | charmap emoticons | fullscreen  preview print | insertfile image media link anchor codesample | ltr rtl',
+        menubar: 'file edit view insert format tools table help',
+        image_title: true,
+        automatic_uploads: true,
+        images_upload_handler: function (blobInfo, success, failure) {
+          const token = getAccessToken(); // from auth.js
+          const formData = new FormData();
+          formData.append('file', blobInfo.blob(), blobInfo.filename());
+
+          $.ajax({
+            url: 'http://127.0.0.1:5000/api/media/upload',
+            type: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` },
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (res) {
+              if (res.status === 1 && res.data.location) {
+                success(res.data.location); // URL inserted into TinyMCE
+              } else {
+                failure('Upload failed');
+              }
+            },
+            error: function (err) {
+              failure('Upload failed');
+            }
+          });
+        },
+      });
+
+      // Submit Function
+      async function submitArticle(status) {
+        const title = $('#title').val().trim();
+        const category = $('#category').val().split(',').map(c => c.trim()).filter(Boolean);
+        const tags = $('#tags').val().split(',').map(t => t.trim()).filter(Boolean);
+        const hot_topic = $('#hot_topic').is(':checked');
+        const content = tinymce.get('editor').getContent();
+
+        if (!title || !content) {
+          Swal.fire('Error', 'Title and Content are required!', 'error');
+          return;
+        }
+
+        try {
+          const token = getAccessToken();
+          if (!token) { redirectToLogin(); return; }
+
+          await ajaxWithJWT({
+            url: `http://127.0.0.1:5000/api/article/create?firm_id=${firm_id}`,
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ title, status, content, category, tags, hot_topic }),
+          });
+
+          Swal.fire('Success', `Article ${status === 'DRAFT' ? 'saved as draft' : 'published'}!`, 'success')
+            .then(() => window.location.href = 'home.html');
+
+        } catch (err) {
+          Swal.fire('Error', 'Failed to submit article', 'error');
+          console.error(err);
+        }
+      }
+
+      // Button events
+      $('#saveDraft').click(() => submitArticle('DRAFT'));
+      $('#publish').click(() => submitArticle('PUBLISHED'));
+    });
+  </script>
+
+
+</body>
+
+</html>
+
+
+

@@ -15,9 +15,9 @@ from app.schema.article_schema import ArticleOutSchema
 
 class ArticleController:
 
-    async def create_article(self, article_data: dict, publisher_id: str) -> ArticleModel | None:
+    async def create_article(self, firm_id:str, article_data: dict, publisher_id: str) -> ArticleModel | None:
         try:
-            firm = await FirmModel.find_one(FirmModel.firm_username == article_data['firm_username'])
+            firm = await FirmModel.find_one(FirmModel.id == ObjectId(firm_id), FirmModel.is_deleted == False)
             if not firm:
                 raise HTTPException(status_code=404, detail="Firm not found")
             obj_id = ObjectId(publisher_id)
@@ -166,7 +166,7 @@ class ArticleController:
                 ArticleModel.is_deleted == False
             )
             if not article:
-                raise HTTPException(status_code=404, detail="Article not found")
+                return None
             
             publisher = await article.publisher_id.fetch()
             publisher_info = {
@@ -180,12 +180,17 @@ class ArticleController:
                 id=str(article.id),
                 title=article.title,
                 summary=article.summary,
+                content=article.content,
+                content_text=article.content_text,
+                endorse_count=article.endorse_count,
                 like_count=article.like_count,
+                trust_score_snapshot=article.trust_score_snapshot,
                 tags=article.tags,
                 category=article.category,
                 published_at=article.published_at,
                 publisher=publisher_info
             )
+    
         except Exception as e:
             print(f"Error while liking article: {str(e)}")
             return False

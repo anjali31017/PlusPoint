@@ -97,6 +97,7 @@ app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET)
 
 os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(settings.TINYMCE_UPLOAD_FOLDER, exist_ok=True)
 
 
 # app.mount("/images/profile", StaticFiles(directory="/app/images/profile"), name="profile_images")

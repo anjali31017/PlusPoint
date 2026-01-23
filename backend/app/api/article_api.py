@@ -1,7 +1,10 @@
 import asyncio
 from datetime import datetime
+import os
+import shutil
+import uuid
 from bson import ObjectId
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
 from app.controller.token_controller import get_current_user
 from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
@@ -18,7 +21,7 @@ from app.models.article import ArticleModel, ArticleStatus
 from app.models.firm import FirmModel
 from app.models.users import UserModel
 from app.schema.search_output_schema import MultiSectionSearchResponse
-
+from app.config import settings
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -29,6 +32,7 @@ article_controller = ArticleController()
 async def add_article(
     article_data: ArticleCreateSchema,
     background_tasks: BackgroundTasks,
+    firm_id: str = Query(None),
     current_user: dict = Depends(get_current_user),
 ):
     # async def add_article(article_data: ArticleCreateSchema):
@@ -42,6 +46,7 @@ async def add_article(
         article_data_dict = article_data.dict()
 
         article = await article_controller.create_article(
+            firm_id,
             article_data_dict,
             current_user["user_id"],
             # "692051620cbaa9500904c22d"
@@ -109,6 +114,75 @@ async def add_article(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
 
+
+@router.post("/media/upload", response_model=BaseResponse)
+async def upload_media(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    try:
+        if not file:
+            raise HTTPException(
+                status_code=400,
+                detail="File Not Found"
+            )
+
+        # Extract original file extension
+        ext = os.path.splitext(file.filename)[1]  # .jpg, .mp4, etc.
+
+        # Generate a unique filename using uuid
+        unique_filename = f"{uuid.uuid4().hex}{ext}"
+
+        # Ensure upload directory exists
+        os.makedirs(settings.TINYMCE_UPLOAD_FOLDER, exist_ok=True)
+
+        # Save file
+        filepath = os.path.join(settings.TINYMCE_UPLOAD_FOLDER, unique_filename)
+        with open(filepath, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Return the public URL
+        file_url = f"http://127.0.0.1:3000/src/images/articles/{unique_filename}"
+
+        return {
+            "status": 1,
+            "message": "Media uploaded successfully",
+            "data": {
+                "location": file_url,
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+# async def upload_media(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+#     try:
+#         if not file:
+#             raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST, detail="File Not Found"
+#         )
+        
+#         filename = file.filename
+#         filepath = os.path.join(settings.TINYMCE_UPLOAD_FOLDER, filename)
+
+#         # Make sure directory exists
+#         os.makedirs(settings.TINYMCE_UPLOAD_FOLDER, exist_ok=True)
+
+#         with open(filepath, "wb") as buffer:
+#             shutil.copyfileobj(file.file, buffer)
+
+#         file_url = f"http://127.0.0.1:5000/src/articles/{filename}"
+#         return {
+#             "status": 1,
+#             "message": "Article media created successfully",
+#             "data": {
+#                 "location": file_url,
+#             },
+#         }
+
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+#         )
+    
+    
 
 @router.post("/comment", response_model=BaseResponse)
 async def add_comment(
@@ -374,7 +448,7 @@ async def search_multi_section(search: ArticleSearchSchema):
 
 
 
-@router.get("/article", response_model=BaseResponse)
+@router.get("/detail", response_model=BaseResponse)
 async def get_single_article(
     article_id: str = Query(...),
     current_user: dict = Depends(get_current_user)
@@ -385,9 +459,12 @@ async def get_single_article(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid access token, Login to continue",
             )
-
+        
         article_data = await article_controller.get_article_by_id(article_id)
-
+        if article_data is None:
+            raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
+        )
         return {
             "status": 1,
             "message": "Article fetched successfully",
@@ -398,6 +475,9 @@ async def get_single_article(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
+
+
+
 
 
 # @router.get("/fetch", response_model=BaseResponse)

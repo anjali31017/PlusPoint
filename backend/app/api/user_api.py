@@ -600,7 +600,34 @@ async def get_subscriptions(
         
         
         
+@router.post("/delete/request", response_model=BaseResponse)
+async def delete_request(
+    reason:ReportReasonRequestSchema, 
+    firm_id: str|None = Query(None),
+    article_id: str|None = Query(None),
+    current_user:dict = Depends(get_current_user)
+    ):
+    try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
         
+        result = await user_controller.delete_request(reason.reason, firm_id, article_id, current_user)
+        if result is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+        if result is False:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Requested already raised")
+        
+        return {
+            "status": 1,
+            "message": "Deletion request raised successfully",
+            "data": "Requested"
+        }
+            
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        
+        
+          
         
 
 @router.post("/delete/account", response_model=BaseResponse)

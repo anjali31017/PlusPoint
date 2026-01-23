@@ -251,3 +251,43 @@ class UserController:
             return True
         except Exception as e:
             return str(e)
+        
+
+    async def delete_request(self, reason:str, firm_id: str|None, article_id: str|None, current_user :dict):
+            try:
+                if firm_id:
+                    firm = await FirmModel.find_one(
+                        FirmModel.owner_user_id.id == ObjectId(current_user["user_id"]),
+                        FirmModel.id == ObjectId(firm_id),
+                        FirmModel.is_deleted == False
+                    )
+
+                    if firm is None:
+                        return None
+                    
+                    if firm.delete_reason:
+                        return False
+                    
+                    firm.delete_reason = reason
+                    await firm.save()
+                    
+                if article_id:
+                    article = await ArticleModel.find_one(
+                        ArticleModel.publisher_id.id == ObjectId(current_user["user_id"]),
+                        ArticleModel.id == ObjectId(article_id),
+                        ArticleModel.is_deleted == False
+                    )
+                    
+                    if article is None:
+                        return None
+                    
+                    if article.delete_reason:
+                        return False
+                    
+                    article.delete_reason = reason
+                    await article.save()
+                
+                return True
+            except Exception as e:
+                return str(e)
+        

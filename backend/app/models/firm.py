@@ -25,9 +25,10 @@ class FirmModel(Document):
     follow_count: int = 0
     report_count: int = 0
     endorse_count: int = 0
+    delete_reason: Optional[str] = None
     is_active: bool = True
     is_deleted: bool = False
-    is_verified: bool = False
+    is_verified: bool = True
     verified_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)
 
