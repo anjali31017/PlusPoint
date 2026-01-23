@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="../media/pluspoint_logo.png">
+  <title>Article - PlusPoint</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        body { background: #f9fafb; font-family: sans-serif; }
+        .article-content img { max-width: 100%; height: auto; border-radius: 8px; }
+        .btn-action { cursor: pointer; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; }
+        .btn-action:hover { opacity: 0.9; }
+    </style>
+</head>
+
+<body class="bg-white min-h-screen flex flex-col md:flex-row overflow-hidden font-sans text-gray-900">
+
+  <aside
+    class="hidden md:flex flex-col w-72 bg-gradient-to-tr from-blue-100 to-purple-200 h-screen sticky top-0 border-r border-gray-100 z-20">
+    <div class="p-5 flex flex-col items-center">
+      <h1
+        class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-blue-600 tracking-tighter">
+        PlusPoint</h1>
+    </div>
+    <nav class="flex-1 overflow-y-auto px-6 py-4 space-y-2 no-scrollbar">
+      <div class="space-y-1 mb-8">
+        <a href="home.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="home" class="w-5 h-5"></i><span>HOME</span>
+        </a>
+        <a href="search.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="search" class="w-5 h-5"></i><span>SEARCH</span>
+        </a>
+        <a href="quickTake.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="compass" class="w-5 h-5"></i><span>QUICK TAKE</span>
+        </a>
+        <a href="coverage.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="newspaper" class="w-5 h-5"></i><span>COVERAGE</span>
+        </a>
+        <a href="trending.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="trending-up" class="w-5 h-5"></i><span>TRENDING</span>
+        </a>
+        <a href="newswire.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="rss" class="w-5 h-5"></i><span>NEWSWIRE</span>
+        </a>
+      </div>
+      <div class="pt-6 border-t border-purple-300/30 space-y-1">
+        <p class="text-[10px] font-bold text-gray-500 ml-4 mb-2 tracking-[0.2em]">PERSONAL</p>
+        <a href="favorites.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="heart" class="w-5 h-5"></i>
+          <span>FAVORITES</span>
+        </a>
+        <a href="profile.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="user" class="w-5 h-5"></i><span>PROFILE</span>
+        </a>
+        <a href="settings.html"
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          <i data-lucide="settings" class="w-5 h-5"></i><span>SETTINGS</span>
+        </a>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="flex-1 h-screen overflow-y-auto bg-white content-scroll">
+    <header
+      class="flex justify-between items-center p-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-purple-100">
+    
+
+        <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-800">
+        <img src="../media/pluspoint_logo.png" alt="PLUSPOINT" class="w-8 h-8">
+        ARTICLE
+      </h2>
+
+
+      <div class="flex items-center space-x-2 md:space-x-5">
+        <button
+          class="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all relative">
+          <i data-lucide="bell" class="w-6 h-6"></i>
+          <span class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+        </button>
+        <div class="flex items-center pl-4 border-l border-purple-100">
+          <a href="profile.html"
+            class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all">
+            <i data-lucide="user" class="w-7 h-7"></i>
+          </a>
+        </div>
+      </div>
+    </header>
+
+
+<div class="max-w-6xl mx-auto py-8 px-4">
+
+ <!-- Title -->
+        <h2 id="article-title" class="text-3xl font-bold text-gray-800"></h2>
+
+        <!-- Publisher & Info -->
+        <div class="flex items-center justify-between text-gray-500">
+            <div>
+                By <span id="publisher-name" class="text-purple-700 font-semibold cursor-pointer"></span>
+                | <span id="published-date"></span>
+            </div>
+            <div class="flex gap-2">
+                <span id="category" class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full text-xs"></span>
+                <span id="tags" class="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs"></span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex gap-3 mt-4">
+            <button id="like-btn" class="btn-action bg-gray-200 text-gray-700 flex items-center gap-1">
+                <i data-lucide="heart"></i> <span>Like</span>
+            </button>
+            <button id="endorse-btn" class="btn-action bg-green-600 text-white flex items-center gap-1">
+                <i data-lucide="thumbs-up"></i> <span>Endorse</span>
+            </button>
+            <button id="report-btn" class="btn-action bg-red-600 text-white flex items-center gap-1">
+                <i data-lucide="alert-circle"></i> <span>Report</span>
+            </button>
+            <button id="copy-link-btn" class="btn-action bg-blue-600 text-white flex items-center gap-1">
+                <i data-lucide="copy"></i> <span>Copy Link</span>
+            </button>
+        </div>
+
+        <!-- Article Content -->
+        <div id="article-content" class="article-content prose max-w-none"></div>
+
+
+
+</div>
+  </main>
+
+  <nav
+    class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-purple-100 flex justify-around items-center px-2 py-3 z-50">
+    <a href="home.html" class="flex flex-col items-center text-purple-700">
+      <i data-lucide="home" class="w-6 h-6"></i>
+      <span class="text-[10px] font-bold mt-1">HOME</span>
+    </a>
+    <a href="search.html" class="flex flex-col items-center text-gray-400">
+      <i data-lucide="search" class="w-6 h-6"></i>
+      <span class="text-[10px] font-medium mt-1">SEARCH</span>
+    </a>
+    <a href="quickTake.html" class="flex flex-col items-center text-gray-400">
+      <i data-lucide="compass" class="w-6 h-6"></i>
+      <span class="text-[10px] font-medium mt-1">QUICK TAKE</span>
+    </a>
+    <a href="newswire.html" class="flex flex-col items-center text-gray-400">
+      <i data-lucide="rss" class="w-6 h-6"></i>
+      <span class="text-[10px] font-medium mt-1">NEWS</span>
+    </a>
+  </nav>
+
+  <script>
+    $(document).ready(function () {
+      $('body').fadeIn(300);
+      lucide.createIcons();
+    });
+  </script>
+
+    <script src="../scripts/auth.js"></script>
+    <script src="../scripts/endorsement.js"></script>
+    <script src="../scripts/like.js"></script>
+    <script src="../scripts/report.js"></script>
+    <script src="../scripts/article-detail.js"></script>
+
+</body>
+</html>
+
+
+
+
