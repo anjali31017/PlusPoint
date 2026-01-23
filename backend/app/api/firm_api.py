@@ -16,6 +16,8 @@ from app.models.article import ArticleModel
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import ArticleOutSchema
 from app.kafka.producer import send_kafka_event
+from app.models.subscription import SubscriptionModel
+from app.models.endorse import EndorsementModel
 
 
 router = APIRouter(prefix="/firm", tags=["Firm"])
@@ -145,203 +147,6 @@ async def subscribe_to_entity(
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
-# @router.get("/details", response_model=BaseResponse)
-# async def get_firm_details(
-#     firm_id: str | None = Query(None), 
-#     current_user: dict = Depends(get_current_user)
-    
-#     ):
-#     try:
-#         if current_user is None:
-#             raise HTTPException(
-#                 status_code=status.HTTP_401_UNAUTHORIZED,
-#                 detail="Invalid access token, Login to continue",
-#             )
-        
-#         if not firm_id:
-#             raise HTTPException(
-#                 status_code=status.HTTP_400_BAD_REQUEST,
-#                 detail="firm_id is required"
-#             )
-        
-#         try:
-#             firm_oid = ObjectId(firm_id)
-#         except Exception:
-#             raise HTTPException(
-#                 status_code=status.HTTP_400_BAD_REQUEST,
-#                 detail="Invalid firm_id"
-#             )
-            
-#         firm =await FirmModel.find_one(
-#             FirmModel.id == firm_oid,
-#             FirmModel.is_deleted == False,
-#         )
-#         if not firm:
-#             raise HTTPException(
-#                 status_code=status.HTTP_404_NOT_FOUND, detail="Firm not found"
-#             )
-        
-        
-#         query = [
-#             ArticleModel.firm_id.id == firm_oid,
-#             ArticleModel.is_deleted == False,
-#             ArticleModel.status == ArticleStatus.PUBLISHED,
-#         ]
-   
-
-#         articles = await ArticleModel.find(*query).sort(-ArticleModel.published_at).to_list()
-#         article_data = articles if articles else None
-
-#         data = {"firm_data": firm, "articles": article_data}
-
-            
-#         response_data = {
-#             "status": 1,
-#             "message": "Firm details fetched successfully",
-#             "data": data,
-#         }
-#         return response_data
-#     except HTTPException as e:
-#         raise e
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-#         )
-
-
-
-# from beanie import PydanticObjectId
-
-# @router.get("/details", response_model=BaseResponse)
-# async def get_firm_details(
-#     firm_id: str | None = Query(None), 
-#     current_user: dict = Depends(get_current_user)
-# ):
-#     if current_user is None:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Invalid access token, Login to continue",
-#         )
-
-#     if not firm_id:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="firm_id is required"
-#         )
-
-#     try:
-#         firm_oid = PydanticObjectId(firm_id)
-#     except Exception:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Invalid firm_id"
-#         )
-
-#     # Fetch firm
-#     firm = await FirmModel.find_one(FirmModel.id == firm_oid, FirmModel.is_deleted == False)
-#     if not firm:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND, detail="Firm not found"
-#         )
-
-#     # Fetch linked owner user
-#     await firm.fetch_link(FirmModel.owner_user_id)
-
-#     # Fetch articles
-#     query = [
-#         ArticleModel.firm_id.id == firm_oid,
-#         ArticleModel.is_deleted == False,
-#         ArticleModel.status == ArticleStatus.PUBLISHED,
-#     ]
-
-#     articles = await ArticleModel.find(*query).sort(-ArticleModel.published_at).to_list()
-    
-#     # Fetch linked publisher users for each article
-#     for article in articles:
-#         await article.fetch_link(ArticleModel.publisher_id)
-
-#     article_data = articles if articles else None
-
-#     data = {
-#         "firm_data": firm,
-#         "articles": article_data
-#     }
-
-#     response_data = {
-#         "status": 1,
-#         "message": "Firm details fetched successfully",
-#         "data": data,
-#     }
-#     return response_data
-
-
-# @router.get("/details", response_model=BaseResponse)
-# async def get_firm_details(
-#     firm_id: str | None = Query(None),
-#     current_user: dict = Depends(get_current_user)
-# ):
-#     """
-#     Fetch firm details along with its published articles and owner info.
-#     Only limited fields of owner and publisher are returned.
-#     """
-#     if current_user is None:
-#         raise HTTPException(
-#             status_code=status.HTTP_401_UNAUTHORIZED,
-#             detail="Invalid access token, Login to continue",
-#         )
-
-#     if not firm_id:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="firm_id is required"
-#         )
-
-#     try:
-#         firm_oid = ObjectId(firm_id)
-#     except Exception:
-#         raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST,
-#             detail="Invalid firm_id"
-#         )
-
-#     # Fetch firm
-#     firm = await FirmModel.find_one(FirmModel.id == firm_oid, FirmModel.is_deleted == False)
-#     if not firm:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND, detail="Firm not found"
-#         )
-
-#     # Fetch linked owner user
-#     await firm.fetch_link(FirmModel.owner_user_id)
-#     owner_data = {
-#         "username": firm.owner_user_id.username,
-#         "first_name": firm.owner_user_id.first_name,
-#         "last_name": firm.owner_user_id.last_name,
-#         "profile_picture_url": firm.owner_user_id.profile_picture_url,
-#     }
-
-#     # Fetch articles using ArticleService
-#     articles = await article_controller.get_articles_by_firm(firm_oid)
-
-#     # Prepare response data
-#     data = {
-#         "firm_data": {
-#             "id": str(firm.id),
-#             "firm_name": firm.firm_name,
-#             "firm_username": firm.firm_username,
-#             "bio": firm.bio,
-#             "trust_factor": firm.trust_factor,
-#             "owner": owner_data,
-#         },
-#         "articles": articles if articles else None
-#     }
-
-#     return {
-#         "status": 1,
-#         "message": "Firm details fetched successfully",
-#         "data": data,
-#     }
-
 
 
 @router.get("/details", response_model=BaseResponse)
@@ -384,37 +189,57 @@ async def get_firm_details(
             ArticleModel.is_deleted == False
         ).sort("-published_at").skip(skip).limit(page_size)
 
+        # articles = []
+        # async for article in articles_cursor:
+        #     # Resolve the publisher link
+        #     publisher = await article.publisher_id.fetch()
+        #     publisher_info = {
+        #         "id": str(publisher.id),
+        #         "username": publisher.username,
+        #         "first_name":publisher.first_name,
+        #         "last_name":publisher.last_name,
+        #     } if publisher else None
+
+        #     articles.append(ArticleOutSchema(
+        #         id=str(article.id),
+        #         title=article.title,
+        #         summary=article.summary,
+        #         like_count=article.like_count,
+        #         tags=article.tags,
+        #         category=article.category,
+        #         published_at=article.published_at,
+        #         publisher=publisher_info
+        #     ))
         articles = []
+        
         async for article in articles_cursor:
-            # Resolve the publisher link
-            publisher = await article.publisher_id.fetch()
-            publisher_info = {
-                "id": str(publisher.id),
-                "username": publisher.username,
-                "first_name":publisher.first_name,
-                "last_name":publisher.last_name,
-            } if publisher else None
-
-            articles.append(ArticleOutSchema(
-                id=str(article.id),
-                title=article.title,
-                summary=article.summary,
-                like_count=article.like_count,
-                tags=article.tags,
-                category=article.category,
-                published_at=article.published_at,
-                publisher=publisher_info
-            ))
-
+            article_id = str(article.id)
+            article_data = await article_controller.get_article_by_id(article_id)
+            articles.append(article_data)
+    
         # Check if current user is the owner
         
         is_self = False
         if owner and current_user:
             is_self = str(current_user["user_id"]) == str(owner.id)
 
+        following_details = await SubscriptionModel.find_one(
+            SubscriptionModel.subscriber_id.id == ObjectId(current_user["user_id"]),
+            SubscriptionModel.firm_id.id == firm.id
+        )
+        following = True if following_details else False
+        
+        endorsement_details = await EndorsementModel.find_one(
+            EndorsementModel.user_id.id == ObjectId(current_user["user_id"]),
+            EndorsementModel.firm_id.id == firm.id
+        )
+        endorsed = True if endorsement_details else False
+        
         # Build final response
         response_data = FirmDetailsOutSchema(
             id=str(firm.id),
+            following=following,
+            endorsed=endorsed,
             firm_name=firm.firm_name,
             firm_username=firm.firm_username,
             bio=firm.bio,
@@ -441,3 +266,5 @@ async def get_firm_details(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
+        
+        

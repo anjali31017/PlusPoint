@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 import os
 import shutil
+from typing import Optional
 from bson import ObjectId
 from fastapi import APIRouter, Depends, File, Form, HTTPException, BackgroundTasks, Query, UploadFile
 from app.config import settings
@@ -19,6 +20,8 @@ from app.controller.util_controller import UtilController
 from app.models.kyc import KYCModel
 from app.models.firm import FirmModel, VerificationStatus
 from app.kafka.producer import send_kafka_event
+from app.models.report import ReportReasonRequestSchema
+from app.models.subscription import SubscriptionModel
 
 
 
@@ -451,6 +454,181 @@ async def protected_route(current_user: dict = Depends(get_current_user)):
     return {"msg": f"Hello user {current_user['user_id']} with roles {current_user['role']}"}
 
 
+
+
+
+@router.post("/report", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def report(
+    reason: ReportReasonRequestSchema,
+    firm_id: str|None = Query(None),
+    article_id: str|None = Query(None),
+    current_user: dict = Depends(get_current_user),
+    ):
+    try:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue"
+            )
+        
+        if not firm_id and not article_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Either firm_id or article_id is required"
+            )
+
+        result = await user_controller.report_firm_article(firm_id, article_id, reason.reason, current_user)
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="failed to report, Try again!"
+            )
+        
+        if result is False:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Already reported"
+            )
+            
+        return {
+            "status":1,
+            "message": "reported successfully",
+            "data": None
+        }
+    
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+        
+
+
+@router.post("/endorse", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def report(
+    firm_id: str|None = Query(None),
+    article_id: str|None = Query(None),
+    current_user: dict = Depends(get_current_user),
+    ):
+    try:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue"
+            )
+        
+        if not firm_id and not article_id:
+            raise HTTPException(
+                status_code=400,
+                detail="Either firm_id or article_id is required"
+            )
+
+        result = await user_controller.endorse_firm_article(firm_id, article_id, current_user)
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="failed to endorse, Try again!"
+            )
+    
+        
+        response_data = {
+            "status": 1,
+            "message": (
+                "Removed Endoresement"
+                if result== "removed" else "Endorsed"
+            ),
+            "data": result,
+        }
+        return response_data
+
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+        
+
+
+
+
+
+@router.get("/following", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def get_subscriptions(
+    current_user: dict = Depends(get_current_user),
+):
+
+    try:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue"
+            )
+
+
+        subscriptions = await SubscriptionModel.find(
+            SubscriptionModel.subscriber_id.id == ObjectId(current_user["user_id"]),
+            ).to_list()
+        
+        data = []
+        for sub in subscriptions:
+            firm = await sub.firm_id.fetch()
+            data.append({
+                        "firm_id": str(firm.id),
+                        "firm_username": firm.firm_username,
+                        "firm_name": firm.firm_name,
+                    })
+        
+        
+        response_data = {
+            "status": 1,
+            "message": "following fetched successfully",
+            "data": data
+        }
+        return response_data
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+        
+        
+        
+@router.post("/delete/request", response_model=BaseResponse)
+async def delete_request(
+    reason:ReportReasonRequestSchema, 
+    firm_id: str|None = Query(None),
+    article_id: str|None = Query(None),
+    current_user:dict = Depends(get_current_user)
+    ):
+    try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
+        result = await user_controller.delete_request(reason.reason, firm_id, article_id, current_user)
+        if result is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+        if result is False:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Requested already raised")
+        
+        return {
+            "status": 1,
+            "message": "Deletion request raised successfully",
+            "data": "Requested"
+        }
+            
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        
+        
+          
+        
 
 @router.post("/delete/account", response_model=BaseResponse)
 async def delete_account(current_user:dict = Depends(get_current_user)):

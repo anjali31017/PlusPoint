@@ -69,8 +69,8 @@ class FirmController:
             
             subscriber = await UserModel.find_one(
                 UserModel.id == ObjectId(subscriber_id),
-                FirmModel.is_deleted == False,
-                FirmModel.is_active == True,
+                UserModel.is_deleted == False,
+                UserModel.is_active == True,
                 )
             if not subscriber:
                 raise HTTPException(status_code=404, detail="Subscriber (user) not found")
@@ -96,7 +96,7 @@ class FirmController:
                 return response
             
             subscription = SubscriptionModel(
-                subscriber_id=subscriber, firm_id=firm.id
+                subscriber_id=subscriber, firm_id=firm
             )
 
             await subscription.insert()

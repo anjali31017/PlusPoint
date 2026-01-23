@@ -6,7 +6,6 @@ from app.models.article import ArticleStatus
 
 # Pydantic model for input validation
 class ArticleCreateSchema(BaseModel):
-    firm_username: str  # Firm ID
     title: str
     content: str
     status: ArticleStatus = ArticleStatus.DRAFT
@@ -34,7 +33,11 @@ class ArticleOutSchema(BaseModel):
     id: str
     title: str
     summary: Optional[str]
+    content: Optional[str]
+    content_text: Optional[str]
+    endorse_count: Optional[int]
     like_count: int
+    trust_score_snapshot: Optional[int]
     tags: List[str]
     category: List[str]
     published_at: Optional[datetime]

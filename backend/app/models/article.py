@@ -27,7 +27,10 @@ class ArticleModel(Document):
     status: ArticleStatus = ArticleStatus.DRAFT
     trust_score_snapshot: Optional[int] = None
     moderation_required: bool = False
+    delete_reason: Optional[str] = None
     like_count: int = 0
+    report_count: int = 0
+    endorse_count: int = 0
     hot_topic: bool = False
     is_deleted: bool = False
     published_at: Optional[datetime] = None
