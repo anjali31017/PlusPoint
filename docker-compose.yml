@@ -20,6 +20,7 @@ services:
       - ./backend/app:/app/app 
       - ./backend/images/kyc:/app/images/kyc
       - ./backend/images/profile:/app/images/profile
+      - ./backend/images/articles:/app/images/articles
     ports:
       - "5000:5000"
     networks:
@@ -171,6 +172,7 @@ services:
     volumes:
       - ./frontend:/usr/share/nginx/html
       - ./backend/images/profile:/usr/share/nginx/html/src/images/profile
+      - ./backend/images/articles:/usr/share/nginx/html/src/images/articles
       - ./backend/images/kyc:/usr/share/nginx/html/src/admin/images/kyc
     networks:
       - pluspoint_network
