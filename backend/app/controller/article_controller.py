@@ -10,6 +10,7 @@ from pymongo.errors import DuplicateKeyError
 from app.models.comment import CommentModel
 from app.kafka.producer import send_kafka_event
 from app.schema.article_schema import ArticleOutSchema
+from app.models.endorse import EndorsementModel
 
 
 
@@ -159,7 +160,7 @@ class ArticleController:
             return False
 
 
-    async def get_article_by_id(self, article_id: str) -> ArticleOutSchema:
+    async def get_article_by_id(self, article_id: str, current_user:dict|None = None ) -> ArticleOutSchema:
         try:
             article = await ArticleModel.find_one(
                 ArticleModel.id == ObjectId(article_id),
@@ -176,6 +177,25 @@ class ArticleController:
                 "last_name": publisher.last_name,
             } if publisher else None
 
+            endorse = False
+            like = False
+            is_self = False    
+            
+            if current_user:
+                endorsement = await EndorsementModel.find_one(
+                    EndorsementModel.user_id.id == ObjectId(current_user["user_id"]),
+                    EndorsementModel.article_id.id == article.id
+                    )
+                endorse = True if endorsement else False
+                
+                like_result = await ArticleLikeModel.find_one(
+                    ArticleLikeModel.user_id.id == ObjectId(current_user["user_id"]),
+                    ArticleLikeModel.article_id.id == article.id
+                    )
+                like = True if like_result else False
+
+                is_self = str(current_user["user_id"]) == str(publisher.id)
+                
             return ArticleOutSchema(
                 id=str(article.id),
                 title=article.title,
@@ -188,12 +208,15 @@ class ArticleController:
                 tags=article.tags,
                 category=article.category,
                 published_at=article.published_at,
-                publisher=publisher_info
+                publisher=publisher_info,
+                endorsed=endorse,
+                liked=like,
+                is_self=is_self,
             )
     
         except Exception as e:
             print(f"Error while liking article: {str(e)}")
-            return False
+            return None
         
     # async def like_article(self, a_id: str, u_id: str):
     #     article_id = ObjectId(a_id)

@@ -40,6 +40,23 @@ $(document).ready(function () {
     });
   }
 
+  function uploadVideo(file) {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const token = getAccessToken();
+    return $.ajax({
+      url: 'http://127.0.0.1:5000/api/article/media/upload', // same endpoint, make sure backend accepts video
+      type: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` },
+      data: formData,
+      processData: false,
+      contentType: false
+    });
+  }
+
+
+
   quill.getModule('toolbar').addHandler('image', function () {
     const input = document.createElement('input');
     input.setAttribute('type', 'file');
@@ -64,6 +81,33 @@ $(document).ready(function () {
       }
     };
   });
+
+
+  quill.getModule('toolbar').addHandler('video', function () {
+    const input = document.createElement('input');
+    input.setAttribute('type', 'file');
+    input.setAttribute('accept', 'video/mp4,video/webm'); // allow mp4 and webm
+    input.click();
+
+    input.onchange = async function () {
+      const file = input.files[0];
+      if (!file) return;
+
+      try {
+        const res = await uploadVideo(file); // new function
+        if (res.status === 1 && res.data.location) {
+          const range = quill.getSelection();
+          quill.insertEmbed(range.index, 'video', res.data.location);
+        } else {
+          Swal.fire('Error', 'Video upload failed', 'error');
+        }
+      } catch (err) {
+        Swal.fire('Error', 'Video upload failed', 'error');
+        console.error(err);
+      }
+    };
+  });
+
 
   // Submit Article
   async function submitArticle(status) {

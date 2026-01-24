@@ -87,7 +87,7 @@ $(document).ready(function () {
         } else { // quick_take or coverage
             html = `<div class="space-y-3">
                 ${data.map(a => `
-                    <a href="article.html?id=${a.id}&type=${section}" target="_blank"
+                    <a href="article.html?article_id=${a.id}&type=${section}" target="_blank"
                        class="p-4 bg-white rounded-xl shadow hover:shadow-md transition block">
                         <h4 class="font-semibold text-gray-800 truncate">${a.title}</h4>
                         <p class="text-xs text-gray-500 mt-1">

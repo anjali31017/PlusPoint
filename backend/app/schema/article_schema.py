@@ -32,16 +32,19 @@ class ArticleSearchSchema(BaseModel):
 class ArticleOutSchema(BaseModel):
     id: str
     title: str
-    summary: Optional[str]
-    content: Optional[str]
-    content_text: Optional[str]
-    endorse_count: Optional[int]
-    like_count: int
-    trust_score_snapshot: Optional[int]
-    tags: List[str]
+    summary: Optional[str] = None
+    content: Optional[str] = None
+    content_text: Optional[str] = None
+    endorse_count: Optional[int] = None
+    like_count: int = None
+    trust_score_snapshot: Optional[int] = None
+    tags: List[str] 
     category: List[str]
-    published_at: Optional[datetime]
-    publisher: Optional[dict]
+    published_at: Optional[datetime] = None
+    publisher: Optional[dict] = None
+    endorsed: Optional[bool] = False
+    liked: Optional[bool] = False
+    is_self : Optional[bool] = False
     
     
     
