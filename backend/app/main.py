@@ -24,7 +24,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.kafka.consumer.moderation_consumer import ModerationKafkaConsumer
 from app.kafka.consumer.like_consumer import KafkaLikeService
 from app.kafka.consumer.follow_consumer import KafkaFollowService
-
+from app.utils.trust_factor import background_tf_updater
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -38,7 +38,8 @@ async def lifespan(app: FastAPI):
     
     # moderation_consumer = asyncio.create_task(ModerationKafkaConsumer.start())
 
-
+    asyncio.create_task(background_tf_updater())
+    
     try:
         yield
 

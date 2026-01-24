@@ -6,6 +6,7 @@ import random
 from app.models.firm import FirmModel
 from app.models.subscription import SubscriptionModel
 from app.controller.email_controller import is_user_blocked
+from app.models.article import ArticleModel
 
 class UtilController:
     
@@ -61,4 +62,3 @@ class UtilController:
             print("Error generating username:", e)
             raise HTTPException(status_code=500, detail="Internal server error")
         
-    

@@ -152,35 +152,7 @@ async def upload_media(file: UploadFile = File(...), current_user: dict = Depend
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
-# async def upload_media(file: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
-#     try:
-#         if not file:
-#             raise HTTPException(
-#             status_code=status.HTTP_400_BAD_REQUEST, detail="File Not Found"
-#         )
-        
-#         filename = file.filename
-#         filepath = os.path.join(settings.TINYMCE_UPLOAD_FOLDER, filename)
 
-#         # Make sure directory exists
-#         os.makedirs(settings.TINYMCE_UPLOAD_FOLDER, exist_ok=True)
-
-#         with open(filepath, "wb") as buffer:
-#             shutil.copyfileobj(file.file, buffer)
-
-#         file_url = f"http://127.0.0.1:5000/src/articles/{filename}"
-#         return {
-#             "status": 1,
-#             "message": "Article media created successfully",
-#             "data": {
-#                 "location": file_url,
-#             },
-#         }
-
-#     except Exception as e:
-#         raise HTTPException(
-#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-#         )
     
     
 
@@ -460,7 +432,7 @@ async def get_single_article(
                 detail="Invalid access token, Login to continue",
             )
         
-        article_data = await article_controller.get_article_by_id(article_id)
+        article_data = await article_controller.get_article_by_id(article_id, current_user)
         if article_data is None:
             raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=str(e)
