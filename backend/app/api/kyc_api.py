@@ -13,24 +13,6 @@ router = APIRouter(prefix="/kyc", tags=["kyc"])
 
 UPLOAD_FOLDER = "backend/images/kyc"
 
-# @router.post("/kyc/create")
-# async def create_kyc( kyc_data: KYCSchema, current_user: UserModel = Depends(get_current_user)):
-#     """
-#     Accepts KYC data as JSON/dict.
-#     Stores the info in UserKYCModel with status .
-#     """
-#     try:
-#         existing_kyc = await UserKYCModel.find_one(UserKYCModel.user_id == ObjectId(current_user["user_id"]))
-#         if existing_kyc:
-#             raise HTTPException(
-#                 status_code=status.HTTP_409_CONFLICT,
-#                 detail="KYC already done"
-#                 )
-#     except Exception as e:
-#         return JSONResponse(
-#         status_code=500,
-#         content={"status": 0, "message": "Internal server error", "data": str(e)}
-#         )
 
 kyc_controller = KYCController()
 

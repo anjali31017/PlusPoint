@@ -8,7 +8,6 @@ from app.schema.base_schema import BaseResponse
 from app.controller.firm_controller import FirmController
 from app.schema.firm_schema import AddPublisherSchema, FirmCreateSchema, FirmDetailsOutSchema
 from fastapi import status
-
 from app.models.users import UserModel
 from app.models.kyc import KYCModel
 from app.models.firm import FirmModel
@@ -83,33 +82,33 @@ async def create_firm_api(
         )
 
 
-@router.post("/add-publisher", response_model=BaseResponse)
-async def add_publisher(
-    data: AddPublisherSchema, current_user: dict = Depends(get_current_user)
-):
-    try:
-        if current_user is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid access token, Login to continue",
-            )
+# @router.post("/add-publisher", response_model=BaseResponse)
+# async def add_publisher(
+#     data: AddPublisherSchema, current_user: dict = Depends(get_current_user)
+# ):
+#     try:
+#         if current_user is None:
+#             raise HTTPException(
+#                 status_code=status.HTTP_401_UNAUTHORIZED,
+#                 detail="Invalid access token, Login to continue",
+#             )
 
-        new_publisher = await firm_controller.add_publisher(data)
-        response_data = {
-            "status": 1,
-            "message": "Publisher added successfully",
-            "data": {
-                "publisher_user_id": str(new_publisher.publisher_user_id.id),
-                "invited_at": new_publisher.invited_at,
-            },
-        }
-        return response_data
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
-        )
+#         new_publisher = await firm_controller.add_publisher(data)
+#         response_data = {
+#             "status": 1,
+#             "message": "Publisher added successfully",
+#             "data": {
+#                 "publisher_user_id": str(new_publisher.publisher_user_id.id),
+#                 "invited_at": new_publisher.invited_at,
+#             },
+#         }
+#         return response_data
+#     except HTTPException as e:
+#         raise e
+#     except Exception as e:
+#         raise HTTPException(
+#             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+#         )
 
 
 @router.post("/follow", response_model=BaseResponse)
@@ -146,6 +145,88 @@ async def subscribe_to_entity(
         raise
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+
+# async def get_firm_articles(
+#     firm: FirmModel,
+#     current_user: dict,
+#     page: int,
+#     page_size: int
+# ):
+#     try:
+#         skip = (page - 1) * page_size
+
+#         # 1️⃣ Fetch articles
+#         articles = await ArticleModel.find(
+#             ArticleModel.firm_id.id == firm.id,
+#             ArticleModel.status == "PUBLISHED",
+#             ArticleModel.is_deleted == False
+#         ).sort("-published_at").skip(skip).limit(page_size).to_list()
+
+#         if not articles:
+#             return []
+
+#         article_ids = [a.id for a in articles]
+#         publisher_ids = [a.publisher_id.id for a in articles]
+
+#         # 2️⃣ Fetch publishers
+#         publishers = await UserModel.find(
+#             UserModel.id.in_(publisher_ids)
+#         ).to_list()
+#         publisher_map = {p.id: p for p in publishers}
+
+#         # 3️⃣ Likes + endorsements (batched)
+#         likes_map = set()
+#         endorsements_map = set()
+
+#         user_id = ObjectId(current_user["user_id"])
+
+#         likes = await ArticleLikeModel.find(
+#             ArticleLikeModel.user_id.id == user_id,
+#             ArticleLikeModel.article_id.id.in_(article_ids)
+#         ).to_list()
+
+#         endorsements = await EndorsementModel.find(
+#             EndorsementModel.user_id.id == user_id,
+#             EndorsementModel.article_id.id.in_(article_ids)
+#         ).to_list()
+
+#         likes_map = {l.article_id.id for l in likes}
+#         endorsements_map = {e.article_id.id for e in endorsements}
+
+#         # 4️⃣ Build response
+#         result = []
+#         for article in articles:
+#             publisher = publisher_map.get(article.publisher_id.id)
+
+#             result.append(ArticleOutSchema(
+#                 id=str(article.id),
+#                 title=article.title,
+#                 summary=article.summary,
+#                 content=article.content,
+#                 content_text=article.content_text,
+#                 endorse_count=article.endorse_count,
+#                 like_count=article.like_count,
+#                 trust_score_snapshot=article.trust_score_snapshot,
+#                 tags=article.tags,
+#                 category=article.category,
+#                 published_at=article.published_at,
+#                 publisher={
+#                     "id": str(publisher.id),
+#                     "username": publisher.username,
+#                     "first_name": publisher.first_name,
+#                     "last_name": publisher.last_name,
+#                 } if publisher else None,
+#                 endorsed=article.id in endorsements_map,
+#                 liked=article.id in likes_map,
+#                 is_self=str(user_id) == str(publisher.id)
+#             ))
+
+#         return result
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
 
@@ -189,34 +270,20 @@ async def get_firm_details(
             ArticleModel.is_deleted == False
         ).sort("-published_at").skip(skip).limit(page_size)
 
-        # articles = []
-        # async for article in articles_cursor:
-        #     # Resolve the publisher link
-        #     publisher = await article.publisher_id.fetch()
-        #     publisher_info = {
-        #         "id": str(publisher.id),
-        #         "username": publisher.username,
-        #         "first_name":publisher.first_name,
-        #         "last_name":publisher.last_name,
-        #     } if publisher else None
-
-        #     articles.append(ArticleOutSchema(
-        #         id=str(article.id),
-        #         title=article.title,
-        #         summary=article.summary,
-        #         like_count=article.like_count,
-        #         tags=article.tags,
-        #         category=article.category,
-        #         published_at=article.published_at,
-        #         publisher=publisher_info
-        #     ))
+        # print(articles_cursor)
         articles = []
         
         async for article in articles_cursor:
-            article_id = str(article.id)
-            article_data = await article_controller.get_article_by_id(article_id)
+
+            article_data = {
+                "id":str(article.id),
+                "title":article.title,
+                "summary":article.summary,
+                "tags":article.tags,
+                "category":article.category,
+            }
             articles.append(article_data)
-    
+        print(articles)
         # Check if current user is the owner
         
         is_self = False

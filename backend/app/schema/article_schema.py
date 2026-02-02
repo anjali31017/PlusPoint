@@ -29,6 +29,17 @@ class ArticleSearchSchema(BaseModel):
     page_size: int = Field(default=10, ge=1, le=100)
 
 
+class ArticleFirmOutSchema(BaseModel):
+    id: str
+    title: str
+    summary: Optional[str] = None
+    tags: List[str] 
+    category: List[str]
+    like_count: int = None
+    published_at: Optional[datetime] = None
+
+    
+    
 class ArticleOutSchema(BaseModel):
     id: str
     title: str
@@ -37,7 +48,7 @@ class ArticleOutSchema(BaseModel):
     content_text: Optional[str] = None
     endorse_count: Optional[int] = None
     like_count: int = None
-    trust_score_snapshot: Optional[int] = None
+    trust_score_snapshot: Optional[float] = None
     tags: List[str] 
     category: List[str]
     published_at: Optional[datetime] = None

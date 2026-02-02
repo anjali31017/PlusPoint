@@ -1,3 +1,4 @@
+#app/models/users.py
 from typing import ClassVar, Optional, List
 from beanie import Document, Indexed
 from pydantic import Field
@@ -67,10 +68,3 @@ class UserModel(Document):
             print("Error verifying OTP:", e)
             return False
         
-
-    # @staticmethod
-    # def hash_password(password: str) -> str:
-    #     return bcrypt.hash(password)
-
-    # def verify_password(self, password: str) -> bool:
-    #     return bcrypt.verify(password, self.password_hash)

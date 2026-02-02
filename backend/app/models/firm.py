@@ -20,7 +20,7 @@ class FirmModel(Document):
     # publishers: Optional[List[PublisherInfo]] = Field(default_factory=list)
     bio: Optional[str] = None
     verification_status: VerificationStatus = VerificationStatus.APPROVED # PENDING | APPROVED | REJECTED | SUSPENDED
-    trust_factor: int = Field(default=100)
+    trust_factor: float = Field(default=100)
     violations_count: int = Field(default=0)
     follow_count: int = 0
     report_count: int = 0

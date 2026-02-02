@@ -166,7 +166,6 @@ $(document).ready(async function () {
                         <label for="agreeTerms" class="text-sm text-gray-600">
                             I agree to the
                             <a href="terms.html#registerFirm"
-                            target="_blank"
                             class="text-emerald-600 underline hover:text-emerald-700">
                                 Terms & Conditions
                             </a>
@@ -305,7 +304,7 @@ $(document).ready(async function () {
             const href = `firm.html?firm_id=${f.id}`;
 
             $el.append(`
-            <a href="${href}" target="_blank"
+            <a href="${href}"
                 class="w-full p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
                 <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
                 <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>

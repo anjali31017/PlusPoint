@@ -10,6 +10,7 @@ from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import (
     ArticleCreateSchema,
+    ArticleFirmOutSchema,
     ArticleSearchSchema,
     CreateCommentSchema,
 )
@@ -33,6 +34,7 @@ async def add_article(
     article_data: ArticleCreateSchema,
     background_tasks: BackgroundTasks,
     firm_id: str = Query(None),
+    # cover_page: UploadFile | None = File(None),
     current_user: dict = Depends(get_current_user),
 ):
     # async def add_article(article_data: ArticleCreateSchema):
@@ -44,7 +46,7 @@ async def add_article(
                 detail="Invalid access token, Login to continue",
             )
         article_data_dict = article_data.dict()
-
+            
         article = await article_controller.create_article(
             firm_id,
             article_data_dict,
@@ -57,6 +59,25 @@ async def add_article(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create article",
             )
+            
+        # if cover_page and cover_page.filename:
+        #     ext = os.path.splitext(cover_page.filename)[1].lower()
+        #     if ext not in [".jpg", ".jpeg", ".png", ".gif"]:
+        #         raise HTTPException(
+        #             status_code=status.HTTP_400_BAD_REQUEST,
+        #             detail="Only JPG, JPEG, PNG, GIF files are allowed"
+        #         )
+
+        #     article_title = article.id
+        #     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        #     filename = f"{article_title}_{timestamp}{ext}"
+        #     file_path = os.path.join(settings.ARTICLE_COVER_PAGE, filename)
+        #     print("@@@@@@@@@@@@@",file_path)
+        #     with open(file_path, "wb") as buffer:
+        #         shutil.copyfileobj(cover_page.file, buffer)
+
+        #     article.cover_page = f"images/profile/{filename}"
+        #     article.save()
         # article_notification_manager.send_personal_message("hello", "692052180cbaa9500904c230")
 
         if article.status == "DRAFT":
@@ -91,12 +112,7 @@ async def add_article(
             "article.published", 
             kafka_article_event
         )
-        # publish event
-        # event  = await send_kafka_event("article.published", kafka_article_event)
-
-        # if event is None:
-        #     raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to send Kafka event")
-
+      
         summary_reponse = summerization_task.delay(article.content, str(article.id))
 
         return {
@@ -185,13 +201,7 @@ async def add_comment(
             "status": 1,
             "message": "Comment added successfully",
             "data": comment,
-            # {
-            # "comment_id": str(comment["id"]),
-            # "article_id": str(comment.article_id.id),
-            # "parent_comment_id": str(comment.parent_comment_id) if comment.parent_comment_id else None,
-            # "content": comment.content,
-            # "posted_at": comment.posted_at
-            # }
+
         }
         return response_data
 
@@ -451,20 +461,54 @@ async def get_single_article(
 
 
 
+@router.get("/coverage", response_model=BaseResponse)
+async def get_firm_details(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        if current_user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue",
+            )
+        
+        # Pagination
+        skip = (page - 1) * page_size
 
-# @router.get("/fetch", response_model=BaseResponse)
-# async def get_article_details(article_id: str | None = Query(None),
-#     current_user: dict = Depends(get_current_user)
-#     ):
-#     try:
-#         article = await article_controller.get_article_by_id(article_id)
-#         if not article:
-#             raise HTTPException(status_code=404, detail="Article not found")
+        # Fetch published articles
+        articles_cursor = ArticleModel.find(
+            ArticleModel.status == "PUBLISHED",
+            ArticleModel.is_deleted == False
+        ).sort("-published_at").skip(skip).limit(page_size)
 
-#         return {
-#             "status": 1,
-#             "message": "Article fetched successfully",
-#             "data": article,
-#         }
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
+        # print(articles_cursor)
+        articles = []
+        
+        async for article in articles_cursor:
+
+            article_data = {
+                "id":str(article.id),
+                "title":article.title,
+                "summary":article.summary,
+                "tags":article.tags,
+                "category":article.category,
+                "like_count": article.like_count,
+                "published_at": article.published_at
+            }
+            articles.append(article_data)
+        
+        return{
+            "status": 1,
+            "message": "Firm fetched successfully",
+            "data": articles
+        } 
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+        
