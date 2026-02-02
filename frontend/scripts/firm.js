@@ -169,7 +169,7 @@ $(document).ready(async function () {
 
         if (isSelf) {
             const $createBtn = $('<button class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">Create Article</button>')
-                .click(() => window.open(`createArticle.html?firm_id=${firm.id}`, "_blank"));
+                .click(() => window.open(`createArticle.html?firm_id=${firm.id}`));
 
             const $deleteBtn = $('<button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">Delete Account</button>')
                 .click(() => requestDelete('firm', firm.id));
@@ -254,7 +254,7 @@ $(document).ready(async function () {
                 $(e.currentTarget).siblings(".dropdown-menu").toggle();
             });
 
-            $card.find(".p-4").click(() => window.open(`article.html?article_id=${article.id}`, "_blank"));
+            $card.find(".p-4").click(() => window.open(`article.html?article_id=${article.id}`));
 
             const $reportBtn = $card.find(".article-report");
             if ($reportBtn.length) {

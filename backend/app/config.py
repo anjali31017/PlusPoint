@@ -30,7 +30,9 @@ class Settings(BaseSettings):
     KYC_UPLOAD_FOLDER: str = os.path.join(BASE_DIR, "app","images", "kyc")
     PROFILE_UPLOAD_FOLDER: str = os.path.join(BASE_DIR, "app", "images", "profile")
     TINYMCE_UPLOAD_FOLDER: str = os.path.join(BASE_DIR, "app", "images", "articles")
-
+    # ARTICLE_COVER_PAGE: str = os.path.join(BASE_DIR, "app", "images", "cover_page")
+    
+    
     KYC_FINGERPRINT_SECRET: str
     SESSION_SECRET:str
 
@@ -68,3 +70,4 @@ settings = Settings()
 os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(settings.TINYMCE_UPLOAD_FOLDER, exist_ok=True)
+# os.makedirs(settings.ARTICLE_COVER_PAGE, exist_ok=True)

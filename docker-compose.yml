@@ -21,6 +21,7 @@ services:
       - ./backend/images/kyc:/app/images/kyc
       - ./backend/images/profile:/app/images/profile
       - ./backend/images/articles:/app/images/articles
+      # - ./backend/images/articles:/app/images/cover_page
     ports:
       - "5000:5000"
     networks:
@@ -173,6 +174,7 @@ services:
       - ./frontend:/usr/share/nginx/html
       - ./backend/images/profile:/usr/share/nginx/html/src/images/profile
       - ./backend/images/articles:/usr/share/nginx/html/src/images/articles
+      # - ./backend/images/articles:/usr/share/nginx/html/src/images/cover_page
       - ./backend/images/kyc:/usr/share/nginx/html/src/admin/images/kyc
     networks:
       - pluspoint_network

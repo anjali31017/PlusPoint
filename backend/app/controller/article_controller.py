@@ -11,7 +11,7 @@ from app.models.comment import CommentModel
 from app.kafka.producer import send_kafka_event
 from app.schema.article_schema import ArticleOutSchema
 from app.models.endorse import EndorsementModel
-
+import os
 
 
 class ArticleController:
@@ -25,6 +25,9 @@ class ArticleController:
             
             baseline = 100
             trust_score = (0.4 * firm.trust_factor + 0.6 * baseline) / 2
+            
+            
+        
             
             article = ArticleModel(
                 firm_id=firm,
@@ -140,16 +143,7 @@ class ArticleController:
                 "user_id": u_id,
                 
             }
-            # background_tasks.add_task(
-            #     send_kafka_event("article.like", {
-            #     "publisher_id": str(article.publisher_id.id),
-            #     "firm_id": str(article.firm_id.id),
-            #     "article_id": str(article.id),
-            #     "article_title": article.title,
-            #     "user_id": u_id,
-            # })
-            # )
-            
+
             response = {
                     "status": "liked",
                     "data" : kafka_like_event
@@ -218,152 +212,62 @@ class ArticleController:
             print(f"Error while liking article: {str(e)}")
             return None
         
-    # async def like_article(self, a_id: str, u_id: str):
-    #     article_id = ObjectId(a_id)
-    #     user_id = ObjectId(u_id)
 
-    #     article = await ArticleModel.get(article_id)
-    #     if not article:
-    #         raise HTTPException(status_code=404, detail="Article not found")
-
-    #     user = await UserModel.get(user_id)
-    #     if not user:
-    #         raise HTTPException(status_code=404, detail="User not found")
-
-    #     try:
-    #         # TRY LIKE
-    #         # print("!!!!!!!!!!!!!!!!!!!! Entering like")
-    #         like = ArticleLikeModel(
-    #             article_id=article.id,
-    #             user_id=user.id
-    #         )
-    #         await like.insert()
-    #         # print(like)
-    #         # ATOMIC increment
-    #         await ArticleModel.find_one(
-    #             ArticleModel.id == article.id,
-    #         ).update({"$inc": {"like_count": 1}})
-    #         # print("Finddddddddddddddddd")
-    #         action = "liked"
-
-    #         # print("ARTICLEEEEE", article)
-    #     except DuplicateKeyError:
-    #         # ALREADY LIKED → UNLIKE
-    #         print("!!!!!!!!!!!!!!!!!!!! Entering duplicate")
-    #         await ArticleLikeModel.find_one(
-    #             ArticleLikeModel.article_id == article.id,
-    #             ArticleLikeModel.user_id == user.id
-    #         ).delete()
-
-    #         await ArticleModel.find_one(
-    #             ArticleModel.id == article.id
-    #         ).update({"$inc": {"like_count": -1}})
-
+    async def get_articles(self, article_id: str, current_user:dict|None = None ) -> ArticleOutSchema:
+        try:
+            article = await ArticleModel.find_one(
+                ArticleModel.id == ObjectId(article_id),
+                ArticleModel.is_deleted == False
+            )
+            if not article:
+                return None
             
-    #         action = "un-liked"
-    #         data = None
+            publisher = await article.publisher_id.fetch()
+            publisher_info = {
+                "id": str(publisher.id),
+                "username": publisher.username,
+                "first_name": publisher.first_name,
+                "last_name": publisher.last_name,
+            } if publisher else None
+
+            endorse = False
+            like = False
+            is_self = False    
             
-    #     # Emit Kafka event ONLY for LIKE (optional)
-    #     if action == "liked":
-    #         firm = await article.firm_id.fetch()
-    #         publisher = await article.publisher_id.fetch()
-    #         data = {
-    #             "publisher_id": str(publisher.id),
-    #             "firm_id": str(firm.id),
-    #             "article_id": str(article.id),
-    #             "article_title": article.title,
-    #             "user_id": u_id,
+            if current_user:
+                endorsement = await EndorsementModel.find_one(
+                    EndorsementModel.user_id.id == ObjectId(current_user["user_id"]),
+                    EndorsementModel.article_id.id == article.id
+                    )
+                endorse = True if endorsement else False
                 
-    #         }
+                like_result = await ArticleLikeModel.find_one(
+                    ArticleLikeModel.user_id.id == ObjectId(current_user["user_id"]),
+                    ArticleLikeModel.article_id.id == article.id
+                    )
+                like = True if like_result else False
 
-    #     response = {
-    #         "status": action,
-    #         "data": data
-    #     }
-    #     return response
-
-
-
-
-    # @staticmethod
-    # async def get_articles_by_firm(
-    #     firm_id: ObjectId,
-    #     include_publisher: bool = True,
-    #     status: Optional[str] = "PUBLISHED",
-    # ) -> List[dict]:
-    #     try:
-    #         query = [
-    #             ArticleModel.firm_id.id == firm_id,
-    #             ArticleModel.is_deleted == False,
-    #         ]
-    #         if status:
-    #             query.append(ArticleModel.status == status)
-
-    #         articles = await ArticleModel.find(*query).sort(-ArticleModel.published_at).to_list()
-    #         result = []
-
-    #         for article in articles:
-    #             article_dict = {
-    #                 "id": str(article.id),
-    #                 "title": article.title,
-    #                 "summary": article.summary,
-    #                 "content_text": article.content_text,
-    #                 "published_at": article.published_at,
-    #             }
-
-    #             if include_publisher:
-    #                 await article.fetch_link(ArticleModel.publisher_id)
-    #                 article_dict["publisher"] = {
-    #                     "username": article.publisher_id.username,
-    #                     "first_name": article.publisher_id.first_name,
-    #                     "last_name": article.publisher_id.last_name,
-    #                     "profile_picture_url": article.publisher_id.profile_picture_url,
-    #                 }
-
-    #             result.append(article_dict)
-
-    #         return result
-    #     except Exception as e:
-    #         return str(e)
+                is_self = str(current_user["user_id"]) == str(publisher.id)
+                
+            return ArticleOutSchema(
+                id=str(article.id),
+                title=article.title,
+                summary=article.summary,
+                content=article.content,
+                content_text=article.content_text,
+                endorse_count=article.endorse_count,
+                like_count=article.like_count,
+                trust_score_snapshot=article.trust_score_snapshot,
+                tags=article.tags,
+                category=article.category,
+                published_at=article.published_at,
+                publisher=publisher_info,
+                endorsed=endorse,
+                liked=like,
+                is_self=is_self,
+            )
+    
+        except Exception as e:
+            print(f"Error while liking article: {str(e)}")
+            return None
         
-    # @staticmethod
-    # async def get_article_by_id(
-    #     article_id: str,
-    #     include_publisher: bool = True,
-    # ) -> Optional[dict]:
-    #     try:
-    #         if isinstance(article_id, str):
-    #             if not ObjectId.is_valid(article_id):
-    #                 return None  # Invalid ID
-    #             article_id = ObjectId(article_id)
-
-    #         # Use find_one() — returns a single document, not a cursor
-    #         article = await ArticleModel.find_one(
-    #             ArticleModel.id == article_id,
-    #             ArticleModel.is_deleted == False
-    #         )
-
-    #         if not article:
-    #             return None
-
-    #         # Include publisher info
-    #         article_dict = {
-    #             "id": str(article.id),
-    #             "title": article.title,
-    #             "summary": article.summary,
-    #             "content_text": article.content_text,
-    #             "published_at": article.published_at,
-    #         }
-
-    #         if include_publisher:
-    #             await article.fetch_link(ArticleModel.publisher_id)
-    #             article_dict["publisher"] = {
-    #                 "username": article.publisher_id.username,
-    #                 "first_name": article.publisher_id.first_name,
-    #                 "last_name": article.publisher_id.last_name,
-    #                 "profile_picture_url": article.publisher_id.profile_picture_url,
-    #             }
-
-    #         return article_dict
-    #     except Exception as e:
-    #         return str(e)

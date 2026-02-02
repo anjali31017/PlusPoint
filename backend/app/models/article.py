@@ -24,8 +24,9 @@ class ArticleModel(Document):
     summary: Optional[str] = None
     category: Optional[List[str]] = Field(default_factory=list)
     tags: Optional[List[str]] = Field(default_factory=list)
+    cover_page: Optional[str] = None
     status: ArticleStatus = ArticleStatus.DRAFT
-    trust_score_snapshot: Optional[int] = None
+    trust_score_snapshot: Optional[float] = None
     moderation_required: bool = False
     delete_reason: Optional[str] = None
     like_count: int = 0
@@ -57,25 +58,3 @@ class ArticleLikeModel(Document):
             [("article_id", 1), ("user_id", 1)]
         ]
 
-
-# class ArticleLikeModel(Document):
-#     article_id: Link["ArticleModel"]
-#     user_id: Link["UserModel"]
-#     created_at: datetime = Field(default_factory=datetime.now)
-
-#     class Settings:
-#         name = "article_likes"
-#         indexes = [
-#             {
-#                 "keys": [("article_id.id", 1), ("user_id.id", 1)],
-#                 "unique": True
-#             }
-#         ]
-
-
-# kafka_like_event = {
-#     "firm_id": str(article.firm_id.id),
-#     "article_id": str(article.id),
-#     "article_title": article.title,
-#     "user_id": u_id,
-# }

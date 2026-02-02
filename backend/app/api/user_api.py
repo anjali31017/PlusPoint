@@ -22,6 +22,7 @@ from app.models.firm import FirmModel, VerificationStatus
 from app.kafka.producer import send_kafka_event
 from app.models.report import ReportReasonRequestSchema
 from app.models.subscription import SubscriptionModel
+from app.models.article import ArticleLikeModel, ArticleModel
 
 
 
@@ -648,4 +649,95 @@ async def delete_account(current_user:dict = Depends(get_current_user)):
             
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
-        
+
+
+from beanie.operators import In
+
+
+from beanie.operators import In
+from bson import ObjectId
+
+@router.get("/recommendations", response_model=BaseResponse)
+async def get_recommendations(current_user: dict = Depends(get_current_user)):
+    user_id = ObjectId(current_user["user_id"])
+
+    # 1️⃣ Firms user follows
+    subscriptions = await SubscriptionModel.find(
+        SubscriptionModel.subscriber_id.id == user_id
+    ).to_list()
+
+    followed_firm_ids = [s.firm_id.to_ref().id for s in subscriptions]
+
+    # 2️⃣ Articles user liked (optional, future use)
+    liked_articles = await ArticleLikeModel.find(
+        ArticleLikeModel.user_id.id == user_id
+    ).to_list()
+
+    liked_article_ids = [a.article_id.to_ref().id for a in liked_articles]
+
+    # 3️⃣ Personalized articles (from followed firms)
+    if followed_firm_ids:
+        recommended_articles = await ArticleModel.find(
+            ArticleModel.status == "PUBLISHED",
+            ArticleModel.is_deleted == False,
+            In(ArticleModel.firm_id.id, followed_firm_ids),  # ✅ FIX
+        ).sort("-like_count").limit(10).to_list()
+    else:
+        recommended_articles = []
+
+    # 4️⃣ Fallback: global popular articles
+    if not recommended_articles:
+        recommended_articles = await ArticleModel.find(
+            ArticleModel.status == "PUBLISHED",
+            ArticleModel.is_deleted == False
+        ).sort("-like_count").limit(10).to_list()
+
+    return {
+        "status": 1,
+        "message": "Recommendations fetched",
+        "data": {
+            "articles": [
+                {
+                    "id": str(a.id),
+                    "title": a.title,
+                    "like_count": a.like_count,
+                    "trust_score": a.trust_score_snapshot,
+                }
+                for a in recommended_articles
+            ]
+        }
+    }
+
+      
+# @router.get("/recommendations", response_model=BaseResponse)
+# async def get_recommendations(current_user: dict = Depends(get_current_user)):
+#     user_id = current_user["user_id"]
+
+#     # 1. Get firms user follows
+#     subscriptions = await SubscriptionModel.find(SubscriptionModel.subscriber_id.id == ObjectId(user_id)).to_list()
+#     followed_firms = [s.firm_id.id for s in subscriptions]
+
+#     # 2. Get articles user liked
+#     liked_articles = await ArticleLikeModel.find(ArticleLikeModel.user_id.id == ObjectId(user_id)).to_list()
+#     liked_article_ids = [a.article_id.id for a in liked_articles]
+
+#     # 3. Recommend popular articles
+#     popular_articles = await ArticleModel.find(
+#         ArticleModel.is_deleted == False,
+#         ArticleModel.status == "PUBLISHED"
+#     ).sort("-like_count").limit(10).to_list()
+
+#     # 4. Recommend firms similar to followed ones (same category, etc.)
+#     similar_firms = await FirmModel.find(
+#         FirmModel.is_deleted == False,
+#         FirmModel.verification_status == "APPROVED"
+#     ).sort("-follow_count").limit(10).to_list()
+
+#     return {
+#         "status": 1,
+#         "message": "Recommendations fetched",
+#         "data": {
+#             "articles": [a.title for a in popular_articles],
+#             "firms": [f.firm_name for f in similar_firms]
+#         }
+#     }

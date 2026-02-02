@@ -21,7 +21,7 @@ from app.kafka.producer import start_producer, stop_producer
 from app.kafka.consumer.article_consumer import KafkaArticleService
 from starlette.middleware.sessions import SessionMiddleware
 
-from app.kafka.consumer.moderation_consumer import ModerationKafkaConsumer
+# from app.kafka.consumer.moderation_consumer import ModerationKafkaConsumer
 from app.kafka.consumer.like_consumer import KafkaLikeService
 from app.kafka.consumer.follow_consumer import KafkaFollowService
 from app.utils.trust_factor import background_tf_updater
@@ -60,15 +60,7 @@ async def lifespan(app: FastAPI):
         follow_consumer.cancel()
         
         await asyncio.gather(article_consumer, like_consumer, follow_consumer, return_exceptions=True)
-        
-    # ModerationKafkaConsumer.is_running = False
-    # await ModerationKafkaConsumer.shutdown()
 
-    # try:
-    #     await consumer_task.cancel()
-    # except:
-    #     print("Kafka consumer task cancellation failed or was already cancelled.")
-    # await asyncio.gather(consumer_task, return_exceptions=True)
     
         await stop_producer()
         await close_mongo_connection()
@@ -94,16 +86,12 @@ app.add_middleware(
 
 app.add_middleware(SessionMiddleware, secret_key=settings.SESSION_SECRET)
 
-# os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
+
 
 os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(settings.PROFILE_UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(settings.TINYMCE_UPLOAD_FOLDER, exist_ok=True)
-
-
-# app.mount("/images/profile", StaticFiles(directory="/app/images/profile"), name="profile_images")
-# app.mount("/images/kyc", StaticFiles(directory="/app/images/kyc"), name="kyc_images")
-
+# os.makedirs(settings.ARTICLE_COVER_PAGE, exist_ok=True)
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -178,35 +166,3 @@ app.include_router(
 
 
 app.include_router(sse_router)
-
-# app.include_router(
-#     email_otp_router,
-#     prefix=f"{settings.API_PREFIX}",
-#     tags=["email-otp"],
-
-# )
-
-# @app.middleware("http")
-# async def db_session_middleware(request: Request, call_next):
-#     try:
-#         session = get_session()
-#         request.state.db = session
-#         response = await call_next(request)
-#         return response
-#     except ConnectionError:
-#         print("Database connection lost, attempting to reconnect...")
-#         await connect_to_mysql()
-#         session = get_session()
-#         request.state.db = session
-#         return await call_next(request)
-#     finally:
-#         if hasattr(request.state, "db"):
-#             await request.state.db.close()
-
-
-# app.include_router(
-#     oauth_router,
-#     prefix=f"{settings.API_PREFIX}",
-#     tags=["oauth"],
-
-# )
