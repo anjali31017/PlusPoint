@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="../media/pluspoint_logo.png">
-  <title>Reports - ADMIN</title>
+  <title>Moderation - ADMIN</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -22,22 +22,22 @@
       </div>
       <div class="flex items-center space-x-6">
         <a href="kyc.html" class="text-gray-700 font-semibold hover:text-pink-600">KYC</a>
-        <a href="#" id="reportLink" class="text-gray-700 font-semibold hover:text-pink-600">Reports</a>
-        <a href="requests.html" id="requestLink" class="text-gray-700 font-semibold hover:text-pink-600">Delete Requests</a>
-        <a href="moderation.html" id="moderationLink" class="text-gray-700 font-semibold hover:text-pink-600">Moderation</a>
+        <a href="reports.html" class="text-gray-700 font-semibold hover:text-pink-600">Reports</a>
+        <a href="requests.html" class="text-gray-700 font-semibold hover:text-pink-600">Delete Requests</a>
+        <a href="#" id="moderationLink" class="text-gray-700 font-semibold hover:text-pink-600">Moderation</a>
         <button id="logoutBtn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">Logout</button>
       </div>
     </div>
   </nav>
 
   <div class="max-w-6xl mx-auto p-6">
-    <h1 class="text-3xl font-bold mb-6 text-center">Reports Dashboard</h1>
-    <div id="reportsContainer" class="space-y-6"></div>
+    <h1 class="text-3xl font-bold mb-6 text-center">Article Moderation Dashboard</h1>
+    <div id="moderationContainer" class="space-y-6"></div>
   </div>
 
   <!-- JS -->
   <script src="admin.js"></script>
-  <script src="reports.js"></script>
+  <script src="moderation.js"></script>
 </body>
 
 </html>

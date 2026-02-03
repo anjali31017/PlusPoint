@@ -10,6 +10,7 @@ class NotificationStatus(str, Enum):
     COMMENT = "COMMENT"
     FOLLOW = "FOLLOW"
     EVENT = "EVENT"
+    ADMIN = "ADMIN"
     
 
 class NotificationModel(Document):

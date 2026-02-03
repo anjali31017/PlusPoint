@@ -14,13 +14,15 @@ from app.controller.email_controller import (
     delete_request_action_email,
     report_action_email,
 )
+from app.controller.notification_controller import NotificationController
+from app.models.notification import NotificationStatus
 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
 admin_controller = AdminController()
 user_controller = UserController()
-
+notification_controller = NotificationController()
 
 @router.post(
     "/register", response_model=BaseResponse, status_code=status.HTTP_201_CREATED
@@ -152,7 +154,13 @@ async def approve_kyc(
         background_tasks.add_task(
             KYC_status_email, to_email=user.email, status=kyc.kyc_status, reason=None
         )
-
+        # notification_data = {
+        #             "send_to": user_id,
+        #             "message": "KYC APPROVED",
+        #             "type": NotificationStatus.ADMIN,
+        #             "sent": False
+        #         }
+        # notification = notification_controller.save_notification(notification_data)
         return {
             "status": 1,
             "message": "KYC approved",
@@ -190,7 +198,7 @@ async def reject_kyc(
             status=kyc_record.kyc_status,
             reason=kyc_record.rejection_reason,
         )
-
+        
         return {
             "status": 1,
             "message": "KYC Rejected",
@@ -382,3 +390,68 @@ async def delete_requests_admin(admin_id: str = Depends(admin_required)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
         
+@router.get("/moderation", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def moderation(admin_id: str = Depends(admin_required)):
+    try:
+        articles = await ArticleModel.find(
+            ArticleModel.is_deleted == False,
+            ArticleModel.status == ArticleStatus.PENDING_REVIEW
+        ).to_list()
+
+        return {
+            "status": 1,
+            "message": "Successfully fetched",
+            "data": {
+                "articles": articles,
+            },
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+    
+@router.post("/moderation/accept", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def moderation(article_id: str= Query(None), admin_id: str = Depends(admin_required)):
+    try:
+        articles = await ArticleModel.find_one(
+            ArticleModel.id == ObjectId(article_id),
+            ArticleModel.is_deleted == False,
+        )
+        articles.status = ArticleStatus.PUBLISHED
+        articles.moderation_required = False
+        await articles.save()
+        
+        return {
+            "status": 1,
+            "message": "Successfully fetched",
+            "data": {
+                "articles": articles,
+            },
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+
+@router.post("/moderation/reject", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def moderation(article_id: str= Query(None), data: AdminRejctReasonSchema = None, admin_id: str = Depends(admin_required)):
+    try:
+        articles = await ArticleModel.find_one(
+            ArticleModel.id == ObjectId(article_id),
+            ArticleModel.is_deleted == False,
+        )
+        articles.status = ArticleStatus.REJECTED
+        articles.rejection_reason = data.reason
+        await articles.save()
+        return {
+            "status": 1,
+            "message": "Successfully fetched",
+            "data": {
+                "articles": articles,
+            },
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
