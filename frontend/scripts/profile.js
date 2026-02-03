@@ -309,7 +309,7 @@ $(document).ready(async function () {
                 <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
                 <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>
                 <p class="text-xs mt-1 text-purple-600">
-                    Trust: ${f.trust_factor ?? 'N/A'}
+                    Trust: ${Number(f.trust_factor).toFixed(2) ?? 'N/A'}
                 </p>
             </a>
         `);

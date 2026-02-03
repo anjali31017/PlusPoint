@@ -59,26 +59,6 @@ async def add_article(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create article",
             )
-            
-        # if cover_page and cover_page.filename:
-        #     ext = os.path.splitext(cover_page.filename)[1].lower()
-        #     if ext not in [".jpg", ".jpeg", ".png", ".gif"]:
-        #         raise HTTPException(
-        #             status_code=status.HTTP_400_BAD_REQUEST,
-        #             detail="Only JPG, JPEG, PNG, GIF files are allowed"
-        #         )
-
-        #     article_title = article.id
-        #     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        #     filename = f"{article_title}_{timestamp}{ext}"
-        #     file_path = os.path.join(settings.ARTICLE_COVER_PAGE, filename)
-        #     print("@@@@@@@@@@@@@",file_path)
-        #     with open(file_path, "wb") as buffer:
-        #         shutil.copyfileobj(cover_page.file, buffer)
-
-        #     article.cover_page = f"images/profile/{filename}"
-        #     article.save()
-        # article_notification_manager.send_personal_message("hello", "692052180cbaa9500904c230")
 
         if article.status == "DRAFT":
             return {

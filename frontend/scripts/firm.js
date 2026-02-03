@@ -145,7 +145,7 @@ $(document).ready(async function () {
                     <p class="text-gray-500">@${firm.firm_username}</p>
                     <p class="mt-2">${firm.bio || ''}</p>
                     <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
-                        <span>Trust Factor: <strong>${firm.trust_factor}</strong></span>
+                        <span>Trust Factor: <strong>${Number(firm.trust_factor).toFixed(2)}</strong></span>
                         <span>Followers: <strong>${firm.follow_count ?? 0}</strong></span>
                         <span>Owner: ${ownerLink}</span>
                     </div> 
