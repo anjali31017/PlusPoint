@@ -1,7 +1,8 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import shutil
+from typing import Optional
 import uuid
 from bson import ObjectId
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, UploadFile
@@ -447,7 +448,7 @@ async def get_single_article(
 
 
 @router.get("/coverage", response_model=BaseResponse)
-async def get_firm_details(
+async def get_articles(
     page: int = Query(1, ge=1),
     page_size: int = Query(10, ge=1, le=50),
     current_user: dict = Depends(get_current_user)
@@ -486,9 +487,71 @@ async def get_firm_details(
         
         return{
             "status": 1,
-            "message": "Firm fetched successfully",
+            "message": "Articles fetched successfully",
             "data": articles
         } 
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+        
+        
+@router.get("/trending", response_model=BaseResponse)
+async def get_articles(
+    span: Optional[str] = Query("day", description="Trending span: day, week, month"),
+    current_user: dict = Depends(get_current_user)
+):
+    try:
+        if current_user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue",
+            )
+        
+        now = datetime.now()
+        if span == "day":
+            since = now - timedelta(days=1)
+        elif span == "week":
+            since = now - timedelta(weeks=1)
+        elif span == "month":
+            since = now - timedelta(days=30)
+        else:
+            raise HTTPException(status_code=400, detail="Invalid span value")
+        
+        # Fetch published articles
+        articles_cursor = ArticleModel.find(
+            ArticleModel.status == "PUBLISHED",
+            ArticleModel.is_deleted == False,
+            ArticleModel.published_at >= since
+        )
+
+        articles = []
+        async for article in articles_cursor:
+            score = (article.like_count or 0) + (article.endorse_count or 0) + (0.2 * article.trust_score_snapshot or 0)
+            articles.append({
+                "id": str(article.id),
+                "title": article.title,
+                "summary": article.summary,
+                "tags": article.tags,
+                "category": article.category,
+                "like_count": article.like_count,
+                "trust_score": article.trust_score_snapshot,
+                "report_count": article.report_count,
+                "hot_topic": article.hot_topic,
+                "published_at": article.published_at,
+                "score": score  # for sorting
+            })
+        
+        top_articles = sorted(articles, key=lambda x: x["score"], reverse=True)[:10]
+
+        return {
+            "status": 1,
+            "message": f"Top trending articles ({span}) fetched successfully",
+            "data": top_articles
+        }
     
     except HTTPException as e:
         raise e

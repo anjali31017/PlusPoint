@@ -7,18 +7,35 @@
     <link rel="icon" type="image/png" href="../media/pluspoint_logo.png">
     <title>About - PlusPoint</title>
     <script src="https://cdn.tailwindcss.com"></script>
+      <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 
+<style>
+        #google_translate_element .goog-te-gadget a[href*="translate.google.com"] {
+      display: none !important;
+    }
+
+    .goog-logo-link {
+      display: none !important;
+    }
+
+    .goog-te-gadget {
+      font-size: 0px !important;
+    }
+</style>
 <body class="bg-gradient-to-tr from-blue-100 to-purple-200 flex flex-col min-h-screen">
 
     <!-- Hero Section -->
     <header class="bg-white shadow rounded-b-3xl p-8 relative overflow-hidden mb-8">
         <div
             class="absolute -top-16 -right-16 w-40 h-40 bg-purple-300 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-pulse">
+        
         </div>
-        <img src="../media/pluspoint_logo.png" alt="PLUSPOINT" width="50" height="50"
+        <div id="google_translate_element"></div>
+        <img src="../media/pluspoint_logo.png" class="pt-2" alt="PLUSPOINT" width="50" height="50"
             style="display:block; margin:auto;">
         <h1 class="text-4xl font-extrabold text-purple-700 text-center mb-4">About PlusPoint</h1>
+        
         <p class="text-center text-gray-500 max-w-xl mx-auto">
             PlusPoint is your go-to platform for the latest updates, breaking news, and personalized content.
             Our mission is to make information accessible and engaging for everyone.

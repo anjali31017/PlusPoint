@@ -38,6 +38,7 @@ class FirmDetailsOutSchema(BaseModel):
     trust_factor: float
     violations_count: int
     follow_count: int
+    endorse_count: int
     is_verified: bool
     created_at: datetime
     owner: dict  # minimal owner info

@@ -20,6 +20,13 @@ function truncateWords(str, numWords) {
 }
 
 
+function googleTranslateElementInit() {
+new google.translate.TranslateElement({
+pageLanguage: 'en'
+}, 'google_translate_element');
+}
+
+
 
 // index.js
 // $(document).ready(function () {
