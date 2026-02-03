@@ -183,9 +183,7 @@ class UserController:
     
     async def delete_user(self, current_user :dict):
         try:
-            print(current_user)
             user = await self.get_user(current_user["user_id"])
-            print(user)
             if user is None:
                 return None
         

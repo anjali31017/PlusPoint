@@ -14,7 +14,8 @@ class ReportModel(Document):
     article_id: Optional[Link["ArticleModel"]] = None
     reason: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.now)
-
+    is_deleted: bool = False
+    
     class Settings:
         name = "reports"  
 

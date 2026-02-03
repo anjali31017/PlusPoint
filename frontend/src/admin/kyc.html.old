@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="../media/pluspoint_logo.png">
+  <title>KYC - ADMIN</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+  <!-- <body class="bg-gradient-to-tr from-blue-200 via-white to-pink-200 min-h-screen"> -->
+
+  <!-- NAVIGATION BAR -->
+  <nav class="bg-white shadow-md">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <span class="text-2xl font-bold text-rose-600">PlusPoint Admin</span>
+      </div>
+      <div class="flex items-center space-x-6">
+        <a href="#" id="kycLink" class="text-gray-700 font-semibold hover:text-pink-600">KYC</a>
+        <a href="#" id="reportLink" class="text-gray-700 font-semibold hover:text-pink-600">Reports</a>
+        <button id="logoutBtn"
+          class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">Logout</button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6 text-center">KYC Management Dashboard</h1>
+    <div id="kycContainer" class="space-y-6"></div>
+  </div>
+
+  <script>
+    // Common rejection reasons
+    const commonReasons = [
+      "Name does not match",
+      "Document expired",
+      "Photo unclear",
+      "Document altered",
+      "Other"
+    ];
+
+    // Check session on page load
+    $(document).ready(function () {
+      $.ajax({
+        url: "http://127.0.0.1:5000/api/admin/check-session",
+        method: "GET",
+        xhrFields: { withCredentials: true },
+        success: function (res) {
+          if (res.status === 1) {
+            loadKYCData(); // session active, load KYC
+          }
+        },
+        error: function () {
+          window.location.href = "login.html"; // redirect if session expired
+        }
+      });
+
+      // Logout button
+      $("#logoutBtn").click(function () {
+        $.ajax({
+          url: "http://127.0.0.1:5000/api/admin/logout",
+          method: "POST",
+          xhrFields: { withCredentials: true }, // send cookies/session
+          success: function (res) {
+            if (res.status === 1) {
+              Swal.fire({
+                icon: "success",
+                title: res.message,
+                timer: 1000,
+                showConfirmButton: false
+              }).then(() => {
+                window.location.href = "login.html"; // redirect to login after logout
+              });
+            } else {
+              Swal.fire({
+                icon: "error",
+                title: "Logout failed",
+                text: res.message || "Please try again"
+              });
+            }
+          },
+          error: function (xhr) {
+            Swal.fire({
+              icon: "error",
+              title: "Error",
+              text: xhr.responseJSON?.detail || "Could not logout"
+            });
+          }
+        });
+      });
+
+
+      // Optional: KYC link reloads page
+      $("#kycLink").click(function () {
+        loadKYCData();
+      });
+
+      // Reports link placeholder
+      $("#reportLink").click(function () {
+        Swal.fire({
+          icon: "info",
+          title: "Reports section",
+          text: "This section can show KYC statistics and reports."
+        });
+      });
+    });
+
+    function loadKYCData() {
+      $.ajax({
+        url: "http://127.0.0.1:5000/api/admin/kyc",
+        method: "GET",
+        xhrFields: { withCredentials: true },
+        success: function (res) {
+          const data = res.data.data;
+          if (data.length === 0) {
+            $("#kycContainer").html("<p class='text-center text-gray-600'>No KYC requests available</p>");
+            return;
+          }
+          $("#kycContainer").empty();
+          data.forEach(kyc => {
+            const card = $(`
+              <div class="bg-white rounded-xl shadow-md p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex-1">
+                  <p><strong>Name on ID:</strong> ${kyc.name_on_id}</p>
+                  <p><strong>DOB:</strong> ${kyc.dob}</p>
+                  <p><strong>ID Type:</strong> ${kyc.id_type}</p>
+                  <p><strong>Last 4 of ID:</strong> ${kyc.id_last4}</p>
+                  <p><strong>Status:</strong> <span class="font-semibold text-blue-600">${kyc.kyc_status}</span></p>
+                </div>
+                <div class="flex-1">
+                  <a href="${kyc.id_document_path}" target="_blank" rel="noopener noreferrer"> 
+                    <img src="${kyc.id_document_path}" alt="ID Document" class="mt-2 w-48 border rounded cursor-zoom-in">
+                  </a>
+                </div>
+                <div class="flex flex-col gap-2">
+                  <select class="border px-3 py-2 rounded rejectionReason">
+                    <option value="">Select reason</option>
+                    ${commonReasons.map(r => `<option value="${r}">${r}</option>`).join('')}
+                  </select>
+                  <input type="text" placeholder="Custom reason" class="border px-3 py-2 rounded customReason">
+                  <div class="flex gap-2 mt-2">
+                    <button class="approveBtn bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded font-semibold">Approve</button>
+                    <button class="rejectBtn bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">Reject</button>
+                  </div>
+                </div>
+              </div>
+            `);
+
+            // Approve
+            card.find(".approveBtn").click(function () {
+              $.ajax({
+                url: `http://127.0.0.1:5000/api/admin/kyc/${kyc.user_id.id}/approve`,
+                method: "POST",
+                xhrFields: { withCredentials: true },
+                success: function (res) {
+                  Swal.fire({
+                    icon: "success",
+                    title: "KYC approved",
+                    timer: 1000,
+                    showConfirmButton: false
+                  }).then(() => {
+                    loadKYCData(); // refresh list
+                  });
+                },
+                error: function (xhr) {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: xhr.responseJSON.detail || "Something went wrong"
+                  });
+                }
+              });
+            });
+
+            // Reject
+            card.find(".rejectBtn").click(function () {
+              let reason = card.find(".customReason").val().trim();
+              if (!reason) {
+                reason = card.find(".rejectionReason").val();
+              }
+              if (!reason) {
+                Swal.fire({
+                  icon: "warning",
+                  title: "Please provide a reason"
+                });
+                return;
+              }
+
+              $.ajax({
+                url: `http://127.0.0.1:5000/api/admin/kyc/${kyc.user_id.id}/reject`,
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ reason }),
+                xhrFields: { withCredentials: true },
+                success: function (res) {
+                  Swal.fire({
+                    icon: "success",
+                    title: "KYC rejected",
+                    timer: 1000,
+                    showConfirmButton: false
+                  }).then(() => {
+                    loadKYCData(); // refresh list
+                  });
+                },
+                error: function (xhr) {
+                  Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: xhr.responseJSON.detail || "Something went wrong"
+                  });
+                }
+              });
+            });
+
+            $("#kycContainer").append(card);
+          });
+        },
+        error: function (xhr) {
+          Swal.fire({
+            icon: "error",
+            title: "Error fetching KYC",
+            text: xhr.responseJSON.detail || "Could not fetch KYC data"
+          });
+        }
+      });
+    }
+  </script>
+
+</body>
+
+</html>

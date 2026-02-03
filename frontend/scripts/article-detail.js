@@ -79,7 +79,7 @@ function renderArticle(article, userStatus) {
         <div class="flex flex-wrap gap-6 text-sm text-gray-600 mb-6" id="article-stats">
             <span>❤️ <strong>${article.like_count}</strong> Likes</span>
             <span>👍 <strong>${article.endorse_count}</strong> Endorsements</span>
-            <span>🛡 Trust Score <strong>${article.trust_score_snapshot}</strong></span>
+            <span>🛡 Trust Score <strong>${Number(article.trust_score_snapshot).toFixed(2)}</strong></span>
         </div>
 
         <!-- Categories & Tags -->
