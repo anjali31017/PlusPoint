@@ -147,6 +147,7 @@ $(document).ready(async function () {
                     <div class="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
                         <span>Trust Factor: <strong>${Number(firm.trust_factor).toFixed(2)}</strong></span>
                         <span>Followers: <strong>${firm.follow_count ?? 0}</strong></span>
+                        <span>Endorse count: <strong>${firm.endorse_count ?? 0}</strong></span>
                         <span>Owner: ${ownerLink}</span>
                     </div> 
                 </div>

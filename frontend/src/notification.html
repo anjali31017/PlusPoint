@@ -9,13 +9,25 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<style>
     .content-scroll { scrollbar-width: thin; scrollbar-color: #E9D5FF transparent; }
     .content-scroll::-webkit-scrollbar { width: 6px; }
     .content-scroll::-webkit-scrollbar-thumb { background: #E9D5FF; border-radius: 10px; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     body { display: none; }
+    #google_translate_element .goog-te-gadget a[href*="translate.google.com"] {
+    display: none !important;
+  }
+
+  .goog-logo-link {
+    display: none !important;
+  }
+
+  .goog-te-gadget {
+    font-size: 0px !important;
+  }
   </style>
 </head>
 <body class="bg-white min-h-screen flex flex-col md:flex-row overflow-hidden font-sans text-gray-900">
@@ -70,15 +82,8 @@
       </h2>
 
       <div class="flex items-center space-x-2 md:space-x-5">
-        <button class="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all relative">
-          <i data-lucide="bell" class="w-6 h-6"></i>
-          <span class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
-        <div class="flex items-center pl-4 border-l border-purple-100">
-            <a href="profile.html" class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all">
-                <i data-lucide="user" class="w-7 h-7"></i>
-            </a>
-        </div>
+<div class="px-5 py-2 bg-gray-200" id="google_translate_element"></div>
+
       </div>
     </header>
 
@@ -125,6 +130,7 @@
       $('body').fadeIn(400); // Smoothly show the page
     });
   </script>
+  <script src="../scripts/index.js"></script>
   <!-- <script src="../scripts/common-header.js"></script> -->
 
 </body>

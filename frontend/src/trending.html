@@ -9,13 +9,25 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <style>
+  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<style>
     .content-scroll { scrollbar-width: thin; scrollbar-color: #E9D5FF transparent; }
     .content-scroll::-webkit-scrollbar { width: 6px; }
     .content-scroll::-webkit-scrollbar-thumb { background: #E9D5FF; border-radius: 10px; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     body { display: none; }
+    #google_translate_element .goog-te-gadget a[href*="translate.google.com"] {
+    display: none !important;
+  }
+
+  .goog-logo-link {
+    display: none !important;
+  }
+
+  .goog-te-gadget {
+    font-size: 0px !important;
+  }
   </style>
 </head>
 <body class="bg-white min-h-screen flex flex-col md:flex-row overflow-hidden font-sans text-gray-900">
@@ -70,54 +82,26 @@
       </h2>
 
       <div class="flex items-center space-x-2 md:space-x-5">
-        <button class="p-2.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all relative">
-          <i data-lucide="bell" class="w-6 h-6"></i>
-          <span class="absolute top-2.5 right-2.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white"></span>
-        </button>
-        <div class="flex items-center pl-4 border-l border-purple-100">
-            <a href="profile.html" class="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-2xl transition-all">
-                <i data-lucide="user" class="w-7 h-7"></i>
-            </a>
-        </div>
+<div class="px-5 py-2 bg-gray-200" id="google_translate_element"></div>
+
       </div>
     </header>
 
+    <!-- 1️⃣ Trending Span Selector -->
+<div id="spanSelector" class="flex gap-3 justify-center mb-6 pt-2">
+    <button data-span="day" class="px-4 py-2 rounded-xl bg-purple-700 text-white font-semibold">Day</button>
+    <button data-span="week" class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-purple-100 hover:text-purple-700">Week</button>
+    <button data-span="month" class="px-4 py-2 rounded-xl bg-gray-100 text-gray-700 font-semibold hover:bg-purple-100 hover:text-purple-700">Month</button>
+</div>
+
+
     <div id="content-wrapper" class="p-6 md:p-10 max-w-6xl mx-auto pb-32 md:pb-10">
       
-      <div id="main-content" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div class="group bg-white rounded-[2.5rem] p-4 border border-gray-100 hover:border-purple-200 hover:shadow-2xl transition-all duration-500">
-          <div class="h-52 bg-purple-50 rounded-[2rem] mb-4 overflow-hidden relative">
-            <img src="../images/Gemini_Generated_Image_8gsg6n8gsg6n8gsg.png" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
-            <div class="absolute top-4 left-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-purple-700">NOTIFICATION</div>
-          </div>
-          <div class="px-2">
-            <h4 class="text-lg font-bold text-gray-800 leading-snug group-hover:text-purple-700 transition-colors">Welcome to PlusPoint</h4>
-            <p class="text-sm text-gray-500 mt-2">The latest in decentralized news and global updates.</p>
-          </div>
-        </div>
-      </div>
+
 
       </div>
   </main>
 
-  <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-purple-100 flex justify-around items-center px-2 py-3 z-50">
-    <a href="home.html" class="flex flex-col items-center text-purple-700">
-      <i data-lucide="home" class="w-6 h-6"></i>
-      <span class="text-[10px] font-bold mt-1">HOME</span>
-    </a>
-    <a href="search.html" class="flex flex-col items-center text-gray-400">
-      <i data-lucide="search" class="w-6 h-6"></i>
-      <span class="text-[10px] font-medium mt-1">SEARCH</span>
-    </a>
-    <a href="quickTake.html" class="flex flex-col items-center text-gray-400">
-      <i data-lucide="compass" class="w-6 h-6"></i>
-      <span class="text-[10px] font-medium mt-1">QUICK TAKE</span>
-    </a>
-    <a href="notification.html" class="flex flex-col items-center text-gray-400">
-      <i data-lucide="rss" class="w-6 h-6"></i>
-      <span class="text-[10px] font-medium mt-1">NEWS</span>
-    </a>
-  </nav>
 
   <script>
     $(document).ready(function() {
@@ -125,7 +109,10 @@
       $('body').fadeIn(400); // Smoothly show the page
     });
   </script>
-  <!-- <script src="../scripts/common-header.js"></script> -->
+  <script src="../scripts/index.js"></script>
+
+  <script src="../scripts/auth.js"></script>
+  <script src="../scripts/trending.js"></script>
 
 </body>
 </html>

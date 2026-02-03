@@ -314,6 +314,7 @@ async def get_firm_details(
             trust_factor=firm.trust_factor,
             violations_count=firm.violations_count,
             follow_count=firm.follow_count,
+            endorse_count=firm.endorse_count,
             is_verified=firm.is_verified,
             created_at=firm.created_at,
             owner=owner_info,
