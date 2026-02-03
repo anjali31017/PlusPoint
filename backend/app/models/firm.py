@@ -28,6 +28,8 @@ class FirmModel(Document):
     delete_reason: Optional[str] = None
     is_active: bool = True
     is_deleted: bool = False
+    is_verified: bool = True
+    verified_at: Optional[datetime] = None
     created_at: datetime = Field(default_factory=datetime.now)
 
     class Settings:

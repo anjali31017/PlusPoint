@@ -87,12 +87,14 @@ async def add_article(
                 else datetime.now().isoformat()
             ),
         }
+        
         background_tasks.add_task(
             send_kafka_event,
             "article.published", 
             kafka_article_event
         )
-      
+
+        
         summary_reponse = summerization_task.delay(article.content, str(article.id))
 
         return {

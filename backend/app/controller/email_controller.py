@@ -23,7 +23,7 @@ async def otp_email(to_email: str, otp: str) -> bool:
         <p>Dear User,</p>
         <p>Your One-Time Password (OTP) for PlusPoint verification is:</p>
         <p style="text-align:center;margin:20px 0;">
-            <span style="display:inline-block;padding:10px 20px;background-color:#1a73e8;color:#fff;font-weight:bold;font-size:18px;border-radius:5px;">
+            <span style="padding:10px 20px;font-weight:bold;font-size:18px;">
                 {otp}
             </span>
         </p>
@@ -240,6 +240,72 @@ async def report_action_email(
         <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
             <p>Dear User,</p>
             <p>We’re writing to inform you that some content associated with your account has been removed from our platform.</p>
+            <p><strong>Reason for removal:</strong><br>{reason or 'No specific reason provided.'}</p>
+            <p>If you believe this action was made in error or would like to appeal, please contact us at <a href="mailto:support@pluspoint.com">support@pluspoint.com</a>.</p>
+            <p style="margin-top:20px;font-weight:900;font-size:26px;color:#1a73e8;">PlusPoint Support Team</p>
+        </div>
+        """
+
+    message = MIMEMultipart()
+    message["From"] = settings.SMTP_FROM_EMAIL
+    message["To"] = to_email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "html"))
+
+    try:
+        await aiosmtplib.send(
+            message,
+            hostname=settings.SMTP_SERVER,
+            port=settings.SMTP_PORT,
+            start_tls=True,
+            username=settings.SMTP_USERNAME,
+            password=settings.SMTP_PASSWORD,
+        )
+
+        return True
+    except Exception as e:
+        print("Error sending email:", e)
+        return False
+
+
+
+
+async def delete_request_action_email(
+    to_email: str,
+    firm: dict | None = None,
+    article: dict | None = None,
+    reason: str | None = None,
+) -> bool:
+
+    # Subject
+    subject = "Update on Deletion Request"
+
+    # Body construction
+    if firm:
+        body = f"""
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
+            <p>Dear {firm.firm_name},</p>
+            <p>We’re writing to inform you that your firm account <strong>{firm.firm_username}</strong> deletion request has been accepted.</p>
+            <p><strong>Reason for deletion:</strong><br>{reason or 'No specific reason provided.'}</p>
+            <p>If you believe this action was made in error or would like to appeal, please contact us at <a href="mailto:support@pluspoint.com">support@pluspoint.com</a>.</p>
+            <p style="margin-top:20px;font-weight:900;font-size:26px;color:#1a73e8;">PlusPoint Support Team</p>
+        </div>
+        """
+    elif article:
+        body = f"""
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
+            <p>Dear User,</p>
+            <p>We’re writing to inform you that your article titled <strong>"{article.title}"</strong> deletion request has been accepted.</p>
+            <p><strong>Reason for removal:</strong><br>{reason or 'No specific reason provided.'}</p>
+            <p>If you believe this action was made in error or would like to appeal, please contact us at <a href="mailto:support@pluspoint.com">support@pluspoint.com</a>.</p>
+            <p style="margin-top:20px;font-weight:900;font-size:26px;color:#1a73e8;">PlusPoint Support Team</p>
+        </div>
+        """
+    else:
+        body = f"""
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#333;">
+            <p>Dear User,</p>
+            <p>We’re writing to inform you that some content associated with your account deletion request has been accepted.</p>
             <p><strong>Reason for removal:</strong><br>{reason or 'No specific reason provided.'}</p>
             <p>If you believe this action was made in error or would like to appeal, please contact us at <a href="mailto:support@pluspoint.com">support@pluspoint.com</a>.</p>
             <p style="margin-top:20px;font-weight:900;font-size:26px;color:#1a73e8;">PlusPoint Support Team</p>

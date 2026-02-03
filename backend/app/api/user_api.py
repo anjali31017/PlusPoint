@@ -24,6 +24,11 @@ from app.models.report import ReportReasonRequestSchema
 from app.models.subscription import SubscriptionModel
 from app.models.article import ArticleLikeModel, ArticleModel
 
+from beanie.operators import In
+
+
+from beanie.operators import In
+from bson import ObjectId
 
 
 
@@ -651,11 +656,6 @@ async def delete_account(current_user:dict = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-from beanie.operators import In
-
-
-from beanie.operators import In
-from bson import ObjectId
 
 @router.get("/recommendations", response_model=BaseResponse)
 async def get_recommendations(current_user: dict = Depends(get_current_user)):

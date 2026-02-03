@@ -6,11 +6,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request, HTTPExc
 from app.models.admin import AdminModel
 from app.controller.admin_controller import admin_required
 from app.controller.user_controller import UserController
-from app.models.firm import FirmModel
+from app.models.firm import FirmModel, VerificationStatus
 from app.models.article import ArticleModel, ArticleStatus
 from app.models.report import ReportModel
 from app.controller.email_controller import (
     KYC_status_email,
+    delete_request_action_email,
     report_action_email,
 )
 
@@ -205,7 +206,7 @@ async def reject_kyc(
 
 # Reports
 @router.get("/reports", response_model=BaseResponse, status_code=status.HTTP_200_OK)
-async def list_reports(admin_id: str = Depends(admin_required)):
+async def list_firm_articles(admin_id: str = Depends(admin_required)):
     try:
         firms = await FirmModel.find(
             FirmModel.is_deleted == False, FirmModel.report_count >= 30
@@ -232,35 +233,41 @@ async def list_reports(admin_id: str = Depends(admin_required)):
         )
 
 
-@router.get(
-    "/user-reports", response_model=BaseResponse, status_code=status.HTTP_200_OK
-)
-async def list_reports(admin_id: str = Depends(admin_required)):
+@router.get("/user-reports", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def list_reports(firm_id:str = Query(None), article_id:str = Query(None), admin_id: str = Depends(admin_required)):
     try:
-        reports = await ReportModel.find_all().sort("-created_at").to_list()
 
+        filters = [ReportModel.is_deleted == False]
+        if firm_id:
+            filters.append(ReportModel.firm_id.id == ObjectId(firm_id))
+
+        if article_id:
+            filters.append(ReportModel.article_id.id == ObjectId(article_id))
+        
+        reports = await ReportModel.find(*filters).sort("-created_at").to_list()
+        
+        
         return {
             "status": 1,
             "message": "Reported Firms",
-            "data": {
-                "reports": reports,
-            },
+            "data": {"reports": reports},
         }
 
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
-
-
+        
+        
 @router.post(
-    "/report/action",
+    "/delete/action",
     response_model=BaseResponse,
     status_code=status.HTTP_200_OK,
 )
 async def handle_report(
     firm_id: str = Query(None),
     article_id: str = Query(None),
+    action:str = Query(None),
     admin_id: str = Depends(admin_required),
     data: AdminRejctReasonSchema = None,
     background_tasks: BackgroundTasks = None,
@@ -269,6 +276,9 @@ async def handle_report(
         to_email = None
         firm = None
         article = None
+        
+        delete_filters = [ReportModel.is_deleted == False]
+        
         if firm_id:
             firm = await FirmModel.find_one(
                 FirmModel.id == ObjectId(firm_id), FirmModel.is_deleted == False
@@ -281,8 +291,11 @@ async def handle_report(
             
             firm.is_deleted = True
             firm.is_active = False
+            firm.verification_status = VerificationStatus.REJECTED
             await firm.save()
-            print("deltetedddd")
+            
+            delete_filters.append(ReportModel.firm_id.id == ObjectId(firm_id))
+
             owner = await firm.owner_user_id.fetch()
             to_email = owner.email
 
@@ -305,26 +318,31 @@ async def handle_report(
             owner = await article.publisher_id.fetch()
             to_email = owner.email
 
-            
+            delete_filters.append(ReportModel.article_id.id == ObjectId(article_id))
 
-        delete_reports = await ReportModel.find_many(
-            ReportModel.article_id.id == firm,
-            ReportModel.article_id.id == article,
-            ReportModel.is_deleted == False,
-        ).to_list()
+        delete_reports = await ReportModel.find(*delete_filters).to_list()
         for report in delete_reports:
             report.is_deleted = True
             await report.save()
 
         # send mail
-        background_tasks.add_task(
-            report_action_email,
-            to_email=to_email,
-            firm=firm,
-            article=article,
-            reason=data.reason,
-        )
-
+        if action.lower() == 'report':
+            background_tasks.add_task(
+                report_action_email,
+                to_email=to_email,
+                firm=firm,
+                article=article,
+                reason=data.reason,
+            )
+        if action.lower() == 'delete':
+            background_tasks.add_task(
+                delete_request_action_email,
+                to_email=to_email,
+                firm=firm,
+                article=article,
+                reason=data.reason,
+            )
+            
         return {
             "status": 1,
             "message": "Deleted Successfully",
@@ -335,3 +353,32 @@ async def handle_report(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
+
+
+
+@router.get("/delete/requests", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def delete_requests_admin(admin_id: str = Depends(admin_required)):
+    try:
+        firms = await FirmModel.find(
+            FirmModel.is_deleted == False, FirmModel.delete_reason != None
+        ).to_list()
+
+        articles = await ArticleModel.find(
+            ArticleModel.is_deleted == False,
+            ArticleModel.delete_reason != None
+        ).to_list()
+
+        return {
+            "status": 1,
+            "message": "Successfully fetched",
+            "data": {
+                "firms": firms,
+                "articles": articles,
+            },
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+        
