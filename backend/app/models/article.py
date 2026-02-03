@@ -29,6 +29,7 @@ class ArticleModel(Document):
     trust_score_snapshot: Optional[float] = None
     moderation_required: bool = False
     delete_reason: Optional[str] = None
+    rejection_reason: Optional[str] = None
     like_count: int = 0
     report_count: int = 0
     endorse_count: int = 0

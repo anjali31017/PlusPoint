@@ -59,7 +59,7 @@ async def add_article(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create article",
             )
-
+        
         if article.status == "DRAFT":
             return {
                 "status": 1,
@@ -68,6 +68,9 @@ async def add_article(
                     "article_id": str(article.id),
                 },
             }
+            
+        summary_reponse = summerization_task.delay(article.content, str(article.id))
+        
         if article.status == "PENDING_REVIEW":
             raise HTTPException(
                 status_code=status.HTTP_202_ACCEPTED,
@@ -95,7 +98,7 @@ async def add_article(
         )
 
         
-        summary_reponse = summerization_task.delay(article.content, str(article.id))
+        
 
         return {
             "status": 1,
