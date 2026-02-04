@@ -11,6 +11,7 @@ import os
 from app.api.user_api import router as user_router
 from app.api.admin_api import router as admin_router
 from app.api.kyc_api import router as kyc_router
+
 from app.websocket.websocket_endpoints import router as websocket_router
 from app.database.connection import connect_to_mongo, close_mongo_connection, get_db
 from app.api.refresh_api import router as token_router
@@ -25,6 +26,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from app.kafka.consumer.like_consumer import KafkaLikeService
 from app.kafka.consumer.follow_consumer import KafkaFollowService
 from app.utils.trust_factor import background_tf_updater
+from app.kafka.consumer.admin_action_consumer import KafkaAdminService
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -35,6 +37,7 @@ async def lifespan(app: FastAPI):
     article_consumer = asyncio.create_task(KafkaArticleService.consume_articles())
     like_consumer = asyncio.create_task(KafkaLikeService.consume_likes())
     follow_consumer = asyncio.create_task(KafkaFollowService.consume_follow())
+    admin_action_consumer = asyncio.create_task(KafkaAdminService.consume_admin_action())
     
     # moderation_consumer = asyncio.create_task(ModerationKafkaConsumer.start())
 
@@ -55,9 +58,13 @@ async def lifespan(app: FastAPI):
         KafkaFollowService.is_running = False
         await KafkaFollowService.shutdown()
         
+        KafkaAdminService.is_running = False
+        await KafkaAdminService.shutdown()
+        
         article_consumer.cancel()
         like_consumer.cancel()
         follow_consumer.cancel()
+        admin_action_consumer.cancel()
         
         await asyncio.gather(article_consumer, like_consumer, follow_consumer, return_exceptions=True)
 
@@ -163,6 +170,9 @@ app.include_router(
     prefix=f"{settings.WS_PREFIX}",
     tags=["websocket"],
 )
+
+
+
 
 
 app.include_router(sse_router)

@@ -129,7 +129,7 @@ $(document).ready(function () {
         return;
       }
 
-      await $.ajax({
+      const response = await $.ajax({
         url: `http://127.0.0.1:5000/api/article/create?firm_id=${firm_id}`,
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
@@ -146,7 +146,7 @@ $(document).ready(function () {
 
       Swal.fire(
         'Success',
-        `Article ${status === 'DRAFT' ? 'saved as draft' : 'published'}!`,
+        response.message || `Article ${status === 'DRAFT' ? 'saved as draft' : 'published'}!`,
         'success'
       ).then(() => window.location.href = 'home.html');
 

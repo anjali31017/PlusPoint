@@ -203,83 +203,165 @@ $(document).ready(async function () {
             initReportButton($reportBtn, 'firm', firm.id);
         }
     }
+function renderArticles(articles) {
+    const $list = $("#articles-list");
+    if (!articles || articles.length === 0) return;
 
-    function renderArticles(articles) {
-        const $list = $("#articles-list");
-        if (!articles || articles.length === 0) return;
+    const accessToken = localStorage.getItem("access_token");
+    let currentUserId = null;
+    if (accessToken) {
+        try {
+            currentUserId = JSON.parse(atob(accessToken.split(".")[1])).user_id;
+        } catch (e) { }
+    }
 
-        const accessToken = localStorage.getItem("access_token");
-        let currentUserId = null;
-        if (accessToken) {
-            try {
-                currentUserId = JSON.parse(atob(accessToken.split(".")[1])).user_id;
-            } catch (e) { }
-        }
+    $(document).off("click.articleDropdown").on("click.articleDropdown", () => {
+        $(".dropdown-menu").hide();
+    });
 
-        $(document).off("click.articleDropdown").on("click.articleDropdown", () => {
-            $(".dropdown-menu").hide();
-        });
+    articles.forEach(article => {
+        // If the firm is self, all articles are self-authored
+        const isAuthor = isSelf || currentUserId === String(article.publisher?.id);
 
-        articles.forEach(article => {
-            const isAuthor = currentUserId === String(article.publisher?.id);
-
-            const $card = $(`
-            <div class="card bg-white rounded-lg border border-purple-200 shadow-sm overflow-hidden relative group">
-                <div class="p-4 cursor-pointer" data-article-id="${article.id}">
-                    <h3 class="font-bold text-lg">${article.title}</h3>
-                    <p class="text-gray-500 mt-1">${truncateWords(article.summary || article.content_text, 20)}</p>
-                    <div class="flex flex-wrap gap-2 mt-2 text-xs text-gray-400">
-                        ${article.category.map(c => `<span class="bg-purple-100 px-2 py-1 rounded">${c}</span>`).join('')}
-                        ${article.tags.map(t => `<span class="bg-blue-100 px-2 py-1 rounded">#${t}</span>`).join('')}
-                    </div>
+        const $card = $(`
+        <div class="card bg-white rounded-lg border border-purple-200 shadow-sm overflow-hidden relative group">
+            <div class="p-4 cursor-pointer" data-article-id="${article.id}">
+                <h3 class="font-bold text-lg">${article.title}</h3>
+                <p class="text-gray-500 mt-1">${truncateWords(article.summary || article.content_text, 20)}</p>
+                <div class="flex flex-wrap gap-2 mt-2 text-xs text-gray-400">
+                    ${article.category.map(c => `<span class="bg-purple-100 px-2 py-1 rounded">${c}</span>`).join('')}
+                    ${article.tags.map(t => `<span class="bg-blue-100 px-2 py-1 rounded">#${t}</span>`).join('')}
                 </div>
-                <div class="absolute top-2 right-2">
-                    <div class="relative inline-block text-left">
-                        <button class="dropdown-btn p-1 text-gray-400 hover:text-gray-600" type="button">
-                            <i data-lucide="more-vertical" class="w-5 h-5"></i>
-                        </button>
-                        <div class="dropdown-menu hidden origin-top-right absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
-                            <div class="py-1 text-sm text-gray-700">
-                                ${!isAuthor ? `<button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-report">Report</button>` : ''}
-                                ${isAuthor ? `<button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-del">Request Delete</button>` : ''}
-                                <button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-copy">Copy Link</button>
-                            </div>
+            </div>
+            <div class="absolute top-2 right-2">
+                <div class="relative inline-block text-left">
+                    <button class="dropdown-btn p-1 text-gray-400 hover:text-gray-600" type="button">
+                        <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                    </button>
+                    <div class="dropdown-menu hidden origin-top-right absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                        <div class="py-1 text-sm text-gray-700">
+                            ${!isAuthor ? `<button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-report">Report</button>` : ''}
+                            ${isAuthor ? `<button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-del">Request Delete</button>` : ''}
+                            <button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-copy">Copy Link</button>
                         </div>
                     </div>
                 </div>
             </div>
-            `);
+        </div>
+        `);
 
-            $card.find(".dropdown-btn").click(e => {
-                e.stopPropagation();
-                $(e.currentTarget).siblings(".dropdown-menu").toggle();
-            });
+        $card.find(".dropdown-btn").click(e => {
+            e.stopPropagation();
+            $(e.currentTarget).siblings(".dropdown-menu").toggle();
+        });
 
-            $card.find(".p-4").click(() => window.open(`article.html?article_id=${article.id}`));
+        $card.find(".p-4").click(() => window.open(`article.html?article_id=${article.id}`));
 
+        if (!isAuthor) {
             const $reportBtn = $card.find(".article-report");
             if ($reportBtn.length) {
                 initReportButton($reportBtn, 'article', article.id);
                 $reportBtn.click(e => { e.stopPropagation(); $card.find(".dropdown-menu").hide(); });
             }
+        }
 
+        if (isAuthor) {
             const $deleteBtn = $card.find(".article-del");
             if ($deleteBtn.length) {
                 initDeleteRequest($deleteBtn, 'article', article.id);
                 $deleteBtn.click(e => { e.stopPropagation(); $card.find(".dropdown-menu").hide(); });
             }
+        }
 
-            $card.find(".article-copy").click(e => {
-                e.stopPropagation();
-                navigator.clipboard.writeText(`${window.location.origin}/src/article.html?article_id=${article.id}`);
-                $card.find(".dropdown-menu").hide();
-            });
-
-            $list.append($card);
+        $card.find(".article-copy").click(e => {
+            e.stopPropagation();
+            navigator.clipboard.writeText(`${window.location.origin}/src/article.html?article_id=${article.id}`);
+            $card.find(".dropdown-menu").hide();
         });
 
-        lucide.createIcons();
-    }
+        $list.append($card);
+    });
+
+    lucide.createIcons();
+}
+
+
+    // function renderArticles(articles) {
+    //     const $list = $("#articles-list");
+    //     if (!articles || articles.length === 0) return;
+
+    //     const accessToken = localStorage.getItem("access_token");
+    //     let currentUserId = null;
+    //     if (accessToken) {
+    //         try {
+    //             currentUserId = JSON.parse(atob(accessToken.split(".")[1])).user_id;
+    //         } catch (e) { }
+    //     }
+
+    //     $(document).off("click.articleDropdown").on("click.articleDropdown", () => {
+    //         $(".dropdown-menu").hide();
+    //     });
+
+    //     articles.forEach(article => {
+    //         const isAuthor = currentUserId === String(article.publisher?.id);
+
+    //         const $card = $(`
+    //         <div class="card bg-white rounded-lg border border-purple-200 shadow-sm overflow-hidden relative group">
+    //             <div class="p-4 cursor-pointer" data-article-id="${article.id}">
+    //                 <h3 class="font-bold text-lg">${article.title}</h3>
+    //                 <p class="text-gray-500 mt-1">${truncateWords(article.summary || article.content_text, 20)}</p>
+    //                 <div class="flex flex-wrap gap-2 mt-2 text-xs text-gray-400">
+    //                     ${article.category.map(c => `<span class="bg-purple-100 px-2 py-1 rounded">${c}</span>`).join('')}
+    //                     ${article.tags.map(t => `<span class="bg-blue-100 px-2 py-1 rounded">#${t}</span>`).join('')}
+    //                 </div>
+    //             </div>
+    //             <div class="absolute top-2 right-2">
+    //                 <div class="relative inline-block text-left">
+    //                     <button class="dropdown-btn p-1 text-gray-400 hover:text-gray-600" type="button">
+    //                         <i data-lucide="more-vertical" class="w-5 h-5"></i>
+    //                     </button>
+    //                     <div class="dropdown-menu hidden origin-top-right absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+    //                         <div class="py-1 text-sm text-gray-700">
+    //                             ${!isAuthor ? `<button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-report">Report</button>` : ''}
+    //                             ${isAuthor ? `<button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-del">Request Delete</button>` : ''}
+    //                             <button class="w-full text-left px-4 py-2 hover:bg-gray-100 article-copy">Copy Link</button>
+    //                         </div>
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         </div>
+    //         `);
+
+    //         $card.find(".dropdown-btn").click(e => {
+    //             e.stopPropagation();
+    //             $(e.currentTarget).siblings(".dropdown-menu").toggle();
+    //         });
+
+    //         $card.find(".p-4").click(() => window.open(`article.html?article_id=${article.id}`));
+
+    //         const $reportBtn = $card.find(".article-report");
+    //         if ($reportBtn.length) {
+    //             initReportButton($reportBtn, 'article', article.id);
+    //             $reportBtn.click(e => { e.stopPropagation(); $card.find(".dropdown-menu").hide(); });
+    //         }
+
+    //         const $deleteBtn = $card.find(".article-del");
+    //         if ($deleteBtn.length) {
+    //             initDeleteRequest($deleteBtn, 'article', article.id);
+    //             $deleteBtn.click(e => { e.stopPropagation(); $card.find(".dropdown-menu").hide(); });
+    //         }
+
+    //         $card.find(".article-copy").click(e => {
+    //             e.stopPropagation();
+    //             navigator.clipboard.writeText(`${window.location.origin}/src/article.html?article_id=${article.id}`);
+    //             $card.find(".dropdown-menu").hide();
+    //         });
+
+    //         $list.append($card);
+    //     });
+
+    //     lucide.createIcons();
+    // }
 
     // --- Infinite scroll ---
     $(window).on("scroll", () => {

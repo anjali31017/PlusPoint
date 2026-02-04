@@ -512,10 +512,11 @@ async def report(
         
 
 
-@router.post("/endorse", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+@router.post("/endorse", response_model=BaseResponse,  status_code=status.HTTP_200_OK)
 async def report(
     firm_id: str|None = Query(None),
     article_id: str|None = Query(None),
+    background_tasks:BackgroundTasks=None,
     current_user: dict = Depends(get_current_user),
     ):
     try:
@@ -538,6 +539,20 @@ async def report(
                 detail="failed to endorse, Try again!"
             )
     
+        
+        # kafka_endorse_event = {
+        #     "event_type": "user.endorse",
+        #     "firm_id": str(article.firm_id.id),
+        #     "article_id": str(article.id),
+        #     "article_title": article.title,
+        #     "firm_username": article.firm_id.firm_username,
+        # }
+        
+        # background_tasks.add_task(
+        #     send_kafka_event,
+        #     "user.endorse", 
+        #     kafka_endorse_event
+        # )
         
         response_data = {
             "status": 1,

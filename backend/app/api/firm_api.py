@@ -129,7 +129,7 @@ async def subscribe_to_entity(
         if success["status"] == "followed":
             background_tasks.add_task(
                 send_kafka_event,  
-                "article.follow",  
+                "firm.follow",  
                 success["data"],  
             )
 

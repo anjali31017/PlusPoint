@@ -73,10 +73,12 @@ async def add_article(
         summary_reponse = summerization_task.delay(article.content, str(article.id))
         
         if article.status == "PENDING_REVIEW":
-            raise HTTPException(
-                status_code=status.HTTP_202_ACCEPTED,
-                detail="Article sent for moderation",
-            )
+            return {
+                "status": 1,
+                "message": "Article sent for moderation",
+                "data": None,
+            }
+
 
         # final, clean Kafka event
         kafka_article_event = {

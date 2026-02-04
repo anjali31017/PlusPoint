@@ -47,7 +47,7 @@ function renderFirmReports(container, firms) {
           <textarea placeholder="Reason for deletion" class="border px-3 py-2 rounded reasonInput"></textarea>
           <div class="flex gap-2 mt-2">
             <button class="deleteBtn bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded font-semibold">Delete Firm</button>
-            <button class="viewReportsBtn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold" data-type="firm" data-id="${firm.id}">View Reports</button>
+            <button class="viewReportsBtn bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded font-semibold" data-type="firm" data-id="${firm._id}">View Reports</button>
           </div>
           
         </div>
@@ -62,7 +62,7 @@ function renderFirmReports(container, firms) {
       confirmAction("Confirm Delete Firm?", `Reason: ${reason}`, "Delete").then(result => {
         if (result.isConfirmed) {
           $.ajax({
-            url: `http://127.0.0.1:5000/api/admin/delete/action?firm_id=${firm.id}&action=report`,
+            url: `http://127.0.0.1:5000/api/admin/delete/action?firm_id=${firm._id}&action=report`,
             method: "POST",
             contentType: "application/json",
             data: JSON.stringify({ reason }),
