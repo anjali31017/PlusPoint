@@ -45,14 +45,16 @@ class KafkaFollowService:
                             "firm_id": post["firm_id"],
                             "user_id": post["user_id"],
                         }
-
-                        await asyncio.gather(
-                            *[
-                                sse_connection_manager.send_to_user(
-                                    firm_owner_id, message, NotificationStatus.FOLLOW
-                                )
-                            ]
+                        asyncio.create_task(
+                            sse_connection_manager.send_to_user(firm_owner_id, message, NotificationStatus.FOLLOW)
                         )
+                        # await asyncio.gather(
+                        #     *[
+                        #         sse_connection_manager.send_to_user(
+                        #             firm_owner_id, message, NotificationStatus.FOLLOW
+                        #         )
+                        #     ]
+                        # )
                         print("Notifications sent to firm.")
 
                     except Exception as process_err:

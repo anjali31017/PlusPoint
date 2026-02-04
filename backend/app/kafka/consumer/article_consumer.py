@@ -69,11 +69,15 @@ class KafkaArticleService:
 
                         if all_subscribers:
                             print(f"Sending notifications to subscribers: {all_subscribers}")
-                            await asyncio.gather(*[
-                                # article_notification_manager.send_personal_message(message, sid)
-                                sse_connection_manager.send_to_user(sid, article, NotificationStatus.ARTICLE)
-                                for sid in all_subscribers
-                            ])
+                            for sid in all_subscribers:
+                                asyncio.create_task(
+                                    sse_connection_manager.send_to_user(sid, article, NotificationStatus.ARTICLE)
+                                )
+                            # await asyncio.gather(*[
+                            #     # article_notification_manager.send_personal_message(message, sid)
+                            #     sse_connection_manager.send_to_user(sid, article, NotificationStatus.ARTICLE)
+                            #     for sid in all_subscribers
+                            # ])
                             print("Notifications sent to subscribers.")
 
                     except Exception as process_err:

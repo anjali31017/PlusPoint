@@ -18,6 +18,7 @@ from app.api.refresh_api import router as token_router
 from app.api.firm_api import router as firm_router
 from app.api.article_api import router as article_router
 from app.sse.sse_endpoint import router as sse_router
+from app.api.dashboard_api import router as dashboard_router
 from app.kafka.producer import start_producer, stop_producer
 from app.kafka.consumer.article_consumer import KafkaArticleService
 from starlette.middleware.sessions import SessionMiddleware
@@ -27,6 +28,7 @@ from app.kafka.consumer.like_consumer import KafkaLikeService
 from app.kafka.consumer.follow_consumer import KafkaFollowService
 from app.utils.trust_factor import background_tf_updater
 from app.kafka.consumer.admin_action_consumer import KafkaAdminService
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -71,7 +73,8 @@ async def lifespan(app: FastAPI):
     
         await stop_producer()
         await close_mongo_connection()
-
+        
+        
         print("Application shutdown complete.")
         
         
@@ -157,6 +160,11 @@ app.include_router(
     tags=["article"],
 )
 
+app.include_router(
+    dashboard_router,
+    prefix=f"{settings.API_PREFIX}",
+    tags=["dashboard"],
+)
 
 app.include_router(
     kyc_router,

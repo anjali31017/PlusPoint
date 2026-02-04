@@ -47,14 +47,17 @@ class KafkaAdminService:
                             "article_id": post["article_id"],
                             "firm_id": post["firm_id"],
                         }
-
-                        await asyncio.gather(
-                            *[
-                                sse_connection_manager.send_to_user(
-                                    user_id, message, NotificationStatus.ADMIN
-                                )
-                            ]
+                        
+                        asyncio.create_task(
+                            sse_connection_manager.send_to_user(user_id, message, NotificationStatus.ADMIN)
                         )
+                        # await asyncio.gather(
+                        #     *[
+                        #         sse_connection_manager.send_to_user(
+                        #             user_id, message, NotificationStatus.ADMIN
+                        #         )
+                        #     ]
+                        # )
                         print("Notifications sent to user.")
 
                     except Exception as process_err:

@@ -47,7 +47,7 @@ class SSEManager:
             print(f"Error connecting user {user_id}: {e}")
             raise
 
-    def disconnect(self, user_id: str):
+    async def disconnect(self, user_id: str):
         try:
             self.connections.pop(user_id, None)
         except Exception as e:
@@ -64,7 +64,9 @@ class SSEManager:
             if user_id in self.connections:
                 print(f"Sending message to user {user_id}")
                 await self.connections[user_id].put(notification_data)
-                await notification_controller.save_notification(notification_data)
+                
+                asyncio.create_task(notification_controller.save_notification(notification_data))
+                # await notification_controller.save_notification(notification_data)
             else:
                 print(f"User {user_id} not connected")
                 notification_data["sent"] = False
@@ -78,3 +80,6 @@ class SSEManager:
                 await q.put(message)
         except Exception as e:
             print(f"Error broadcasting message: {e}")
+            
+            
+sse_connection_manager = SSEManager()

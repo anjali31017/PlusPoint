@@ -1,7 +1,7 @@
 // // global-notifications.js
 
 // global-notifications.js
-let notifications = [];
+var notifications = [];
 
 /* --------------------------------------------------
    Start SSE for global notifications
@@ -94,47 +94,3 @@ document.addEventListener("DOMContentLoaded", startGlobalSSE);
 
 
 
-
-
-// let notifications = [];
-
-// function startGlobalSSE() {
-//     const token = localStorage.getItem("access_token");
-//     if (!token) return;
-
-//     const eventSource = new EventSource(`http://127.0.0.1:5000/sse/notifications?token=${token}`);
-
-//     eventSource.onmessage = (event) => {
-//         const data = JSON.parse(event.data);
-//         if (data.type === "heartbeat") return;
-
-//         // Add to notifications array
-//         notifications.unshift(data);
-
-//         // Update badge
-//         updateBadge();
-
-//         // Show toast popup
-//         showToast(data);
-//     };
-
-//     eventSource.onerror = () => {
-//         eventSource.close();
-//         setTimeout(startGlobalSSE, 5000);
-//     };
-// }
-
-// function updateBadge() {
-//     const badge = document.getElementById("notification-badge");
-//     badge.textContent = notifications.length > 0 ? notifications.length : "";
-// }
-
-
-
-// // Clickable bell icon
-// document.getElementById("global-notification").addEventListener("click", () => {
-//     window.location.href = "/notification.html";
-// });
-
-// // Start SSE on page load
-// document.addEventListener("DOMContentLoaded", startGlobalSSE);

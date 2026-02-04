@@ -44,11 +44,13 @@ class KafkaEndorseService:
                             "article_title": post["article_title"],
                             "user_id": post["user_id"],
                         }
-                        
-                        await asyncio.gather(*[
-                                sse_connection_manager.send_to_user(publisher_id, message, NotificationStatus.LIKE )
-                            ])
-                        print("Notifications sent to firm.")
+                        asyncio.create_task(
+                            sse_connection_manager.send_to_user(publisher_id, message, NotificationStatus.LIKE)
+                        )
+                        # await asyncio.gather(*[
+                        #         sse_connection_manager.send_to_user(publisher_id, message, NotificationStatus.LIKE )
+                        #     ])
+                        # print("Notifications sent to firm.")
 
                     except Exception as process_err:
                         print(f"Error processing message: {process_err}")
