@@ -1,4 +1,5 @@
 
+import asyncio
 from typing import List, Optional
 from bson import ObjectId
 from app.models.article import ArticleModel, ArticleLikeModel, ArticleStatus
@@ -64,6 +65,39 @@ class ArticleController:
                 print("Failed to update article")
                 return None 
             print("Article updated successfully")
+            
+            # print("SUMMARYYYYYYYY UPDATEDDDDD")
+            # if article.status == ArticleStatus.PUBLISHED and article.is_deleted == False:
+            #     firm = await article.firm_id.fetch()
+            #     print("EVENTTTTTTT QUICKTAKE")
+                
+                # kafka_quick_take_event = {
+                # "event_type": "quick.take",
+                # "firm_id": str(firm.id),
+                # "article_id": str(article.id),
+                # "title": article.title,
+                # "firm_username": firm.firm_username,
+                # "summary": article.summary,
+                # "likes": article.like_count,
+                # "endorse": article.endorse_count,
+                # "category":article.category,
+                # "tags":article.tags,
+                # "trust_score_snapshot":article.trust_score_snapshot,
+                # "hot_topic": article.hot_topic,
+                # "published_at": (
+                #     article.published_at.isoformat()
+                #     if article.published_at
+                #     else datetime.now().isoformat()
+                # ),
+                # }
+                # # background_tasks = 
+                
+                # asyncio.run(
+                #     send_kafka_event("quick.take", 
+                #     kafka_quick_take_event)
+                # )
+
+                # print("BACKGROUNDDDDDD QUICKTAKE")
             return article           
         except Exception as e:
             print(f"Error while updating article: {str(e)}")

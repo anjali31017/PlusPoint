@@ -16,10 +16,15 @@ async function reportItem(type, id) {
         inputLabel: 'Reason',
         inputPlaceholder: 'Type your reason here...',
         showCancelButton: true,
-        confirmButtonText: 'Report'
+        confirmButtonText: 'Report',
+        inputValidator: (value) => {
+            if (!value || value.trim() === '') {
+                return 'You must enter a reason to report!';
+            }
+        }
     });
 
-    if (!reason || reason.trim() === '') return;
+    if (!reason) return; // redundant, but safe
 
     try {
         const res = await ajaxWithJWT({
@@ -29,13 +34,12 @@ async function reportItem(type, id) {
             data: JSON.stringify({ reason: reason.trim() })
         });
 
-        // Swal.fire("Reported", res.message || `${type.charAt(0).toUpperCase() + type.slice(1)} has been reported.`, "success");
         Swal.fire({
             title: "Reported",
-            text: "Article has been reported.",
+            text: `${type.charAt(0).toUpperCase() + type.slice(1)} has been reported.`,
             icon: "success",
-            showConfirmButton: false, // <-- hides OK button
-            timer: 1000               // optional: auto-close after 2 seconds
+            showConfirmButton: false,
+            timer: 1000
         });
     } catch (err) {
         console.error(err);
@@ -43,6 +47,7 @@ async function reportItem(type, id) {
         Swal.fire("Error", msg, "error");
     }
 }
+
 
 // Initialize a report button
 function initReportButton($button, type, id) {

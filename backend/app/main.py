@@ -28,6 +28,7 @@ from app.kafka.consumer.like_consumer import KafkaLikeService
 from app.kafka.consumer.follow_consumer import KafkaFollowService
 from app.utils.trust_factor import background_tf_updater
 from app.kafka.consumer.admin_action_consumer import KafkaAdminService
+from app.kafka.consumer.quicktake_consumer import KafkaQuickTakeService
 
 
 @asynccontextmanager
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI):
     like_consumer = asyncio.create_task(KafkaLikeService.consume_likes())
     follow_consumer = asyncio.create_task(KafkaFollowService.consume_follow())
     admin_action_consumer = asyncio.create_task(KafkaAdminService.consume_admin_action())
+    quick_take_consumer = asyncio.create_task(KafkaQuickTakeService.consume_quicktake())
     
     # moderation_consumer = asyncio.create_task(ModerationKafkaConsumer.start())
 
@@ -63,12 +65,16 @@ async def lifespan(app: FastAPI):
         KafkaAdminService.is_running = False
         await KafkaAdminService.shutdown()
         
+        KafkaQuickTakeService.is_running = False
+        await KafkaQuickTakeService.shutdown()
+        
         article_consumer.cancel()
         like_consumer.cancel()
         follow_consumer.cancel()
         admin_action_consumer.cancel()
+        quick_take_consumer.cancel()
         
-        await asyncio.gather(article_consumer, like_consumer, follow_consumer, return_exceptions=True)
+        await asyncio.gather(article_consumer, like_consumer, follow_consumer, admin_action_consumer, quick_take_consumer, return_exceptions=True)
 
     
         await stop_producer()

@@ -3,18 +3,21 @@ from aiokafka import AIOKafkaConsumer
 from bson import ObjectId
 from app.models.subscription import SubscriptionModel
 from app.config import settings
-from app.sse.sse_endpoint import sse_connection_manager
+from app.sse.sse_endpoint import add_to_recent_articles, sse_connection_manager
 from app.models.notification import NotificationStatus
+from app.models.article import ArticleLikeModel, ArticleModel
+from app.models.endorse import EndorsementModel
+from app.models.report import ReportModel
 
 
 
 
-class KafkaArticleService:
+class KafkaQuickTakeService:
     is_running = True
     consumer = None
 
     @classmethod
-    async def consume_articles(cls):
+    async def consume_quicktake(cls):
         """Kafka Consumer with retry logic."""
         while cls.is_running:
             # await asyncio.sleep(0.1)
@@ -22,13 +25,9 @@ class KafkaArticleService:
                 print("Attempting to connect Kafka Consumer...")
 
                 cls.consumer = AIOKafkaConsumer(
-                    "article.published",
+                    "quick.take",
                     bootstrap_servers="kafka_pluspoint_1:9092",
-                    # bootstrap_servers=[
-                    #     'kafka_pluspoint_1:9092',
-                    #     'kafka_pluspoint_2:9094'
-                    # ],
-                    group_id="notification_service_group_test",
+                    group_id="quick_take_service_group_test",
                     value_deserializer=lambda v: json.loads(v.decode('utf-8')),
                     auto_offset_reset="earliest",
                     request_timeout_ms=30000,
@@ -42,44 +41,40 @@ class KafkaArticleService:
                 async for msg in cls.consumer:
 
                     try:
+                        
+                        
                         print("Message received from Kafka")
                         post = msg.value
                         
+                        article_id = post["article_id"]
+                        # liked = await ArticleLikeModel.find_one(ArticleLikeModel.article_id == ObjectId(article_id), ArticleLikeModel.user_id == ObjectId(user_id))
+                        # endorsed = await EndorsementModel.find_one(EndorsementModel.article_id == ObjectId(article_id), EndorsementModel.user_id == ObjectId(user_id))
+                        # reported = await ReportModel.find_one(ReportModel.article_id == ObjectId(article_id), ReportModel.user_id == ObjectId(user_id), ReportModel.is_deleted == False)
                         
-                        firm_id = post["firm_id"]
+                        await asyncio.sleep(30)
                         
-                        firm_obj_id = ObjectId(firm_id)
-                        article = {
+                        article = await ArticleModel.find_one(ArticleModel.id == ObjectId(article_id), ArticleModel.is_deleted == False)
+                        
+                        article_data = {
+                            "firm_id": post["firm_id"],
                             "article_id": post["article_id"],
-                            "article_title": post["article_title"],
-                            "article_firm": post["firm_username"],
+                            "title": post["title"],
+                            "firm_username": post["firm_username"],
+                            "summary": article.summary,
+                            "likes": post["likes"],
+                            "endorse": post["endorse"],
+                            "category": post["category"],
+                            "tags": post["tags"],
+                            "trust_score_snapshot": post["trust_score_snapshot"],
+                            "hot_topic": post["hot_topic"],
+                            # "liked": bool(liked),
+                            # "endorsed": bool(endorsed),
+                            # "reported": bool(reported),
                             "published_at": post["published_at"]
                         }
-                        
-                        firm_subscribers = await SubscriptionModel.find(SubscriptionModel.firm_id.id == firm_obj_id).to_list()
-                        firm_subscribers_id = [str(sub.subscriber_id.ref.id) for sub in firm_subscribers]
-                        all_subscribers = []
-                        if firm_subscribers is not None:
-                            all_subscribers = list(set(firm_subscribers_id))
-                        
-                            print("@@@@@@@@@@@@@@@@@@@@@@", all_subscribers)
-                        
-                        if not all_subscribers:
-                            continue 
-                        
 
-                        if all_subscribers:
-                            print(f"Sending notifications to subscribers: {all_subscribers}")
-                            for sid in all_subscribers:
-                                asyncio.create_task(
-                                    sse_connection_manager.send_to_user(sid, article, NotificationStatus.ARTICLE)
-                                )
-                            # await asyncio.gather(*[
-                            #     # article_notification_manager.send_personal_message(message, sid)
-                            #     sse_connection_manager.send_to_user(sid, article, NotificationStatus.ARTICLE)
-                            #     for sid in all_subscribers
-                            # ])
-                            print("Notifications sent to subscribers.")
+                        await add_to_recent_articles(article_data)
+                        await sse_connection_manager.broadcast(article_data)
 
                     except Exception as process_err:
                         print(f"Error processing message: {process_err}")

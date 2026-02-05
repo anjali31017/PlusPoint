@@ -25,6 +25,7 @@ from app.models.users import UserModel
 from app.schema.search_output_schema import MultiSectionSearchResponse
 from app.config import settings
 from app.models.endorse import EndorsementModel
+from app.models.report import ReportModel
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -102,6 +103,31 @@ async def add_article(
         )
 
         
+        
+        kafka_quick_take_event = {
+            "event_type": "quick.take",
+            "user_id": str(current_user["user_id"]),
+            "firm_id": str(article.firm_id.id),
+            "article_id": str(article.id),
+            "title": article.title,
+            "firm_username": article.firm_id.firm_username,
+            "likes": article.like_count,
+            "endorse": article.endorse_count,
+            "category":article.category,
+            "tags":article.tags,
+            "trust_score_snapshot":article.trust_score_snapshot,
+            "hot_topic": article.hot_topic,
+            "published_at": (
+                article.published_at.isoformat()
+                if article.published_at
+                else datetime.now().isoformat()
+            ),
+            }
+        background_tasks.add_task(
+            send_kafka_event,
+            "quick.take", 
+            kafka_quick_take_event
+            )
         
 
         return {
@@ -334,8 +360,17 @@ async def search_multi_section(search: ArticleSearchSchema):
         if search.hot_topic is not None:
             article_filters["hot_topic"] = True
 
-        article_filters["moderation_required"] = False
-        article_filters["status"] = ArticleStatus.PUBLISHED
+        if search.start_date and search.end_date:
+            article_filters["published_at"] = {
+                "$gte": datetime.combine(search.start_date, datetime.min.time()),
+                "$lte": datetime.combine(search.end_date, datetime.max.time())
+            }
+        elif search.start_date:
+            article_filters["published_at"] = {"$gte": datetime.combine(search.start_date, datetime.min.time())}
+        elif search.end_date:
+            article_filters["published_at"] = {"$lte": datetime.combine(search.end_date, datetime.max.time())}
+
+        
         skip = (page - 1) * page_size
         articles = (
             await ArticleModel.find(article_filters)
@@ -500,6 +535,70 @@ async def get_articles(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
+        
+
+
+
+@router.get("/quicktake")
+async def get_quicktake(
+    page: int = 1,
+    page_size: int = 10,
+    user_id: str = None
+):
+    try:
+        print("calllllledddddd QUICK TAKE")
+        skip = (page - 1) * page_size
+        today = datetime.now().date()
+        start = datetime(today.year, today.month, today.day)
+        end = start + timedelta(days=1)
+
+        # Fetch published articles
+        articles_cursor = ArticleModel.find(
+            ArticleModel.status == "PUBLISHED",
+            ArticleModel.is_deleted == False,
+            ArticleModel.published_at >= start,
+            ArticleModel.published_at < end
+        ).sort("-published_at").skip(skip).limit(page_size)
+
+        # print(articles_cursor)
+        articles = []
+        
+        async for article in articles_cursor:
+            firm = await article.firm_id.fetch()
+            
+            # liked = await ArticleLikeModel.find_one(ArticleLikeModel.article_id == article.id, ArticleLikeModel.user_id == ObjectId(user_id))
+            # endorsed = await EndorsementModel.find_one(EndorsementModel.article_id == article.id, EndorsementModel.user_id == ObjectId(user_id))
+            # reported = await ReportModel.find_one(ReportModel.article_id == article.id, ReportModel.user_id == ObjectId(user_id), ReportModel.is_deleted == False)
+                        
+                        
+            article_data = {
+                "firm_id": str(firm.id),
+                "article_id":str(article.id),
+                "title":article.title,
+                "firm_username": firm.firm_username,
+                "summary":article.summary,
+                "likes": article.like_count,
+                "endorse": article.endorse_count,
+                "category":article.category,
+                "tags":article.tags,
+                "trust_score_snapshot":article.trust_score_snapshot,
+                "hot_topic": article.hot_topic,
+                # "liked": True if liked else False,
+                # "endorsed": True if endorsed else False,
+                # "reported": True if reported else False,
+                "published_at": article.published_at.isoformat(),
+            }
+            articles.append(article_data)
+        
+        return articles
+    
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
+        
         
         
 @router.get("/trending", response_model=BaseResponse)

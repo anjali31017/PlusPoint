@@ -24,7 +24,6 @@ class ArticleModel(Document):
     summary: Optional[str] = None
     category: Optional[List[str]] = Field(default_factory=list)
     tags: Optional[List[str]] = Field(default_factory=list)
-    cover_page: Optional[str] = None
     status: ArticleStatus = ArticleStatus.DRAFT
     trust_score_snapshot: Optional[float] = None
     moderation_required: bool = False

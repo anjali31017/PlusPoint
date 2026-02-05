@@ -1,7 +1,6 @@
-// // global-notifications.js
 
-// global-notifications.js
-var notifications = [];
+
+var get_notifications = [];
 
 /* --------------------------------------------------
    Start SSE for global notifications
@@ -17,7 +16,7 @@ function startGlobalSSE() {
         if (data.type === "heartbeat") return;
 
         // Add new notification to the top
-        notifications.unshift(data);
+        get_notifications.unshift(data);
 
         // Update sidebar badge
         updateSidebarBadge();
@@ -39,7 +38,7 @@ function updateSidebarBadge() {
     const badge = document.getElementById("sidebar-notification-badge");
     if (!badge) return;
 
-    badge.textContent = notifications.length > 0 ? notifications.length : "";
+    badge.textContent = get_notifications.length > 0 ? get_notifications.length : "";
 }
 
 /* --------------------------------------------------
