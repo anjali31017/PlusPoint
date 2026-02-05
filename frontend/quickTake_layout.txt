@@ -1,0 +1,20 @@
+
+   ┌──────────────────────── CONTENT CARD ──────────────────────────────────────┐
+   |                                                     |                      |
+   |  @firm_username                                     |                      |
+   |                                                     |                      |
+   |  ARTICLE TITLE                                      |      ACTION PANEL    |
+   |                                                     | ❤️ Like        25    |
+   |  Article summary paragraph goes here and wraps      | ⭐ Endorse     10    |
+   |  nicely without touching buttons                    | 🔗 Copy Link         |
+   |                                                     | 🚩 Report            |
+   |  [Category]   [HOT]                                 | 			|
+   |                                                     |                      |
+   |  #AI   #Future   #Tech                              |                      |
+   |                                                     |                      |
+   |          [ View Full Article → ]                    |                      |
+   |                                                     |                      |
+   └────────────────────────────────────────────────────────────────────────────┘ 
+                                                                              
+
+

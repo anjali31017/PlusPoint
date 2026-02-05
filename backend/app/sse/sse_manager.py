@@ -11,32 +11,6 @@ notification_controller = NotificationController()
 class SSEManager:
     def __init__(self):
         self.connections: Dict[str, asyncio.Queue] = {}
-        
-    # async def connect(self, user_id: str) -> asyncio.Queue:
-    #     """
-    #     Connect user to SSE and replay any missed notifications.
-    #     """
-    #     queue = asyncio.Queue()
-    #     self.connections[user_id] = queue
-
-    #     # ---- Replay missed notifications ----
-    #     try:
-    #         unsent_notifications = await NotificationModel.find(
-    #             {"send_to": ObjectId(user_id), "sent": False}
-    #         ).to_list()
-
-    #         for n in unsent_notifications:
-    #             await queue.put({
-    #                 "message": n.message,
-    #                 "type": n.type,
-    #                 "_id": str(n.id)
-    #             })
-    #             await NotificationModel.find_one(n.id).update({"$set": {"sent": True}})
-    #         if unsent_notifications:
-    #             print(f"Replayed {len(unsent_notifications)} missed notifications for user {user_id}")
-    #     except Exception as e:
-    #         print(f"Error replaying notifications for {user_id}: {e}")
-    #     return queue
     
     async def connect(self, user_id: str) -> asyncio.Queue:
         try:
@@ -64,8 +38,6 @@ class SSEManager:
                 print(f"Disconnected one SSE for {user_id}")
             except ValueError:
                 pass
-            # try:
-            #     self.connections.pop(user_id, None)
             except Exception as e:
                 print(f"Error disconnecting user {user_id}: {e}")
 
@@ -91,34 +63,14 @@ class SSEManager:
 
         except Exception as e:
             print(f"Error sending message to user {user_id}: {e}")
-    
-    
-    
-    # async def send_to_user(self, user_id: str, message: dict, type: str):
-    #     try:
-    #         notification_data = {
-    #                 "send_to": user_id,
-    #                 "message": message,
-    #                 "type": type,
-    #                 "sent": True
-    #             }
-    #         if user_id in self.connections:
-    #             print(f"Sending message to user {user_id}")
-    #             await self.connections[user_id].put(notification_data)
-                
-    #             asyncio.create_task(notification_controller.save_notification(notification_data))
-    #             # await notification_controller.save_notification(notification_data)
-    #         else:
-    #             print(f"User {user_id} not connected")
-    #             notification_data["sent"] = False
-    #             await notification_controller.save_notification(notification_data)
-    #     except Exception as e:
-    #         print(f"Error sending message to user {user_id}: {e}")
             
     async def broadcast(self, message: dict):
         try:
-            for q in self.connections.values():
-                await q.put(message)
+            for queues in self.connections.values():
+                for queue in queues:
+                    await queue.put(message)
+            # for q in self.connections.values():
+            #     await q.put(message)
         except Exception as e:
             print(f"Error broadcasting message: {e}")
             

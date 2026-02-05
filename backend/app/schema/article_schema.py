@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -27,6 +27,8 @@ class ArticleSearchSchema(BaseModel):
     hot_topic: Optional[bool] = None
     page: int = Field(default=1, ge=1)
     page_size: int = Field(default=10, ge=1, le=100)
+    start_date: Optional[date] = None  
+    end_date: Optional[date] = None    
 
 
 class ArticleFirmOutSchema(BaseModel):

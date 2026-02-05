@@ -19,6 +19,16 @@ import os
 from app.models.notification import NotificationModel
 from bson import ObjectId
 from datetime import datetime
+import asyncio
+import json
+from fastapi import APIRouter, Request
+from fastapi.responses import StreamingResponse
+from app.sse.sse_manager import SSEManager
+from app.models.article import ArticleLikeModel, ArticleModel  # your DB model for articles
+from app.api.article_api import get_quicktake
+from app.models.endorse import EndorsementModel
+from app.models.report import ReportModel  # function to fetch daily feed
+
 
 router = APIRouter(prefix="/sse", tags=["sse"])
 
@@ -38,10 +48,8 @@ async def sse_notifications(
     request: Request,
     token: str = Query(...),  # <- JWT from frontend
 ):
-    # Validate JWT using your existing function
     auth = "Bearer " + token
     current_user = await get_current_user(auth) 
-    # current_user = await get_current_user("Bearer") 
     if current_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -51,19 +59,7 @@ async def sse_notifications(
     user_id = current_user["user_id"]
     queue = await sse_connection_manager.connect(user_id)
     print(f"User {user_id} connected to SSE")
-    # async def event_stream():
-    #     try:
-    #         while True:
-    #             if await request.is_disconnected():
-    #                 break
-
-    #             try:
-    #                 message = await asyncio.wait_for(queue.get(), timeout=10)
-    #                 yield f"data: {json.dumps(message)}\n\n"
-    #             except asyncio.TimeoutError:
-    #                 yield 'data: {"type": "heartbeat"}\n\n'
-    #     finally:
-    #         await sse_connection_manager.disconnect(user_id)
+    
         
     async def event_stream():
         try:
@@ -113,66 +109,112 @@ async def list_notifications(current_user: dict = Depends(get_current_user)):
         )
 
 
-# @router.get("/unread_count")
-# async def get_unread_count(current_user: dict = Depends(get_current_user)):
-#     count = await NotificationModel.find(
-#         {"send_to": ObjectId(current_user["user_id"]), "read_at": None}
-#     ).count()
-#     return {"count": count}
 
 
-# @router.post("/mark_read")
-# async def mark_notifications_read(
-#     notification_ids: list[str], current_user: dict = Depends(get_current_user)
-# ):
-
-#     try:
-#         obj_ids = [ObjectId(nid) for nid in notification_ids]
-#         data = await NotificationModel.find(NotificationModel.id == obj_ids)
-#         data.read_at
-#         await NotificationModel.find(
-#             {"_id": {"$in": obj_ids}, "send_to": ObjectId(current_user["user_id"])}
-#         ).update({"$set": {"read_at": datetime.utcnow()}})
-#         return {"status": 1, "message": "Marked as read"}
-#     except Exception as e:
-#         return {"status": 0, "message": str(e)}
 
 
-# @router.get("/notifications")
-# async def sse_notifications(request: Request, current_user: dict = Depends(get_current_user)):
-#     if current_user is None:
-#             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
-#     user_id = current_user["user_id"]
-#     queue = await sse_connection_manager.connect(user_id)
-#     print(f"User {user_id} connected to SSE")
-
-#     async def event_stream():
-#         try:
-#             yield f"data: {json.dumps({'type': 'connection_established', 'user_id': user_id})}\n\n"
-#             while True:
-
-#                 try:
-#                     # Use asyncio.wait_for to wait for either a message or timeout for heartbeat
-#                     message = await asyncio.wait_for(queue.get(), timeout=25)  # 25s timeout
-#                     yield f"data: {json.dumps(message)}\n\n"
-#                 except asyncio.TimeoutError:
-#                     # Timeout → send heartbeat
-#                     yield f"data: {json.dumps({'type': 'heartbeat'})}\n\n"
-
-#                 # Check if client disconnected
 
 
-#                 if await request.is_disconnected():
-#                     print("Client disconnected")
-#                     sse_connection_manager.disconnect(user_id)
-#                     break
-#             #--------------------------
-#             #code to disconnect if browser closes
-#             #--------------------------
-#                 message = await queue.get()
-#                 yield f"data: {json.dumps(message)}\n\n"
-#         except asyncio.CancelledError:
-#             sse_connection_manager.disconnect(user_id)
-#             raise
+# Keep a queue of last N articles to replay to new connections
+LAST_N_ARTICLES = 50
+recent_articles: asyncio.Queue = asyncio.Queue(maxsize=LAST_N_ARTICLES)
 
-#     return StreamingResponse(event_stream(), media_type="text/event-stream")
+async def add_to_recent_articles(article: dict):
+    if recent_articles.full():
+        await recent_articles.get()
+    await recent_articles.put(article)
+
+
+
+async def hydrate_article_for_user(article: dict, user_id: str):
+
+    # IMPORTANT: make a copy so we don't modify shared object
+    hydrated = article.copy()
+
+    article_id = ObjectId(hydrated["article_id"])
+
+    liked = await ArticleLikeModel.find_one(
+        ArticleLikeModel.article_id.id == article_id,
+        ArticleLikeModel.user_id.id == ObjectId(user_id)
+    )
+
+    endorsed = await EndorsementModel.find_one(
+        EndorsementModel.article_id.id == article_id,
+        EndorsementModel.user_id.id == ObjectId(user_id)
+    )
+
+    reported = await ReportModel.find_one(
+        ReportModel.article_id.id == article_id,
+        ReportModel.user_id.id == ObjectId(user_id),
+        ReportModel.is_deleted == False
+    )
+
+    hydrated["liked"] = bool(liked)
+    hydrated["endorsed"] = bool(endorsed)
+    hydrated["reported"] = bool(reported)
+
+    return hydrated
+
+
+
+@router.get("/feed")
+async def sse_feed(request: Request, token: str = Query(...)):
+
+    auth = "Bearer " + token
+    current_user = await get_current_user(auth)
+
+    if current_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid access token, Login to continue",
+        )
+
+    user_id = current_user["user_id"]
+
+    # connect user
+    queue = await sse_connection_manager.connect(user_id)
+
+    # replay recent BASE articles → hydrate per user
+    recent = list(recent_articles._queue)
+
+    for article in recent:
+        hydrated = await hydrate_article_for_user(article, user_id)
+        await queue.put(hydrated)
+
+    # if empty → fetch initial feed
+    if recent_articles.empty():
+        quicktake_feed = await get_quicktake(
+            page=1,
+            page_size=10,
+            user_id=user_id
+        )
+
+        for article in quicktake_feed:
+            # await add_to_recent_articles(article)
+
+            hydrated = await hydrate_article_for_user(article, user_id)
+            await add_to_recent_articles(hydrated)
+            await queue.put(hydrated)
+
+    async def event_generator():
+        try:
+            while True:
+                if await request.is_disconnected():
+                    break
+
+                try:
+                    message = await asyncio.wait_for(queue.get(), timeout=10)
+                    yield f"data: {json.dumps(message)}\n\n"
+
+                except asyncio.TimeoutError:
+                    yield 'data: {"type": "heartbeat"}\n\n'
+
+        finally:
+            await sse_connection_manager.disconnect(user_id, queue)
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers=headers,
+    )
+    

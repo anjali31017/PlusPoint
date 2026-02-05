@@ -50,7 +50,7 @@ async function loadTrending(span = "day") {
                         <p>❤️ ${article.like_count || 0} Like</p>
                         <p>👍 ${article.endorse_count || 0} Endorsements</p>
                         <p>🛡 ${article.trust_score || 0} Trust Score</p>
-                        <p class="${article.hot_topic ? 'text-red-500 font-bold' : 'text-gray-500'}">${article.hot_topic ? 'Hot' : ''}</p>
+                        <p class="${article.hot_topic ? 'text-red-500 font-bold' : 'text-gray-500'}">${article.hot_topic ? 'Hot Topic' : ''}</p>
                     </div>
                 </div>
             `);
