@@ -1,11 +1,9 @@
 from datetime import datetime, timedelta
 import os
 import shutil
-from typing import Optional
 from bson import ObjectId
-from fastapi import APIRouter, Depends, File, Form, HTTPException, BackgroundTasks, Query, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, BackgroundTasks, Query, UploadFile, status
 from app.config import settings
-
 from app.controller.user_controller import UserController
 from app.models.users import UserModel
 from app.schema.user_schema import ForgotPasswordSchema, LogoutSchema, ResetPasswordSchema, UserCreateSchema, LoginSchema, UserProfileEditSchema, UserProfileSchema
@@ -14,22 +12,13 @@ from app.models.token import RefreshTokenModel
 from app.schema.base_schema import BaseResponse
 from app.controller.email_controller import generate_reset_token, is_user_blocked, reset_password_email, send_otp_email
 from app.schema.email_schema import OTPVerifySchema, ResendOTPSchema
-from fastapi import status
-
 from app.controller.util_controller import UtilController
 from app.models.kyc import KYCModel
 from app.models.firm import FirmModel, VerificationStatus
-from app.kafka.producer import send_kafka_event
-from app.models.report import ReportReasonRequestSchema
+from app.models.report import ReportModel, ReportReasonRequestSchema
+from app.models.article import ArticleModel
+from beanie.operators import In
 from app.models.subscription import SubscriptionModel
-from app.models.article import ArticleLikeModel, ArticleModel
-
-from beanie.operators import In
-
-
-from beanie.operators import In
-from bson import ObjectId
-
 
 
 
@@ -670,58 +659,168 @@ async def delete_account(current_user:dict = Depends(get_current_user)):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
+@router.get("/feed/following", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def following_feed(
+    current_user:dict = Depends(get_current_user)
+):
+    try:
+        if current_user is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid access token, Login to continue")
+        
+        user_id = ObjectId(current_user["user_id"])
 
-@router.get("/recommendations", response_model=BaseResponse)
-async def get_recommendations(current_user: dict = Depends(get_current_user)):
-    user_id = ObjectId(current_user["user_id"])
+        end_time = datetime.now()
+        start_time = end_time - timedelta(days=2)
+        
+        # 1️⃣ Firms user follows
+        subscriptions = await SubscriptionModel.find(
+            SubscriptionModel.subscriber_id.id == user_id
+        ).to_list()
 
-    # 1️⃣ Firms user follows
-    subscriptions = await SubscriptionModel.find(
-        SubscriptionModel.subscriber_id.id == user_id
-    ).to_list()
-
-    followed_firm_ids = [s.firm_id.to_ref().id for s in subscriptions]
-
-    # 2️⃣ Articles user liked (optional, future use)
-    liked_articles = await ArticleLikeModel.find(
-        ArticleLikeModel.user_id.id == user_id
-    ).to_list()
-
-    liked_article_ids = [a.article_id.to_ref().id for a in liked_articles]
-
-    # 3️⃣ Personalized articles (from followed firms)
-    if followed_firm_ids:
-        recommended_articles = await ArticleModel.find(
+        followed_firm_ids = [s.firm_id.to_ref().id for s in subscriptions]
+        
+        # 3️⃣ Personalized articles (from followed firms)
+        articles_cursor = await ArticleModel.find(
             ArticleModel.status == "PUBLISHED",
             ArticleModel.is_deleted == False,
-            In(ArticleModel.firm_id.id, followed_firm_ids),  # ✅ FIX
-        ).sort("-like_count").limit(10).to_list()
-    else:
-        recommended_articles = []
+            # ArticleModel.firm_id.id.in_(followed_firm_ids),
+            In(ArticleModel.firm_id.id, followed_firm_ids),
+            ArticleModel.published_at >= start_time,
+            ArticleModel.published_at <= end_time
+        ).sort("-published_at").to_list()
 
-    # 4️⃣ Fallback: global popular articles
-    if not recommended_articles:
-        recommended_articles = await ArticleModel.find(
-            ArticleModel.status == "PUBLISHED",
-            ArticleModel.is_deleted == False
-        ).sort("-like_count").limit(10).to_list()
+        articles = []
+        
+        for article in articles_cursor:
+            article_data = {
+                "id":str(article.id),
+                "title":article.title,
+                "summary":article.summary,
+                "tags":article.tags,
+                "category":article.category,
+                "like_count": article.like_count,
+                "published_at": article.published_at
+            }
+            articles.append(article_data)
+        
+        return{
+            "status": 1,
+            "message": "Articles fetched successfully",
+            "data": articles
+        } 
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
 
-    return {
-        "status": 1,
-        "message": "Recommendations fetched",
-        "data": {
-            "articles": [
-                {
-                    "id": str(a.id),
-                    "title": a.title,
-                    "like_count": a.like_count,
-                    "trust_score": a.trust_score_snapshot,
-                }
-                for a in recommended_articles
-            ]
-        }
+
+ 
+def serialize_article(article, score: float | None = None):
+
+    data = {
+        "article_id": str(article.id),
+        "title": article.title,
+        "summary": article.summary,
+        # "firm_id": str(article.firm_id),
+        # "firm_username": article.firm_username,
+        "category": article.category,
+        "tags": article.tags,
+        "likes": article.like_count,
+        "endorse": article.endorse_count,
+        "hot_topic": article.hot_topic,
+        "published_at": article.published_at.isoformat(),
+        "trust_score_snapshot": article.trust_score_snapshot,
     }
 
+    if score is not None:
+        data["score"] = score
+
+    return data
+
+ 
+@router.get("/feed/recommended", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def for_you_feed(
+            page: int = Query(1, ge=1),
+            page_size: int = Query(10, le=50),
+            exclude_seen: bool = True,
+            exclude_reported: bool = True,
+            current_user: dict = Depends(get_current_user)
+):
+    try:
+        user_id = current_user["user_id"]
+
+        # 1. followed firms
+        followed_firms = await SubscriptionModel.find(
+            SubscriptionModel.subscriber_id.id == ObjectId(user_id)
+        ).to_list()
+
+        followed_ids = [f.firm_id for f in followed_firms]
+
+        # 2. user preferences
+        interests = await user_controller.build_user_interest_profile(user_id)
+
+        # 3. candidate articles
+        query = {
+            "firm_id": {"$nin": followed_ids},
+            "is_deleted": False
+        }
+
+        if exclude_reported:
+            reports = await ReportModel.find(
+                ReportModel.user_id == ObjectId(user_id),
+                ReportModel.is_deleted == False,
+            ).to_list()
+
+            reported_ids = [r.article_id for r in reports]
+
+            if reported_ids:
+                query["_id"] = {"$nin": reported_ids}
+
+            query["_id"] = {"$nin": reported_ids}
+
+        candidates = await ArticleModel.find(query)\
+            .sort("-published_at")\
+            .limit(500)\
+            .to_list()
+
+        # 4. scoring
+        scored = []
+
+        for art in candidates:
+            s = await user_controller.score_article_for_user(art, interests)
+            scored.append((s, art))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+
+        # 5. paginate
+        start = (page - 1) * page_size
+        end = start + page_size
+
+        page_items = scored[start:end]
+
+        return {
+            "status": 1,
+            "message": "Recommended articles fetched successfully",
+            "data": {
+            "page": page,
+            "page_size": page_size,
+            "total": len(scored),
+            "articles": [
+                serialize_article(a, score=s)
+                for s, a in page_items
+            ]
+        }
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+ 
       
 # @router.get("/recommendations", response_model=BaseResponse)
 # async def get_recommendations(current_user: dict = Depends(get_current_user)):
