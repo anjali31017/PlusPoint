@@ -499,6 +499,7 @@ async def moderation(article_id: str= Query(None), background_tasks: BackgroundT
             ArticleModel.is_deleted == False,
         )
         article.status = ArticleStatus.REJECTED
+        article.is_deleted = True
         article.rejection_reason = data.reason
         await article.save()
         

@@ -5,7 +5,7 @@ from datetime import datetime
 class ArticlePerformanceSchema(BaseModel):
     article_id: str
     title: str
-    firm_name: str
+    # firm_name: str
     status: str
     likes: int
     endorsements: int
@@ -31,9 +31,9 @@ class DashboardSummarySchema(BaseModel):
     total_firm_reports: int
     total_articles: int
     published_articles: int
-    draft_articles: int
+    # draft_articles: int
     pending_articles: int
-    rejected_articles: int
+    # rejected_articles: int
     total_article_likes: int
     total_article_endorsements: int
     total_article_reports: int

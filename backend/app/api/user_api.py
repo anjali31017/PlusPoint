@@ -378,7 +378,7 @@ async def update_profile(
             "bio": bio
         }.items() if v is not None}
 
-        print(profile_picture)
+
         # --------- Handle profile picture ----------
         if profile_picture and profile_picture.filename:
             # Ensure folder exists
@@ -395,7 +395,6 @@ async def update_profile(
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{username}_{timestamp}{ext}"
             file_path = os.path.join(settings.PROFILE_UPLOAD_FOLDER, filename)
-            print("@@@@@@@@@@@@@",file_path)
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(profile_picture.file, buffer)
 

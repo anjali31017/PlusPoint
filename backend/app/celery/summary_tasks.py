@@ -21,7 +21,7 @@ def summerization_task(self, html_text, article_id=None):
         result = end_summary(self, html_text, article_id)
         return result
     except Exception as e:
-        print("Final summary error:", str(e))
+        # print("Final summary error:", str(e))
         raise self.retry(exc=e)
     
     

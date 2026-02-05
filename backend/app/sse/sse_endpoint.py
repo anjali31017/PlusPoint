@@ -51,25 +51,10 @@ async def sse_notifications(
     user_id = current_user["user_id"]
     queue = await sse_connection_manager.connect(user_id)
     print(f"User {user_id} connected to SSE")
-    async def event_stream():
-        try:
-            while True:
-                if await request.is_disconnected():
-                    break
-
-                try:
-                    message = await asyncio.wait_for(queue.get(), timeout=10)
-                    yield f"data: {json.dumps(message)}\n\n"
-                except asyncio.TimeoutError:
-                    yield 'data: {"type": "heartbeat"}\n\n'
-        finally:
-            await sse_connection_manager.disconnect(user_id, queue)
-        
     # async def event_stream():
     #     try:
     #         while True:
     #             if await request.is_disconnected():
-    #                 print(f"Client {user_id} disconnected")
     #                 break
 
     #             try:
@@ -77,15 +62,30 @@ async def sse_notifications(
     #                 yield f"data: {json.dumps(message)}\n\n"
     #             except asyncio.TimeoutError:
     #                 yield 'data: {"type": "heartbeat"}\n\n'
-
-    #     except asyncio.CancelledError:
-    #         await sse_connection_manager.disconnect(user_id)
-    #         print(f"SSE cancelled for user {user_id}")
-    #         return
-
     #     finally:
     #         await sse_connection_manager.disconnect(user_id)
-    #         print(f"SSE cleaned up for user {user_id}")
+        
+    async def event_stream():
+        try:
+            while True:
+                if await request.is_disconnected():
+                    print(f"Client {user_id} disconnected")
+                    break
+
+                try:
+                    message = await asyncio.wait_for(queue.get(), timeout=10)
+                    yield f"data: {json.dumps(message)}\n\n"
+                except asyncio.TimeoutError:
+                    yield 'data: {"type": "heartbeat"}\n\n'
+
+        except asyncio.CancelledError:
+            await sse_connection_manager.disconnect(user_id, queue)
+            print(f"SSE cancelled for user {user_id}")
+            return
+
+        finally:
+            await sse_connection_manager.disconnect(user_id, queue)
+            print(f"SSE cleaned up for user {user_id}")
 
     
 

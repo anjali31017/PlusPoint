@@ -173,7 +173,7 @@ async def get_firm_details(
                 "category":article.category,
             }
             articles.append(article_data)
-        print(articles)
+
         # Check if current user is the owner
         
         is_self = False

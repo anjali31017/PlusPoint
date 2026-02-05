@@ -17,11 +17,11 @@ class KafkaAdminService:
 
                 cls.consumer = AIOKafkaConsumer(
                     "admin.action",
-                    # bootstrap_servers="kafka_pluspoint_1:9092",
-                    bootstrap_servers=[
-                        "kafka_pluspoint_1:9092",
-                        "kafka_pluspoint_2:9094",
-                    ],
+                    bootstrap_servers="kafka_pluspoint_1:9092",
+                    # bootstrap_servers=[
+                    #     "kafka_pluspoint_1:9092",
+                    #     "kafka_pluspoint_2:9094",
+                    # ],
                     group_id="notification_service_group_test",
                     value_deserializer=lambda v: json.loads(v.decode("utf-8")),
                     auto_offset_reset="earliest",
