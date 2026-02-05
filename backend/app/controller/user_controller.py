@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from typing import Optional
+from collections import Counter
 from bson import ObjectId
 from app.models.users import UserModel, UserRole
 import random
@@ -7,12 +8,13 @@ from app.models.firm import FirmModel
 from app.models.subscription import SubscriptionModel
 from app.controller.email_controller import is_user_blocked
 from app.controller.util_controller import UtilController
-from app.models.article import ArticleModel
+from app.models.article import ArticleLikeModel, ArticleModel
 from app.models.comment import CommentModel
 from app.models.kyc import KYCModel
 from app.models.report import ReportModel
 from app.models.endorse import EndorsementModel
-
+import math
+from datetime import datetime, timezone
 
 util_controller = UtilController()
 
@@ -132,6 +134,108 @@ class UserController:
             print("Error updating user:", e)
             return None
 
+    async def build_user_interest_profile(self, user_id: str):
+        try:
+            uid = ObjectId(user_id)
+
+            profile = {
+                "top_categories": [],
+                "top_tags": [],
+                "liked_articles": set(),
+                "endorsed_articles": set(),
+            }
+
+            # ---- LIKES ----
+            likes = await ArticleLikeModel.find(
+                ArticleLikeModel.user_id == uid
+            ).to_list()
+
+            for l in likes:
+                profile["liked_articles"].add(l.article_id)
+
+            # ---- ENDORSEMENTS ----
+            endorsements = await EndorsementModel.find(
+                EndorsementModel.user_id == uid
+            ).to_list()
+
+            for e in endorsements:
+                profile["endorsed_articles"].add(e.article_id)
+
+            # ---- ARTICLE META FOR TAGS / CATS ----
+            interacted_ids = list(
+                profile["liked_articles"] | profile["endorsed_articles"]
+            )
+
+            if interacted_ids:
+                articles = await ArticleModel.find(
+                    ArticleModel.id.in_(interacted_ids)
+                ).to_list()
+
+                cat_counter = Counter()
+                tag_counter = Counter()
+
+                for art in articles:
+                    cat_counter.update(art.category or [])
+                    tag_counter.update(art.tags or [])
+
+                profile["top_categories"] = [
+                    c for c, _ in cat_counter.most_common(5)
+                ]
+
+                profile["top_tags"] = [
+                    t for t, _ in tag_counter.most_common(8)
+                ]
+
+            return profile
+        except Exception as e:
+            print("Error updating user:", e)
+            return None
+
+    async def score_article_for_user(self, article, profile: dict) -> float:
+        try:
+            score = 0.0
+
+            # ---- CATEGORY MATCH ----
+            if article.category:
+                overlap = set(article.category) & set(profile["top_categories"])
+                score += len(overlap) * 5
+
+            # ---- TAG MATCH ----
+            if article.tags:
+                overlap = set(article.tags) & set(profile["top_tags"])
+                score += len(overlap) * 4
+
+            # ---- POPULARITY ----
+            score += math.log((article.likes or 0) + 1) * 1.5
+            score += (article.endorse or 0) * 3
+
+            # ---- HOT TOPIC ----
+            if getattr(article, "hot_topic", False):
+                score += 6
+
+            # ---- TRUST SNAPSHOT ----
+            score += (article.trust_score_snapshot or 0) * 0.05
+
+            # ---- FRESHNESS BOOST ----
+            age_hours = (
+                datetime.now(timezone.utc) - article.published_at
+            ).total_seconds() / 3600
+
+            if age_hours < 24:
+                score += 5
+            elif age_hours < 72:
+                score += 3
+            elif age_hours < 168:
+                score += 1
+
+            # ---- DIVERSITY BOOST ----
+            if article.id not in profile["liked_articles"]:
+                score += 1
+
+            return round(score, 2)
+        except Exception as e:
+            print("Error updating user:", e)
+            return 0.0
 
     async def endorse_firm_article(self, firm_id: str|None, article_id: str|None,  current_user:dict ):
         try:
