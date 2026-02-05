@@ -4,26 +4,23 @@ from app.sse.sse_endpoint import sse_connection_manager
 from app.models.notification import NotificationStatus
 
 
-class KafkaFollowService:
+
+class KafkaEndorseService:
     is_running = True
     consumer = None
 
     @classmethod
-    async def consume_follow(cls):
+    async def consume_endorse(cls):
         """Kafka Consumer with retry logic."""
         while cls.is_running:
             try:
                 print("Attempting to connect Kafka Consumer...")
 
                 cls.consumer = AIOKafkaConsumer(
-                    "firm.follow",
+                    "user.endorse",
                     bootstrap_servers="kafka_pluspoint_1:9092",
-                    # bootstrap_servers=[
-                    #     "kafka_pluspoint_1:9092",
-                    #     "kafka_pluspoint_2:9094",
-                    # ],
                     group_id="notification_service_group_test",
-                    value_deserializer=lambda v: json.loads(v.decode("utf-8")),
+                    value_deserializer=lambda v: json.loads(v.decode('utf-8')),
                     auto_offset_reset="earliest",
                     request_timeout_ms=30000,
                     session_timeout_ms=10000,
@@ -39,23 +36,21 @@ class KafkaFollowService:
                         print("Message received from Kafka")
                         post = msg.value
 
-                        firm_owner_id = post["firm_owner_id"]
-
+                        publisher_id = post["publisher_id"]
+                        
                         message = {
                             "firm_id": post["firm_id"],
+                            "article_id": post["article_id"],
+                            "article_title": post["article_title"],
                             "user_id": post["user_id"],
                         }
                         asyncio.create_task(
-                            sse_connection_manager.send_to_user(firm_owner_id, message, NotificationStatus.FOLLOW)
+                            sse_connection_manager.send_to_user(publisher_id, message, NotificationStatus.LIKE)
                         )
-                        # await asyncio.gather(
-                        #     *[
-                        #         sse_connection_manager.send_to_user(
-                        #             firm_owner_id, message, NotificationStatus.FOLLOW
-                        #         )
-                        #     ]
-                        # )
-                        print("Notifications sent to firm.")
+                        # await asyncio.gather(*[
+                        #         sse_connection_manager.send_to_user(publisher_id, message, NotificationStatus.LIKE )
+                        #     ])
+                        # print("Notifications sent to firm.")
 
                     except Exception as process_err:
                         print(f"Error processing message: {process_err}")
@@ -77,4 +72,4 @@ class KafkaFollowService:
             try:
                 await asyncio.wait_for(cls.consumer.stop(), timeout=5)
             except asyncio.TimeoutError:
-                print("Kafka consumer stop timed out")
+                print("Kafka consumer stop timed out")  

@@ -19,11 +19,12 @@ from app.kafka.producer import send_kafka_event
 from app.celery.summary_tasks import summerization_task
 from fastapi import status
 
-from app.models.article import ArticleModel, ArticleStatus
+from app.models.article import ArticleLikeModel, ArticleModel, ArticleStatus
 from app.models.firm import FirmModel
 from app.models.users import UserModel
 from app.schema.search_output_schema import MultiSectionSearchResponse
 from app.config import settings
+from app.models.endorse import EndorsementModel
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -73,10 +74,12 @@ async def add_article(
         summary_reponse = summerization_task.delay(article.content, str(article.id))
         
         if article.status == "PENDING_REVIEW":
-            raise HTTPException(
-                status_code=status.HTTP_202_ACCEPTED,
-                detail="Article sent for moderation",
-            )
+            return {
+                "status": 1,
+                "message": "Article sent for moderation",
+                "data": None,
+            }
+
 
         # final, clean Kafka event
         kafka_article_event = {
@@ -560,3 +563,109 @@ async def get_articles(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
         )
         
+
+
+
+@router.get("/liked", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def get_liked_articles(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+    current_user: dict = Depends(get_current_user),
+):
+
+    try:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue"
+            )
+
+        skip = (page - 1) * page_size
+        
+        liked = await ArticleLikeModel.find(
+            ArticleLikeModel.user_id.id == ObjectId(current_user["user_id"]),
+            ).skip(skip).limit(page_size).sort("-created_at").to_list()
+        
+        data = []
+        for like in liked:
+            article = await like.article_id.fetch()
+            data.append({
+                        "article_id": str(article.id),
+                        "article_title": article.title,
+                        "created_at": like.created_at,
+                    })
+        
+        
+        response_data = {
+            "status": 1,
+            "message": "Liked data fetched successfully",
+            "data": data
+        }
+        return response_data
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+        
+@router.get("/endorsed", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+async def get_endorsed_articles_firms(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=50),
+    current_user: dict = Depends(get_current_user),
+):
+
+    try:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid access token, Login to continue"
+            )
+
+        skip = (page - 1) * page_size
+        
+        liked = await EndorsementModel.find(
+            EndorsementModel.user_id.id == ObjectId(current_user["user_id"]),
+            ).skip(skip).limit(page_size).sort("-created_at").to_list()
+        
+        article_data = []
+        for like in liked:
+            if like.article_id is not None:
+                article = await like.article_id.fetch()
+                article_data.append({
+                            "article_id": str(article.id),
+                            "article_title": article.title,
+                            "created_at": like.created_at,
+                        })
+        
+        firm_data = []
+        for like in liked:
+            if like.firm_id is not None:
+                firm = await like.firm_id.fetch()
+                firm_data.append({
+                            "firm_id": str(firm.id),
+                            "firm_name": firm.firm_name,
+                            "created_at": like.created_at,
+                        })
+         
+        
+        response_data = {
+            "status": 1,
+            "message": "Liked data fetched successfully",
+            "data": {
+                     "article": article_data,
+                     "firm": firm_data
+                     }
+        }
+        return response_data
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )

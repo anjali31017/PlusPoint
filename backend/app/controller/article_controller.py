@@ -158,6 +158,7 @@ class ArticleController:
         try:
             article = await ArticleModel.find_one(
                 ArticleModel.id == ObjectId(article_id),
+                ArticleModel.status == ArticleStatus.PUBLISHED,
                 ArticleModel.is_deleted == False
             )
             if not article:

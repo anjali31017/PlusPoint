@@ -4,19 +4,19 @@ from app.sse.sse_endpoint import sse_connection_manager
 from app.models.notification import NotificationStatus
 
 
-class KafkaFollowService:
+class KafkaAdminService:
     is_running = True
     consumer = None
 
     @classmethod
-    async def consume_follow(cls):
+    async def consume_admin_action(cls):
         """Kafka Consumer with retry logic."""
         while cls.is_running:
             try:
                 print("Attempting to connect Kafka Consumer...")
 
                 cls.consumer = AIOKafkaConsumer(
-                    "firm.follow",
+                    "admin.action",
                     bootstrap_servers="kafka_pluspoint_1:9092",
                     # bootstrap_servers=[
                     #     "kafka_pluspoint_1:9092",
@@ -39,23 +39,26 @@ class KafkaFollowService:
                         print("Message received from Kafka")
                         post = msg.value
 
-                        firm_owner_id = post["firm_owner_id"]
+                        user_id = post["user_id"]
 
                         message = {
+                            "status": post["status"],
+                            "detail": post["detail"],
+                            "article_id": post["article_id"],
                             "firm_id": post["firm_id"],
-                            "user_id": post["user_id"],
                         }
+                        
                         asyncio.create_task(
-                            sse_connection_manager.send_to_user(firm_owner_id, message, NotificationStatus.FOLLOW)
+                            sse_connection_manager.send_to_user(user_id, message, NotificationStatus.ADMIN)
                         )
                         # await asyncio.gather(
                         #     *[
                         #         sse_connection_manager.send_to_user(
-                        #             firm_owner_id, message, NotificationStatus.FOLLOW
+                        #             user_id, message, NotificationStatus.ADMIN
                         #         )
                         #     ]
                         # )
-                        print("Notifications sent to firm.")
+                        print("Notifications sent to user.")
 
                     except Exception as process_err:
                         print(f"Error processing message: {process_err}")

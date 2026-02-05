@@ -378,7 +378,7 @@ async def update_profile(
             "bio": bio
         }.items() if v is not None}
 
-        print(profile_picture)
+
         # --------- Handle profile picture ----------
         if profile_picture and profile_picture.filename:
             # Ensure folder exists
@@ -395,7 +395,6 @@ async def update_profile(
             timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{username}_{timestamp}{ext}"
             file_path = os.path.join(settings.PROFILE_UPLOAD_FOLDER, filename)
-            print("@@@@@@@@@@@@@",file_path)
             with open(file_path, "wb") as buffer:
                 shutil.copyfileobj(profile_picture.file, buffer)
 
@@ -512,10 +511,11 @@ async def report(
         
 
 
-@router.post("/endorse", response_model=BaseResponse, status_code=status.HTTP_200_OK)
+@router.post("/endorse", response_model=BaseResponse,  status_code=status.HTTP_200_OK)
 async def report(
     firm_id: str|None = Query(None),
     article_id: str|None = Query(None),
+    background_tasks:BackgroundTasks=None,
     current_user: dict = Depends(get_current_user),
     ):
     try:
@@ -538,6 +538,20 @@ async def report(
                 detail="failed to endorse, Try again!"
             )
     
+        
+        # kafka_endorse_event = {
+        #     "event_type": "user.endorse",
+        #     "firm_id": str(article.firm_id.id),
+        #     "article_id": str(article.id),
+        #     "article_title": article.title,
+        #     "firm_username": article.firm_id.firm_username,
+        # }
+        
+        # background_tasks.add_task(
+        #     send_kafka_event,
+        #     "user.endorse", 
+        #     kafka_endorse_event
+        # )
         
         response_data = {
             "status": 1,

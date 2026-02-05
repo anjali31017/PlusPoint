@@ -1,4 +1,6 @@
+from datetime import datetime
 from beanie import Document, Link
+from pydantic import Field
 
 from app.models.users import UserModel
 from enum import Enum
@@ -11,6 +13,7 @@ class NotificationStatus(str, Enum):
     FOLLOW = "FOLLOW"
     EVENT = "EVENT"
     ADMIN = "ADMIN"
+    ENDORSE = "ENDORSE"
     
 
 class NotificationModel(Document):
@@ -18,5 +21,6 @@ class NotificationModel(Document):
     message: dict
     type: NotificationStatus = NotificationStatus.EVENT
     sent: bool = False
+    created_at: datetime = Field(default_factory=datetime.now)
     class Settings:
         name = "notifications"

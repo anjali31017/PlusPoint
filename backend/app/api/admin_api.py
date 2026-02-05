@@ -16,6 +16,7 @@ from app.controller.email_controller import (
 )
 from app.controller.notification_controller import NotificationController
 from app.models.notification import NotificationStatus
+from app.kafka.producer import send_kafka_event
 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -154,13 +155,21 @@ async def approve_kyc(
         background_tasks.add_task(
             KYC_status_email, to_email=user.email, status=kyc.kyc_status, reason=None
         )
-        # notification_data = {
-        #             "send_to": user_id,
-        #             "message": "KYC APPROVED",
-        #             "type": NotificationStatus.ADMIN,
-        #             "sent": False
-        #         }
-        # notification = notification_controller.save_notification(notification_data)
+  
+        
+        kafka_admin_event = {
+            "event_type": "admin.action",
+            "user_id": str(user_id),
+            "status": "KYC Approved!",
+            "detail": None,
+        }
+        
+        background_tasks.add_task(
+            send_kafka_event,
+            "admin.action", 
+            kafka_admin_event
+        )
+        
         return {
             "status": 1,
             "message": "KYC approved",
@@ -197,6 +206,18 @@ async def reject_kyc(
             to_email=user.email,
             status=kyc_record.kyc_status,
             reason=kyc_record.rejection_reason,
+        )
+        kafka_admin_event = {
+            "event_type": "admin.action",
+            "user_id": str(user_id),
+            "status": "KYC Rejected!",
+            "detail": data.reason,
+        }
+        
+        background_tasks.add_task(
+            send_kafka_event,
+            "admin.action", 
+            kafka_admin_event
         )
         
         return {
@@ -284,6 +305,7 @@ async def handle_report(
         to_email = None
         firm = None
         article = None
+        user_id = None
         
         delete_filters = [ReportModel.is_deleted == False]
         
@@ -306,7 +328,7 @@ async def handle_report(
 
             owner = await firm.owner_user_id.fetch()
             to_email = owner.email
-
+            user_id = owner.id
             
 
         if article_id:
@@ -325,7 +347,8 @@ async def handle_report(
             
             owner = await article.publisher_id.fetch()
             to_email = owner.email
-
+            user_id = owner.id
+            
             delete_filters.append(ReportModel.article_id.id == ObjectId(article_id))
 
         delete_reports = await ReportModel.find(*delete_filters).to_list()
@@ -342,6 +365,8 @@ async def handle_report(
                 article=article,
                 reason=data.reason,
             )
+            
+        
         if action.lower() == 'delete':
             background_tasks.add_task(
                 delete_request_action_email,
@@ -350,6 +375,21 @@ async def handle_report(
                 article=article,
                 reason=data.reason,
             )
+            
+        kafka_admin_event = {
+            "event_type": "admin.action",
+            "user_id": str(user_id),
+            "article_id": article_id,
+            "firm_id": firm_id,
+            "status": "Article or Firm has been deleted",
+            "detail": data.reason,
+            }
+            
+        background_tasks.add_task(
+            send_kafka_event,
+            "admin.action", 
+            kafka_admin_event
+        )
             
         return {
             "status": 1,
@@ -412,21 +452,38 @@ async def moderation(admin_id: str = Depends(admin_required)):
         )
     
 @router.post("/moderation/accept", response_model=BaseResponse, status_code=status.HTTP_200_OK)
-async def moderation(article_id: str= Query(None), admin_id: str = Depends(admin_required)):
+async def moderation(article_id: str= Query(None), background_tasks: BackgroundTasks=None ,admin_id: str = Depends(admin_required)):
     try:
-        articles = await ArticleModel.find_one(
+        article = await ArticleModel.find_one(
             ArticleModel.id == ObjectId(article_id),
             ArticleModel.is_deleted == False,
         )
-        articles.status = ArticleStatus.PUBLISHED
-        articles.moderation_required = False
-        await articles.save()
+        article.status = ArticleStatus.PUBLISHED
+        article.moderation_required = False
+        await article.save()
+
+        publisher_data = await article.publisher_id.fetch()
+        
+        kafka_admin_event = {
+            "event_type": "admin.action",
+            "user_id": str(publisher_data.id),
+            "article_id": str(article_id),
+            "firm_id": None,
+            "status": "Your article has been reviewed and approved. It is now published.",
+            "detail": None,
+            }
+            
+        background_tasks.add_task(
+            send_kafka_event,
+            "admin.action", 
+            kafka_admin_event
+        )
         
         return {
             "status": 1,
             "message": "Successfully fetched",
             "data": {
-                "articles": articles,
+                "articles": article,
             },
         }
     except Exception as e:
@@ -435,20 +492,39 @@ async def moderation(article_id: str= Query(None), admin_id: str = Depends(admin
         )
 
 @router.post("/moderation/reject", response_model=BaseResponse, status_code=status.HTTP_200_OK)
-async def moderation(article_id: str= Query(None), data: AdminRejctReasonSchema = None, admin_id: str = Depends(admin_required)):
+async def moderation(article_id: str= Query(None), background_tasks: BackgroundTasks= None, data: AdminRejctReasonSchema = None, admin_id: str = Depends(admin_required)):
     try:
-        articles = await ArticleModel.find_one(
+        article = await ArticleModel.find_one(
             ArticleModel.id == ObjectId(article_id),
             ArticleModel.is_deleted == False,
         )
-        articles.status = ArticleStatus.REJECTED
-        articles.rejection_reason = data.reason
-        await articles.save()
+        article.status = ArticleStatus.REJECTED
+        article.is_deleted = True
+        article.rejection_reason = data.reason
+        await article.save()
+        
+        publisher_data = await article.publisher_id.fetch()
+        
+        kafka_admin_event = {
+            "event_type": "admin.action",
+            "user_id": str(publisher_data.id),
+            "article_id": str(article_id),
+            "firm_id": None,
+            "status": "Your article has been reviewed and was not approved for publication.",
+            "detail": data.reason,
+            }
+            
+        background_tasks.add_task(
+            send_kafka_event,
+            "admin.action", 
+            kafka_admin_event
+        )
+        
         return {
             "status": 1,
             "message": "Successfully fetched",
             "data": {
-                "articles": articles,
+                "articles": article,
             },
         }
     except Exception as e:

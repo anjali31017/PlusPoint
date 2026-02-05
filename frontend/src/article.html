@@ -10,7 +10,8 @@
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+  <script type="text/javascript"
+    src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
   <style>
     /* ---- Article Content Safety ---- */
@@ -152,7 +153,7 @@
 
         <div class="px-5 py-2 bg-gray-200" id="google_translate_element"></div>
 
-                                    
+
 
       </div>
     </header>
@@ -196,28 +197,17 @@
 
 
 
-    </div>
+
+
   </main>
 
-  <nav
-    class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-purple-100 flex justify-around items-center px-2 py-3 z-50">
-    <a href="home.html" class="flex flex-col items-center text-purple-700">
-      <i data-lucide="home" class="w-6 h-6"></i>
-      <span class="text-[10px] font-bold mt-1">HOME</span>
-    </a>
-    <a href="search.html" class="flex flex-col items-center text-gray-400">
-      <i data-lucide="search" class="w-6 h-6"></i>
-      <span class="text-[10px] font-medium mt-1">SEARCH</span>
-    </a>
-    <a href="quickTake.html" class="flex flex-col items-center text-gray-400">
-      <i data-lucide="compass" class="w-6 h-6"></i>
-      <span class="text-[10px] font-medium mt-1">QUICK TAKE</span>
-    </a>
-    <a href="notification.html" class="flex flex-col items-center text-gray-400">
-      <i data-lucide="rss" class="w-6 h-6"></i>
-      <span class="text-[10px] font-medium mt-1">NEWS</span>
-    </a>
-  </nav>
+
+
+  </div>
+
+  <div id="notification-toast-container" class="fixed bottom-4 left-4 z-50 flex flex-col gap-2"></div>
+
+
 
   <script>
     $(document).ready(function () {
@@ -233,6 +223,8 @@
   <script src="../scripts/article-detail.js"></script>
   <script src="../scripts/delete-request.js"></script>
   <script src="../scripts/index.js"></script>
+  <script src="../scripts/global-notifications.js"></script>
+  <script src="../scripts/global-notifications.js"></script>
 </body>
 
 </html>

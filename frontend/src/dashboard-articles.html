@@ -5,13 +5,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" type="image/png" href="../media/pluspoint_logo.png">
-  <title>Home - PlusPoint</title>
+  <title>Dashboard - PlusPoint</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-<style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script type="text/javascript"
+    src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+  <style>
     .content-scroll {
       scrollbar-width: thin;
       scrollbar-color: #E9D5FF transparent;
@@ -38,25 +42,25 @@
     body {
       display: none;
     }
-    
-#google_translate_element .goog-te-gadget a[href*="translate.google.com"] {
-  display: none !important;
-}
 
-.goog-logo-link {
-  display: none !important;
-}
+    #google_translate_element .goog-te-gadget a[href*="translate.google.com"] {
+      display: none !important;
+    }
 
-.goog-te-gadget {
-  font-size: 0px !important;
-}
+    .goog-logo-link {
+      display: none !important;
+    }
+
+    .goog-te-gadget {
+      font-size: 0px !important;
+    }
   </style>
 </head>
 
 <body class="bg-white min-h-screen flex flex-col md:flex-row overflow-hidden font-sans text-gray-900">
 
   <aside
-    class="hidden md:flex flex-col w-72 bg-gradient-to-tr from-sky-950 to-purple-950 h-screen sticky top-0 border-r border-gray-100 z-20">
+    class="hidden md:flex flex-col w-72 bg-gradient-to-tr from-blue-100 to-purple-200 h-screen sticky top-0 border-r border-gray-100 z-20">
     <div class="p-5 flex flex-col items-center">
       <h1
         class="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-blue-600 tracking-tighter">
@@ -65,7 +69,7 @@
     <nav class="flex-1 overflow-y-auto px-6 py-4 space-y-2 no-scrollbar">
       <div class="space-y-1 mb-8">
         <a href="home.html"
-          class="flex items-center space-x-4 px-4 py-3 rounded-2xl bg-purple-50 text-purple-700 font-bold shadow-sm">
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
           <i data-lucide="home" class="w-5 h-5"></i><span>HOME</span>
         </a>
         <a href="search.html"
@@ -101,7 +105,7 @@
           <i data-lucide="user" class="w-5 h-5"></i><span>PROFILE</span>
         </a>
         <a href="settings.html"
-          class="flex items-center space-x-4 px-4 py-3 rounded-2xl text-gray-600 hover:bg-white hover:text-purple-700 transition-all">
+          class="flex items-center space-x-4 px-4 py-3 rounded-2xl bg-purple-50 text-purple-700 font-bold shadow-sm">
           <i data-lucide="settings" class="w-5 h-5"></i><span>SETTINGS</span>
         </a>
       </div>
@@ -111,30 +115,40 @@
   <main class="flex-1 h-screen overflow-y-auto bg-white content-scroll">
     <header
       class="flex justify-between items-center p-6 bg-white/80 backdrop-blur-md sticky top-0 z-10 border-b border-purple-100">
-      <!-- <h2 class="text-2xl font-bold text-gray-800">Home Feed</h2> -->
-       <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-800">
+      <!-- <h2 class="text-2xl font-bold text-gray-800">Settings</h2> -->
+      <h2 class="flex items-center gap-3 text-2xl font-bold text-gray-800">
         <img src="../media/pluspoint_logo.png" alt="PLUSPOINT" class="w-8 h-8">
-        HOME
+        ARTICLE DASHBOARD
       </h2>
-
       <div class="flex items-center space-x-2 md:space-x-5">
-<div class="px-5 py-2 bg-gray-200" id="google_translate_element"></div>
+        <div class="px-5 py-2 bg-gray-200" id="google_translate_element"></div>
 
       </div>
     </header>
 
+    <div id="content-wrapper" class="p-6 md:p-10 max-w-6xl mx-auto pb-32 md:pb-10">
+
+    </div>
   </main>
 
   <div id="notification-toast-container" class="fixed bottom-4 left-4 z-50 flex flex-col gap-2"></div>
-
   <script>
     $(document).ready(function () {
       lucide.createIcons();
       $('body').fadeIn(400); // Smoothly show the page
+
+
+
+
     });
   </script>
+  <script src="../scripts/auth.js"></script>
+  <script src="../scripts/index.js"></script>
+  <script src="../scripts/global-notifications.js"></script>
+<script src="../scripts/settings-articles.js"></script>
+
+
+
 </body>
-<!-- <script src="../scripts/common-header.js"></script> -->
-<script src="../scripts/global-notifications.js"></script>
-<script src="../scripts/index.js"></script>
+
 </html>
