@@ -165,7 +165,7 @@ $(document).ready(async function () {
                             class="mt-1 w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
                         <label for="agreeTerms" class="text-sm text-gray-600">
                             I agree to the
-                            <a href="terms.html#registerFirm"
+                            <a href="terms.html#registerFirm" target="_blank"
                             class="text-emerald-600 underline hover:text-emerald-700">
                                 Terms & Conditions
                             </a>
