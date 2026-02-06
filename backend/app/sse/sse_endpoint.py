@@ -57,7 +57,7 @@ async def sse_notifications(
         )
 
     user_id = current_user["user_id"]
-    queue = await sse_connection_manager.connect(user_id)
+    queue = await sse_connection_manager.connect("notifications", user_id)
     print(f"User {user_id} connected to SSE")
     
         
@@ -75,12 +75,12 @@ async def sse_notifications(
                     yield 'data: {"type": "heartbeat"}\n\n'
 
         except asyncio.CancelledError:
-            await sse_connection_manager.disconnect(user_id, queue)
+            await sse_connection_manager.disconnect("notifications", user_id, queue)
             print(f"SSE cancelled for user {user_id}")
             return
 
         finally:
-            await sse_connection_manager.disconnect(user_id, queue)
+            await sse_connection_manager.disconnect("notifications", user_id, queue)
             print(f"SSE cleaned up for user {user_id}")
 
     
@@ -172,7 +172,7 @@ async def sse_feed(request: Request, token: str = Query(...)):
     user_id = current_user["user_id"]
 
     # connect user
-    queue = await sse_connection_manager.connect(user_id)
+    queue = await sse_connection_manager.connect("feed",user_id)
 
     # replay recent BASE articles → hydrate per user
     recent = list(recent_articles._queue)
@@ -210,7 +210,7 @@ async def sse_feed(request: Request, token: str = Query(...)):
                     yield 'data: {"type": "heartbeat"}\n\n'
 
         finally:
-            await sse_connection_manager.disconnect(user_id, queue)
+            await sse_connection_manager.disconnect("feed", user_id, queue)
 
     return StreamingResponse(
         event_generator(),

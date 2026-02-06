@@ -10,52 +10,72 @@ $(document).ready(function () {
     const $header = $main.find("header");
 
     // Inject search UI BELOW header
+    // Inject search UI BELOW header
     $header.after(`
-        <section id="searchSection" class="p-4 bg-white border-b border-purple-100 sticky top-[72px] z-10">
-            <div class="flex flex-col md:flex-row gap-2">
-                <!-- Keyword -->
-                <input id="searchInput" type="text"
-                    placeholder="Search publishers, firms, articles..."
-                    class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
+    <section id="searchSection"
+        class="p-4 bg-white border-b border-purple-100 sticky top-[72px] z-10">
 
-                <!-- Tags -->
-                <input id="tagsInput" type="text"
-                    placeholder="Tags (comma separated)"
-                    class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
+        <!-- ROW 1 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+            <input id="searchInput" type="text"
+                placeholder="Search publishers, firms, articles..."
+                class="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
 
-                <!-- Categories -->
-                <input id="categoriesInput" type="text"
-                    placeholder="Categories (comma separated)"
-                    class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <input id="tagsInput" type="text"
+                placeholder="Tags (comma separated)"
+                class="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
 
-
-                <input id="startDateInput" type="date" placeholder="start date"
-                    class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
-
-                <input id="endDateInput" type="date" placeholder="end date"
-                    class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
-
-
-                <!-- Hot Topic -->
-                <label class="flex items-center space-x-2">
-                    <input id="hotTopicInput" type="checkbox" class="rounded border-gray-300">
-                    <span class="text-gray-700 text-sm">Hot Topic</span>
-                </label>
-
-                <!-- Search Button -->
-                <button id="searchBtn"
-                    class="px-5 py-3 rounded-full bg-purple-600 text-white font-semibold hover:bg-purple-700 transition">
-                    Search
-                </button>
-            </div>
-        </section>
-
-        <div id="loader" class="hidden flex justify-center py-6">
-            <div class="loader"></div>
+            <input id="categoriesInput" type="text"
+                placeholder="Categories (comma separated)"
+                class="w-full px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
         </div>
 
-        <section id="resultsWrapper" class="p-4 space-y-8"></section>
+        <!-- ROW 2 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+
+            <!-- Start Date -->
+            <div class="flex items-center gap-2">
+                <label for="startDateInput" class="text-sm text-gray-700 whitespace-nowrap">
+                    Start date:
+                </label>
+                <input id="startDateInput" type="date"
+                    class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+
+            <!-- End Date -->
+            <div class="flex items-center gap-2">
+                <label for="endDateInput" class="text-sm text-gray-700 whitespace-nowrap">
+                    End date:
+                </label>
+                <input id="endDateInput" type="date"
+                    class="flex-1 px-4 py-3 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500">
+            </div>
+
+            <!-- Hot Topic -->
+            <div class="flex items-center gap-2 md:justify-center">
+                <input id="hotTopicInput" type="checkbox" class="rounded border-gray-300">
+                <label for="hotTopicInput" class="text-gray-700 text-sm">
+                    Hot Topic
+                </label>
+            </div>
+
+            <!-- Search Button -->
+            <button id="searchBtn"
+                class="w-full px-5 py-3 rounded-full bg-purple-600 text-white font-semibold hover:bg-purple-700 transition">
+                Search
+            </button>
+
+        </div>
+    </section>
+
+    <div id="loader" class="hidden flex justify-center py-6">
+        <div class="loader"></div>
+    </div>
+
+    <section id="resultsWrapper" class="p-4 space-y-8"></section>
     `);
+
+
 
     const $resultsWrapper = $("#resultsWrapper");
     const $loader = $("#loader");

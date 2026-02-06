@@ -103,14 +103,16 @@ function renderQuickTake(article) {
     };
   }
 
+  // <div class="absolute inset-0" style="background:${randomGradient()}"></div>
+
   const state = quicktakeState[id];
 
   const $reel = $(`
 <section
   id="qt-${id}"
-  class="relative h-[100vh] w-full snap-start flex items-center justify-center">
+  class="relative h-[100vh] w-full snap-start flex items-start justify-center">
 
-  <div class="absolute inset-0" style="background:${randomGradient()}"></div>
+  <div class="absolute inset-0 bg-slate-50"></div>
 
   <div class="relative z-10 w-[92%] max-w-6xl p-10">
 
