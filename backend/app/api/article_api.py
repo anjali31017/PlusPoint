@@ -553,7 +553,7 @@ async def get_quicktake(
         end = start + timedelta(days=1)
 
         # Fetch published articles
-        articles_cursor = await ArticleModel.find(
+        articles_cursor = ArticleModel.find(
             ArticleModel.status == "PUBLISHED",
             ArticleModel.is_deleted == False,
             ArticleModel.published_at >= start,

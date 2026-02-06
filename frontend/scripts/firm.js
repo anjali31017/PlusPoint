@@ -131,7 +131,7 @@ $(document).ready(async function () {
         $firmDiv.empty();
 
         const badge = firm.is_verified
-            ? `<span class="badge bg-purple-600 text-white px-2 py-1 rounded ml-2 text-xs">VERIFIED</span>`
+            ? `<span class="badge bg-green-600 text-white px-2 py-1 rounded ml-2 text-xs">VERIFIED</span>`
             : '';
 
         const ownerLink = firm.owner

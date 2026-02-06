@@ -10,6 +10,27 @@ from app.models.endorse import EndorsementModel
 from app.models.report import ReportModel
 
 
+import asyncio
+import time
+from bson import ObjectId
+
+async def wait_for_article_summary(article_id, timeout=30, interval=2):
+    start = time.monotonic()
+
+    while True:
+        article = await ArticleModel.find_one(
+            ArticleModel.id == ObjectId(article_id),
+            ArticleModel.is_deleted == False
+        )
+
+        if article and article.summary is not None:
+            return article
+
+        if time.monotonic() - start >= timeout:
+            return None  # timeout reached
+
+        await asyncio.sleep(interval)
+
 
 
 class KafkaQuickTakeService:
@@ -53,8 +74,13 @@ class KafkaQuickTakeService:
                         
                         await asyncio.sleep(30)
                         
-                        article = await ArticleModel.find_one(ArticleModel.id == ObjectId(article_id), ArticleModel.is_deleted == False)
+                        # article = await ArticleModel.find_one(ArticleModel.id == ObjectId(article_id), ArticleModel.is_deleted == False)
+                        article = await wait_for_article_summary(article_id)
                         
+                        if not article:
+                            print(f"Summary not ready after timeout for article {article_id}")
+                            return  # or handle fallback logic
+    
                         article_data = {
                             "firm_id": post["firm_id"],
                             "article_id": post["article_id"],

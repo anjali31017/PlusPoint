@@ -1,5 +1,5 @@
 import asyncio
-from typing import Dict
+from typing import Dict, List
 
 from bson import ObjectId
 
@@ -10,16 +10,20 @@ notification_controller = NotificationController()
 
 class SSEManager:
     def __init__(self):
-        self.connections: Dict[str, asyncio.Queue] = {}
+        self.connections: Dict[str, Dict[str, List[asyncio.Queue]]] = {
+            "notifications": {},
+            "feed": {}
+        }
+        # self.connections: Dict[str, asyncio.Queue] = {}
     
-    async def connect(self, user_id: str) -> asyncio.Queue:
+    async def connect(self, channel: str, user_id: str) -> asyncio.Queue:
         try:
             queue = asyncio.Queue()
-            if user_id not in self.connections:
-                self.connections[user_id] = []
+            if user_id not in self.connections[channel]:
+                self.connections[channel][user_id] = []
             
-            self.connections[user_id].append(queue)
-            print(f"User {user_id} now has {len(self.connections[user_id])} connections")
+            self.connections[channel][user_id].append(queue)
+            print(f"[{channel}] User {user_id} connected " f"({len(self.connections[channel][user_id])} connections)")
     
             # self.connections[user_id] = queue
             return queue
@@ -27,15 +31,15 @@ class SSEManager:
             print(f"Error connecting user {user_id}: {e}")
             raise
 
-    async def disconnect(self, user_id: str, queue: asyncio.Queue):
-        if user_id in self.connections:
+    async def disconnect(self, channel:str, user_id: str, queue: asyncio.Queue):
+        if user_id in self.connections[channel]:
             try:
-                self.connections[user_id].remove(queue)
+                self.connections[channel][user_id].remove(queue)
 
-                if not self.connections[user_id]:
-                    del self.connections[user_id]
+                if not self.connections[channel][user_id]:
+                    del self.connections[channel][user_id]
 
-                print(f"Disconnected one SSE for {user_id}")
+                print(f"[{channel}] Disconnected one SSE for {user_id}")
             except ValueError:
                 pass
             except Exception as e:
@@ -50,8 +54,8 @@ class SSEManager:
                 "sent": True
             }
 
-            if user_id in self.connections:
-                for queue in self.connections[user_id]:
+            if user_id in self.connections["notifications"]:
+                for queue in self.connections["notifications"][user_id]:
                     await queue.put(notification_data)
 
                 asyncio.create_task(
@@ -66,7 +70,7 @@ class SSEManager:
             
     async def broadcast(self, message: dict):
         try:
-            for queues in self.connections.values():
+            for queues in self.connections["feed"].values():
                 for queue in queues:
                     await queue.put(message)
             # for q in self.connections.values():
