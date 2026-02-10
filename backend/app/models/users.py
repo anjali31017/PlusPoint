@@ -2,7 +2,7 @@
 from typing import ClassVar, Optional, List
 from beanie import Document, Indexed
 from pydantic import Field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
@@ -60,7 +60,7 @@ class UserModel(Document):
     def verify_otp(self, otp: str) -> bool:
         """Verify the OTP and ensure it is not expired."""
         try:
-            if self.otp_expires_at < datetime.now():
+            if self.otp_expires_at < datetime.now(timezone.utc):
                 print("OTP expired")
                 return False
             return UserModel.ph.verify(self.otp, otp)

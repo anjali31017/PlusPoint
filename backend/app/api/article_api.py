@@ -1,5 +1,4 @@
-import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 import shutil
 from typing import Optional
@@ -11,21 +10,19 @@ from app.schema.base_schema import BaseResponse
 from app.controller.article_controller import ArticleController
 from app.schema.article_schema import (
     ArticleCreateSchema,
-    ArticleFirmOutSchema,
     ArticleSearchSchema,
     CreateCommentSchema,
 )
 from app.kafka.producer import send_kafka_event
 from app.celery.summary_tasks import summerization_task
 from fastapi import status
-
-from app.models.article import ArticleLikeModel, ArticleModel, ArticleStatus
+from app.models.article import ArticleLikeModel, ArticleModel
 from app.models.firm import FirmModel
 from app.models.users import UserModel
 from app.schema.search_output_schema import MultiSectionSearchResponse
 from app.config import settings
 from app.models.endorse import EndorsementModel
-from app.models.report import ReportModel
+from app.controller.quicktake_controller import push_quicktake
 
 router = APIRouter(prefix="/article", tags=["Article"])
 
@@ -92,7 +89,7 @@ async def add_article(
             "published_at": (
                 article.published_at.isoformat()
                 if article.published_at
-                else datetime.now().isoformat()
+                else datetime.now(timezone.utc).isoformat()
             ),
         }
         
@@ -102,32 +99,38 @@ async def add_article(
             kafka_article_event
         )
 
-        
-        
-        kafka_quick_take_event = {
-            "event_type": "quick.take",
-            "user_id": str(current_user["user_id"]),
-            "firm_id": str(article.firm_id.id),
-            "article_id": str(article.id),
-            "title": article.title,
-            "firm_username": article.firm_id.firm_username,
-            "likes": article.like_count,
-            "endorse": article.endorse_count,
-            "category":article.category,
-            "tags":article.tags,
-            "trust_score_snapshot":article.trust_score_snapshot,
-            "hot_topic": article.hot_topic,
-            "published_at": (
-                article.published_at.isoformat()
-                if article.published_at
-                else datetime.now().isoformat()
-            ),
-            }
         background_tasks.add_task(
-            send_kafka_event,
-            "quick.take", 
-            kafka_quick_take_event
-            )
+            push_quicktake,
+            article.id, 
+            current_user
+        )
+
+        # await push_quicktake(article.id, current_user)
+        
+        # kafka_quick_take_event = {
+        #     "event_type": "quick.take",
+        #     "user_id": str(current_user["user_id"]),
+        #     "firm_id": str(article.firm_id.id),
+        #     "article_id": str(article.id),
+        #     "title": article.title,
+        #     "firm_username": article.firm_id.firm_username,
+        #     "likes": article.like_count,
+        #     "endorse": article.endorse_count,
+        #     "category":article.category,
+        #     "tags":article.tags,
+        #     "trust_score_snapshot":article.trust_score_snapshot,
+        #     "hot_topic": article.hot_topic,
+        #     "published_at": (
+        #         article.published_at.isoformat()
+        #         if article.published_at
+        #         else datetime.now().isoformat()
+        #     ),
+        #     }
+        # background_tasks.add_task(
+        #     send_kafka_event,
+        #     "quick.take", 
+        #     kafka_quick_take_event
+        #     )
         
 
         return {
@@ -552,7 +555,7 @@ async def get_quicktake(
         # start = datetime(today.year, today.month, today.day)
         # end = start + timedelta(days=1)
 
-        end = datetime.now()
+        end = datetime.now(timezone.utc)
         start = end - timedelta(hours=24)
         
         # Fetch published articles
@@ -616,7 +619,7 @@ async def get_articles(
                 detail="Invalid access token, Login to continue",
             )
         
-        now = datetime.now()
+        now = datetime.now(timezone.utc)
         if span == "day":
             since = now - timedelta(days=1)
         elif span == "week":

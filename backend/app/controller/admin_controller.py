@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from bson import ObjectId
 from app.models.admin import AdminModel
@@ -71,8 +71,8 @@ class AdminController:
                 return None
             
             kyc.kyc_status = KYCStatus.VERIFIED
-            kyc.reviewed_at = datetime.now()
-            kyc.updated_at = datetime.now()
+            kyc.reviewed_at = datetime.now(timezone.utc)
+            kyc.updated_at = datetime.now(timezone.utc)
             await kyc.save()
             
             user.status = True
@@ -94,8 +94,8 @@ class AdminController:
                 return None
             kyc_record.kyc_status = "REJECTED"
             kyc_record.rejection_reason = reason
-            kyc_record.reviewed_at = datetime.now()
-            kyc_record.updated_at = datetime.now()
+            kyc_record.reviewed_at = datetime.now(timezone.utc)
+            kyc_record.updated_at = datetime.now(timezone.utc)
             kyc_record.is_active = False
             kyc_record.is_deleted = True
             await kyc_record.save()

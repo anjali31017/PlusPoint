@@ -1,37 +1,7 @@
 import asyncio, json
 from aiokafka import AIOKafkaConsumer
-from bson import ObjectId
-from app.models.subscription import SubscriptionModel
-from app.config import settings
 from app.sse.sse_endpoint import add_to_recent_articles, sse_connection_manager
-from app.models.notification import NotificationStatus
-from app.models.article import ArticleLikeModel, ArticleModel
-from app.models.endorse import EndorsementModel
-from app.models.report import ReportModel
-
-
 import asyncio
-import time
-from bson import ObjectId
-
-async def wait_for_article_summary(article_id, timeout=30, interval=2):
-    start = time.monotonic()
-
-    while True:
-        article = await ArticleModel.find_one(
-            ArticleModel.id == ObjectId(article_id),
-            ArticleModel.is_deleted == False
-        )
-
-        if article and article.summary is not None:
-            return article
-
-        if time.monotonic() - start >= timeout:
-            return None  # timeout reached
-
-        await asyncio.sleep(interval)
-
-
 
 class KafkaQuickTakeService:
     is_running = True
@@ -67,26 +37,26 @@ class KafkaQuickTakeService:
                         print("Message received from Kafka")
                         post = msg.value
                         
-                        article_id = post["article_id"]
+                        # article_id = post["article_id"]
                         # liked = await ArticleLikeModel.find_one(ArticleLikeModel.article_id == ObjectId(article_id), ArticleLikeModel.user_id == ObjectId(user_id))
                         # endorsed = await EndorsementModel.find_one(EndorsementModel.article_id == ObjectId(article_id), EndorsementModel.user_id == ObjectId(user_id))
                         # reported = await ReportModel.find_one(ReportModel.article_id == ObjectId(article_id), ReportModel.user_id == ObjectId(user_id), ReportModel.is_deleted == False)
                         
-                        await asyncio.sleep(30)
+                        # await asyncio.sleep(30)
                         
                         # article = await ArticleModel.find_one(ArticleModel.id == ObjectId(article_id), ArticleModel.is_deleted == False)
-                        article = await wait_for_article_summary(article_id)
+                        # article = await wait_for_article_summary(article_id)
                         
-                        if not article:
-                            print(f"Summary not ready after timeout for article {article_id}")
-                            return  # or handle fallback logic
+                        # if not article:
+                        #     print(f"Summary not ready after timeout for article {article_id}")
+                        #     return  # or handle fallback logic
     
                         article_data = {
                             "firm_id": post["firm_id"],
                             "article_id": post["article_id"],
                             "title": post["title"],
                             "firm_username": post["firm_username"],
-                            "summary": article.summary,
+                            "summary": post["summary"],
                             "likes": post["likes"],
                             "endorse": post["endorse"],
                             "category": post["category"],

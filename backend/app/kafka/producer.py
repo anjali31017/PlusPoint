@@ -20,7 +20,7 @@
 
 
 #-------------------------------------------
-# IDEMPOTENCY
+# IDEMPOTENCY ??????????
 #-------------------------------------------
 
 
@@ -53,7 +53,9 @@ async def start_producer():
         #         'kafka_pluspoint_1:9092',
         #         'kafka_pluspoint_2:9094'
         #     ],
-        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+        value_serializer=lambda v: json.dumps(v).encode('utf-8'),
+        # enable_idempotence=True,
+        # acks="all",
     )
     for _ in range(10):
         try:

@@ -5,7 +5,7 @@ from bson import ObjectId
 from app.models.article import ArticleModel, ArticleLikeModel, ArticleStatus
 from app.models.firm import FirmModel
 from app.models.users import UserModel
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import BackgroundTasks, HTTPException
 from pymongo.errors import DuplicateKeyError
 from app.models.comment import CommentModel
@@ -41,7 +41,7 @@ class ArticleController:
                 hot_topic=article_data["hot_topic"],
                 trust_score_snapshot = trust_score,
                 moderation_required=True if trust_score < 40 else False,
-                published_at=datetime.now() 
+                published_at=datetime.now(timezone.utc) 
             )
 
             await article.insert()
@@ -96,7 +96,7 @@ class ArticleController:
                 user_id= user_id,
                 content= comment_data["content"],
                 parent_comment_id= ObjectId(parent_comment_id) if parent_comment_id else None,
-                posted_at= datetime.now()
+                posted_at= datetime.now(timezone.utc)
             )
 
             await comment.insert()

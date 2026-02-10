@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -36,7 +36,7 @@ def get_firm_ids(firms: List[FirmModel]) -> List[ObjectId]:
 
 def normalize_start_date(days: int) -> datetime:
     """Return start date normalized to midnight."""
-    return (datetime.now() - timedelta(days=days)).replace(
+    return (datetime.now(timezone.utc) - timedelta(days=days)).replace(
         hour=0, minute=0, second=0, microsecond=0
     )
 

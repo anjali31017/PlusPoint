@@ -3,7 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import aiosmtplib
 from app.config import settings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app.models.users import UserModel
 import secrets
 
@@ -11,7 +11,7 @@ import secrets
 async def generate_otp(length: int = 6) -> dict[str, str | datetime]:
     """Generate a numeric OTP."""
     otp = "".join([str(random.randint(0, 9)) for _ in range(length)])
-    otp_expiry = datetime.now() + timedelta(minutes=5)
+    otp_expiry = datetime.now(timezone.utc) + timedelta(minutes=5)
     return {"otp": otp, "expires_at": otp_expiry}
 
 
@@ -56,7 +56,7 @@ async def otp_email(to_email: str, otp: str) -> bool:
 
 def is_user_blocked(user: dict) -> bool:
     try:
-        if user.otp_blocked_until and user.otp_blocked_until > datetime.now():
+        if user.otp_blocked_until and user.otp_blocked_until > datetime.now(timezone.utc):
             return True
         return False
     except Exception as e:
@@ -89,7 +89,7 @@ async def send_otp_email(user: dict) -> bool:
 async def verify_otp(user: dict, otp: str) -> bool:
     """Verify the provided OTP against the stored hashed OTP."""
     try:
-        if user.otp_expires_at < datetime.now():
+        if user.otp_expires_at < datetime.now(timezone.utc):
             return False  # OTP expired
 
         is_valid = UserModel.verify_otp(otp, user.otp)

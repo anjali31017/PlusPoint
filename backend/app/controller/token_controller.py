@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from http.client import HTTPException
 from fastapi import Header
 from jose import jwt, JWTError
@@ -10,7 +10,7 @@ from fastapi import status
 async def create_access_token(data: dict):
     try:
         to_encode = data.copy()
-        expire = datetime.now() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     except Exception as e:
@@ -20,7 +20,7 @@ async def create_access_token(data: dict):
 async def create_refresh_token(data: dict):
     try:
         to_encode = data.copy()
-        expire = datetime.now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         to_encode.update({"exp": expire})
         return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     except Exception as e:
@@ -49,7 +49,7 @@ async def create_token_pair(user: dict):
         access_token = await create_access_token(token_data)
         refresh_token = await create_refresh_token(token_data)
 
-        expires_at = datetime.now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         await RefreshTokenModel(
             user_id=str(user.id),
             token=refresh_token,
