@@ -48,7 +48,7 @@ function showToast(notification) {
 
     const div = document.createElement("div");
     div.className = "bg-white shadow-md rounded-lg p-3 border border-gray-200 cursor-pointer hover:bg-gray-50 transition duration-150";
-    div.innerHTML = `<strong>${notification.type}</strong>: ${notification.message.article_title || notification.message.detail || ""}`;
+    div.innerHTML = `<strong>${notification.type}</strong> ${notification.message.article_title || notification.message.detail || ""}`;
 
     // Navigate on click
     div.addEventListener("click", () => {

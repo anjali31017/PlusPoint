@@ -37,11 +37,11 @@ async def lifespan(app: FastAPI):
     await connect_to_mongo()
     await start_producer()
     
-    article_consumer = asyncio.create_task(KafkaArticleService.consume_articles())
-    like_consumer = asyncio.create_task(KafkaLikeService.consume_likes())
-    follow_consumer = asyncio.create_task(KafkaFollowService.consume_follow())
-    admin_action_consumer = asyncio.create_task(KafkaAdminService.consume_admin_action())
-    quick_take_consumer = asyncio.create_task(KafkaQuickTakeService.consume_quicktake())
+    article_consumers = asyncio.create_task(KafkaArticleService.consume_articles())
+    like_consumers = asyncio.create_task(KafkaLikeService.consume_likes())
+    follow_consumers = asyncio.create_task(KafkaFollowService.consume_follow())
+    admin_action_consumers = asyncio.create_task(KafkaAdminService.consume_admin_action())
+    quick_take_consumers = asyncio.create_task(KafkaQuickTakeService.consume_quicktake())
     
     # moderation_consumer = asyncio.create_task(ModerationKafkaConsumer.start())
 
@@ -68,13 +68,13 @@ async def lifespan(app: FastAPI):
         KafkaQuickTakeService.is_running = False
         await KafkaQuickTakeService.shutdown()
         
-        article_consumer.cancel()
-        like_consumer.cancel()
-        follow_consumer.cancel()
-        admin_action_consumer.cancel()
-        quick_take_consumer.cancel()
+        article_consumers.cancel()
+        like_consumers.cancel()
+        follow_consumers.cancel()
+        admin_action_consumers.cancel()
+        quick_take_consumers.cancel()
         
-        await asyncio.gather(article_consumer, like_consumer, follow_consumer, admin_action_consumer, quick_take_consumer, return_exceptions=True)
+        await asyncio.gather(article_consumers, like_consumers, follow_consumers, admin_action_consumers, quick_take_consumers, return_exceptions=True)
 
     
         await stop_producer()

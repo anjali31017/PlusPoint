@@ -317,37 +317,7 @@ $(document).ready(async function () {
     }
 
 
-    // function renderFirms(container, firms, isPublisher) {
-    //     const $el = $(container);
-    //     $el.empty();
-
-    //     if (!firms.length) {
-    //         $el.html(`<p class="text-gray-500">No firms found</p>`);
-    //         return;
-    //     }
-
-    //     firms.forEach(f => {
-    //         const cardClass = isPublisher
-    //             ? "bg-blue-50 hover:bg-blue-100 border border-blue-100"
-    //             : "bg-purple-50 hover:bg-purple-100 border border-purple-100";
-
-    //         // 🔹 URL logic
-    //         const href = isPublisher
-    //             ? `firm.html?firm_id=${f.firm_id}&publisher_id=${user.id}`
-    //             : `firm.html?firm_id=${f.id}`;
-
-    //         $el.append(`
-    //             <a href="${href}" target="_blank"
-    //                 class="w-full p-4 rounded-xl shadow-sm hover:shadow-md transition ${cardClass}">
-    //                 <h4 class="font-semibold text-gray-800 truncate">${f.firm_name}</h4>
-    //                 <p class="text-sm text-gray-500 truncate">@${f.firm_username}</p>
-    //                 <p class="text-xs mt-1 ${isPublisher ? 'text-blue-600' : 'text-purple-600'}">
-    //                     Trust: ${f.trust_factor ?? 'N/A'}
-    //                 </p>
-    //             </a>
-    //             `);
-    //     });
-    // }
+   
 
     // =====================================================
     // Follow / Subscribe

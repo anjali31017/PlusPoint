@@ -42,19 +42,6 @@ class AdminController:
             print(str(e))
             return None
 
-    
-    
-    
-    # async def get_kyc(self):
-    #     try: 
-    #         kyc_data = await KYCModel.find(KYCModel.kyc_status == "UNDER_REVIEW").to_list()
-    #         if not kyc_data or len(kyc_data) == 0:
-    #             return []
-    #         kyc_list = [item.dict() for item in kyc_data]
-    #         return kyc_list
-    #     except Exception as e:
-    #         print(str(e))
-    #         return []
 
     async def get_kyc(self):
         try: 
@@ -62,15 +49,6 @@ class AdminController:
             if not kyc_data:
                 return []
 
-            # # Convert each document to dict and convert ObjectId to str
-            # kyc_list = []
-            # for item in kyc_data:
-            #     item_dict = item.dict()
-            #     # Convert ObjectId to str for JSON serialization
-            #     item_dict["id"] = str(item.id)
-            #     kyc_list.append(item_dict)
-
-            # return kyc_list
             return kyc_data
         except Exception as e:
             print("Error fetching KYC:", e)
@@ -78,13 +56,6 @@ class AdminController:
         
     async def approve_kyc(self, user_id: str):
         try:
-            # id = ObjectId("696800f1d775ff4ccac9b04b")
-            # kyc_record = await KYCModel.find_one( 
-            #                                      KYCModel.id == id,
-            #     # KYCModel.user_id.id == ObjectId(user_id), 
-            #     # KYCModel.kyc_status == "UNDER_REVIEW"
-                                                #  )
-            # kyc_record = await KYCModel.find(KYCModel.kyc_status == "UNDER_REVIEW")
             
             user = await UserModel.find_one(UserModel.id == ObjectId(user_id), UserModel.is_deleted == False)
 
@@ -141,16 +112,7 @@ class AdminController:
             firm_data = await FirmModel.find(KYCModel.verification_status == "UNDER_REVIEW").to_list()
             if not firm_data:
                 return []
-
-            # # Convert each document to dict and convert ObjectId to str
-            # kyc_list = []
-            # for item in kyc_data:
-            #     item_dict = item.dict()
-            #     # Convert ObjectId to str for JSON serialization
-            #     item_dict["id"] = str(item.id)
-            #     kyc_list.append(item_dict)
-
-            # return kyc_list
+                
             return firm_data
         except Exception as e:
             print("Error fetching KYC:", e)

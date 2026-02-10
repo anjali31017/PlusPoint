@@ -35,7 +35,7 @@ function handleNotificationClick(n) {
             if (m.article_id) window.location.href = `article.html?article_id=${m.article_id}`;
             break;
         default:
-            window.location.href = "notification.html";
+            // window.location.href = "notification.html";
             break;
     }
 }
@@ -158,25 +158,42 @@ async function loadNotifications() {
 /* --------------------------------------------------
    SSE - Global
 -------------------------------------------------- */
+
+async function refreshTokenSilently() {
+    try {
+        const newToken = await refreshToken();
+        if (!newToken) {
+            redirectToLogin();
+            return false;
+        }
+        return true;
+    } catch (e) {
+        redirectToLogin();
+        return false;
+    }
+}
+
+
 function startSSE() {
     const token = localStorage.getItem("access_token");
     if (!token) return;
 
     eventSource = new EventSource(`http://127.0.0.1:5000/sse/notifications?token=${token}`);
 
-    eventSource.onmessage = (event) => {
+    eventSource.onmessage = async (event) => {
         const data = JSON.parse(event.data);
         if (data.type === "heartbeat" || data.type === "connection_established") return;
 
+        if (
+            data.type === "ADMIN" &&
+            data.message?.status === "KYC Approved!"
+        ) {
+            await refreshTokenSilently();
+        }
+
         notifications.unshift(data);
 
-        // Update badge globally
-        // updateBadge();
-
-        // Show toast popup
         showToast(data);
-
-        // Update table if on notification.html
         renderNotifications();
     };
 

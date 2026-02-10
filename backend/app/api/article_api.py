@@ -548,10 +548,13 @@ async def get_quicktake(
     try:
         print("calllllledddddd QUICK TAKE")
         skip = (page - 1) * page_size
-        today = datetime.now().date()
-        start = datetime(today.year, today.month, today.day)
-        end = start + timedelta(days=1)
+        # today = datetime.now().date()
+        # start = datetime(today.year, today.month, today.day)
+        # end = start + timedelta(days=1)
 
+        end = datetime.now()
+        start = end - timedelta(hours=24)
+        
         # Fetch published articles
         articles_cursor = ArticleModel.find(
             ArticleModel.status == "PUBLISHED",

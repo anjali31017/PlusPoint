@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>Loading...</title>
+
+    <!-- jQuery (required by auth.js) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Auth logic -->
+    <script src="scripts/auth.js"></script>
+
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            font-family: sans-serif;
+            background: #f9fafb;
+        }
+    </style>
+</head>
+<body>
+    <div>Checking session…</div>
+
+    <script>
+        (async function () {
+            const loggedIn = await isLoggedIn();
+
+            if (loggedIn) {
+                window.location.replace("src/home.html");
+            } else {
+                window.location.replace("src/login.html");
+            }
+        })();
+    </script>
+</body>
+</html>

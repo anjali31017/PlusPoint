@@ -152,23 +152,28 @@ async def approve_kyc(
                 "data": {"data": []},
             }
         user = await user_controller.get_user(user_id)
-        background_tasks.add_task(
-            KYC_status_email, to_email=user.email, status=kyc.kyc_status, reason=None
-        )
-  
-        
+
         kafka_admin_event = {
             "event_type": "admin.action",
             "user_id": str(user_id),
+            "article_id": None,
+            "firm_id": None,
             "status": "KYC Approved!",
             "detail": None,
         }
-        
+        # print("!!!!!!!!!!!", kafka_admin_event)
         background_tasks.add_task(
             send_kafka_event,
             "admin.action", 
             kafka_admin_event
         )
+
+
+        background_tasks.add_task(
+            KYC_status_email, to_email=user.email, status=kyc.kyc_status, reason=None
+        )
+        
+        
         
         return {
             "status": 1,
@@ -201,15 +206,11 @@ async def reject_kyc(
 
         user = await user_controller.get_user(user_id)
 
-        background_tasks.add_task(
-            KYC_status_email,
-            to_email=user.email,
-            status=kyc_record.kyc_status,
-            reason=kyc_record.rejection_reason,
-        )
         kafka_admin_event = {
             "event_type": "admin.action",
             "user_id": str(user_id),
+            "article_id": None,
+            "firm_id": None,
             "status": "KYC Rejected!",
             "detail": data.reason,
         }
@@ -218,6 +219,14 @@ async def reject_kyc(
             send_kafka_event,
             "admin.action", 
             kafka_admin_event
+        )
+        
+        
+        background_tasks.add_task(
+            KYC_status_email,
+            to_email=user.email,
+            status=kyc_record.kyc_status,
+            reason=kyc_record.rejection_reason,
         )
         
         return {

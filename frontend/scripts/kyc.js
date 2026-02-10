@@ -116,10 +116,13 @@ $(document).ready(function () {
 
                 // Get backend message if available
                 if (xhr.responseJSON) {
+                    
                     errorMessage =
                         xhr.responseJSON.message ||
                         xhr.responseJSON.detail ||
                         errorMessage;
+
+                    redirectToLogin();
                 }
 
                 // Show error message in red below the form
@@ -134,125 +137,3 @@ $(document).ready(function () {
 
 
 
-
-// // ===== KYC Page JS with jQuery AJAX =====
-
-// $(document).ready(function () {
-
-//     // File upload preview
-//     $("#id_document").on("change", function () {
-//         const file = this.files[0];
-//         if (!file) return;
-
-//         // Show file name
-//         $("#uploadText").text(file.name);
-
-//         // Preview image if image file
-//         if (file.type.startsWith("image/")) {
-//             const reader = new FileReader();
-//             reader.onload = function (e) {
-//                 $("#docPreview").attr("src", e.target.result).removeClass("hidden");
-//             };
-//             reader.readAsDataURL(file);
-//         } else {
-//             $("#docPreview").addClass("hidden");
-//         }
-//     });
-
-//     // Only allow numbers for ID Last 4 Digits
-//     $("#id_last4").on("input", function () {
-//         this.value = this.value.replace(/\D/g, ""); // Remove any non-digit characters
-//     });
-
-//     // Form submit
-//     $("#kycForm").on("submit", function (e) {
-//         e.preventDefault();
-
-//         // Hide previous errors
-//         $("#kycError").addClass("hidden");
-//         $("#dobError").addClass("hidden");
-
-//         if (!$("#id_document").val()) {
-//             $("#kycError").text("Please upload your ID document.").removeClass("hidden");
-//             return;
-//         }
-
-//         // Consent check
-//         if (!$("#kyc_consent").is(":checked")) {
-//             $("#kycError").text("You must agree to the consent checkbox.").removeClass("hidden");
-//             return;
-//         }
-
-        
-
-//         // DOB check >= 18
-//         const dobVal = $("#dob").val();
-//         if (!dobVal) {
-//             $("#dobError").text("Date of birth is required.").removeClass("hidden");
-//             return;
-//         }
-
-
-//         const dob = new Date(dobVal);
-//         const today = new Date();
-//         let age = today.getFullYear() - dob.getFullYear();
-//         const m = today.getMonth() - dob.getMonth();
-//         if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
-//         if (age < 18) {
-//             $("#dobError").text("You must be at least 18 years old to submit KYC.").removeClass("hidden");
-//             return;
-//         }
-
-//         // Disable submit button
-//         const btn = $(this).find("button[type=submit]");
-//         btn.prop("disabled", true).text("Submitting...");
-
-//         // Prepare form data
-//         const formData = new FormData(this);
-
-//         $.ajax({
-//             url: "http://127.0.0.1:5000/api/kyc/create",
-//             type: "POST",
-//             headers: {
-//                 "Authorization": "Bearer " + localStorage.getItem("access_token")
-//             },
-//             data: formData,
-//             processData: false,
-//             contentType: false,
-//             success: function (data) {
-//                 console.log("KYC submission response:", data);
-//                 Swal.fire({
-//                     icon: "success",
-//                     title: "KYC Submitted!",
-//                     text: data.data || "Sent for verification. Check your email.",
-//                     confirmButtonText: "OK"
-//                 }).then(() => {
-//                     window.location.href = "home.html";
-//                 });
-//             },
-
-//             error: function (xhr) {
-//                 console.error("KYC submission error:", xhr);
-//                 // Default error
-//                 let errorMessage = "Something went wrong";
-
-//                 // Get backend message if available
-//                 if (xhr.responseJSON) {
-//                     errorMessage =
-//                         xhr.responseJSON.message ||
-//                         xhr.responseJSON.detail ||
-//                         errorMessage;
-//                 }
-
-//                 // Show error message in red below the form
-//                 $("#kycError").text(errorMessage).removeClass("hidden");
-
-//                 // Re-enable submit button
-//                 const btn = $("#kycForm").find("button[type=submit]");
-//                 btn.prop("disabled", false).text("Submit KYC");
-//             }
-
-//         });
-//     });
-
-// });

@@ -45,7 +45,7 @@ $(document).ready(async function () {
       ).join(" ") || "";
 
       const card = $(`
-        <div class="group cursor-pointer bg-white p-6 hover:border-purple-200 hover:shadow-2xl transition-all duration-500">
+        <div class="group cursor-pointer bg-white p-6 bg-slate-50 hover:border-purple-200 rounded-2xl hover:shadow-2xl transition-all duration-500">
           <div class="flex justify-between items-start mb-3">
             <h4 class="text-lg font-bold text-gray-800 group-hover:text-purple-700 transition-colors">
               ${article.title}
