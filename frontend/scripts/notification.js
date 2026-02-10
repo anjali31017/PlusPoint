@@ -17,7 +17,7 @@ function formatMessage(n) {
         case "LIKE":
             return `❤️ Someone liked your article <b>${m.article_title || ""}</b>`;
         case "ADMIN":
-            return `🛡️ <b>${m.status || "Admin update"}</b>${m.detail ? `<br/><span class="text-sm text-gray-500">Reason: ${m.detail}</span>` : ""}`;
+            return `🛡️ <b>${m.status || "Admin update"}</b>${m.detail ? `<br/><span class="text-sm text-gray-500">${m.detail}</span>` : ""}`;
         default:
             return `🔔 New notification`;
     }
@@ -166,6 +166,7 @@ async function refreshTokenSilently() {
             redirectToLogin();
             return false;
         }
+        console.log("updateddddddd")
         return true;
     } catch (e) {
         redirectToLogin();
@@ -183,13 +184,6 @@ function startSSE() {
     eventSource.onmessage = async (event) => {
         const data = JSON.parse(event.data);
         if (data.type === "heartbeat" || data.type === "connection_established") return;
-
-        if (
-            data.type === "ADMIN" &&
-            data.message?.status === "KYC Approved!"
-        ) {
-            await refreshTokenSilently();
-        }
 
         notifications.unshift(data);
 

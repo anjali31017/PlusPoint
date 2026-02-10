@@ -159,7 +159,7 @@ async def approve_kyc(
             "article_id": None,
             "firm_id": None,
             "status": "KYC Approved!",
-            "detail": None,
+            "detail": "Please log in again to access all features.",
         }
         # print("!!!!!!!!!!!", kafka_admin_event)
         background_tasks.add_task(

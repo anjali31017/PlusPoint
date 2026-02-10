@@ -43,7 +43,7 @@ function renderArticle(article, userStatus) {
             currentUserStatus = payload.status === true;
         } catch (e) { currentUserStatus = false; }
     }
-
+    console.log(currentUserStatus)
     const isSelf = article.is_self;
 
 
