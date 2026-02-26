@@ -218,7 +218,7 @@ class UserController:
 
             # ---- FRESHNESS BOOST ----
             age_hours = (
-                datetime.now(timezone.utc) - article.published_at
+                datetime.now() - article.published_at
             ).total_seconds() / 3600
 
             if age_hours < 24:

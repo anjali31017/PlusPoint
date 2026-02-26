@@ -85,7 +85,7 @@ async def verify_user_otp(otp_data: OTPVerifySchema):
                     detail= f"User blocked for 6 hours due to OTP failures, try again after {user.otp_blocked_until}" 
                 )
         
-        if datetime.now(timezone.utc) > user.otp_expires_at:
+        if datetime.now() > user.otp_expires_at:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="OTP expired")
         
         if not user.verify_otp(otp_data.otp):
@@ -94,7 +94,7 @@ async def verify_user_otp(otp_data: OTPVerifySchema):
             if attempts >= 5:
                 await user.set({ 
                                 UserModel.otp_attempts: attempts, 
-                                UserModel.otp_blocked_until: datetime.now(timezone.utc) + timedelta(hours=6) 
+                                UserModel.otp_blocked_until: datetime.now() + timedelta(hours=6) 
                             })
                 raise HTTPException( status_code=status.HTTP_429_TOO_MANY_REQUESTS,detail="Too many invalid OTP attempts. User blocked for 6 hours." )
         
@@ -149,7 +149,7 @@ async def resend_otp(data: ResendOTPSchema, background_tasks: BackgroundTasks):
             )
         if user.otp_resend_count >= 3:
             await user.set({
-                UserModel.otp_blocked_until: datetime.now(timezone.utc) + timedelta(hours=6)
+                UserModel.otp_blocked_until: datetime.now() + timedelta(hours=6)
             })
             raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -225,7 +225,7 @@ async def forgot_password(data: ForgotPasswordSchema, background_tasks: Backgrou
         
         await user.set({
         UserModel.reset_token: reset_token,
-        UserModel.reset_token_expiry: datetime.now(timezone.utc) + timedelta(minutes=15)
+        UserModel.reset_token_expiry: datetime.now() + timedelta(minutes=15)
         })
         
         reset_link = f"http://127.0.0.1:3000/src/reset-password.html?token={reset_token}"
@@ -249,7 +249,7 @@ async def forgot_password(data: ForgotPasswordSchema, background_tasks: Backgrou
 async def reset_password(data: ResetPasswordSchema, background_tasks: BackgroundTasks):
     try:
         
-        user = await UserModel.find_one( UserModel.reset_token == data.token, UserModel.reset_token_expiry > datetime.now(timezone.utc))
+        user = await UserModel.find_one( UserModel.reset_token == data.token, UserModel.reset_token_expiry > datetime.now())
 
         if not user:
             raise HTTPException( status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token" )
@@ -381,7 +381,7 @@ async def update_profile(
                 )
 
             username = current_user["username"]
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{username}_{timestamp}{ext}"
             file_path = os.path.join(settings.PROFILE_UPLOAD_FOLDER, filename)
             with open(file_path, "wb") as buffer:
@@ -669,7 +669,7 @@ async def following_feed(
         
         user_id = ObjectId(current_user["user_id"])
 
-        end_time = datetime.now(timezone.utc)
+        end_time = datetime.now()
         start_time = end_time - timedelta(days=2)
         
         # 1️⃣ Firms user follows

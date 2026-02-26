@@ -55,7 +55,7 @@ class KYCController:
         try:
             os.makedirs(settings.KYC_UPLOAD_FOLDER, exist_ok=True)
             
-            timestamp = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+            timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
             ext = os.path.splitext(file.filename)[1]
 
             safe_username = "".join(x for x in current_user['username'] if x.isalnum())

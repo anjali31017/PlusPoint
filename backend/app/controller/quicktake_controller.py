@@ -55,7 +55,7 @@ async def push_quicktake(article_id:str, current_user:dict):
             "published_at": (
                 article.published_at.isoformat()
                 if article.published_at
-                else datetime.now(timezone.utc).isoformat()
+                else datetime.now().isoformat()
             ),
             }
         

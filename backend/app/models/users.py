@@ -60,7 +60,7 @@ class UserModel(Document):
     def verify_otp(self, otp: str) -> bool:
         """Verify the OTP and ensure it is not expired."""
         try:
-            if self.otp_expires_at < datetime.now(timezone.utc):
+            if self.otp_expires_at < datetime.now():
                 print("OTP expired")
                 return False
             return UserModel.ph.verify(self.otp, otp)

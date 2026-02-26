@@ -17,7 +17,7 @@ async def refresh_token_route(data: RefreshSchema):
         if not token_doc or token_doc.is_revoked:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or revoked refresh token")
 
-        if token_doc.expires_at < datetime.now(timezone.utc):
+        if token_doc.expires_at < datetime.now():
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token expired")
 
         payload = await decode_token(data.refresh_token)
@@ -36,7 +36,7 @@ async def refresh_token_route(data: RefreshSchema):
             "role": payload["role"]
         })
         token_doc.token = new_refresh_token
-        token_doc.expires_at = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        token_doc.expires_at = datetime.now() + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
         await token_doc.save()
 
         return {

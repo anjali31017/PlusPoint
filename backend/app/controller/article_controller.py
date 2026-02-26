@@ -41,7 +41,7 @@ class ArticleController:
                 hot_topic=article_data["hot_topic"],
                 trust_score_snapshot = trust_score,
                 moderation_required=True if trust_score < 40 else False,
-                published_at=datetime.now(timezone.utc) 
+                published_at=datetime.now() 
             )
 
             await article.insert()
@@ -96,7 +96,7 @@ class ArticleController:
                 user_id= user_id,
                 content= comment_data["content"],
                 parent_comment_id= ObjectId(parent_comment_id) if parent_comment_id else None,
-                posted_at= datetime.now(timezone.utc)
+                posted_at= datetime.now()
             )
 
             await comment.insert()

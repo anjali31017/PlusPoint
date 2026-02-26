@@ -89,7 +89,7 @@ async def add_article(
             "published_at": (
                 article.published_at.isoformat()
                 if article.published_at
-                else datetime.now(timezone.utc).isoformat()
+                else datetime.now().isoformat()
             ),
         }
         
@@ -555,7 +555,7 @@ async def get_quicktake(
         # start = datetime(today.year, today.month, today.day)
         # end = start + timedelta(days=1)
 
-        end = datetime.now(timezone.utc)
+        end = datetime.now()
         start = end - timedelta(hours=24)
         
         # Fetch published articles
@@ -619,7 +619,7 @@ async def get_articles(
                 detail="Invalid access token, Login to continue",
             )
         
-        now = datetime.now(timezone.utc)
+        now = datetime.now()
         if span == "day":
             since = now - timedelta(days=1)
         elif span == "week":
