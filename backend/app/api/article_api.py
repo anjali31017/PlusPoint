@@ -292,7 +292,8 @@ async def search_multi_section(search: ArticleSearchSchema):
         publisher_results = []
         if text:  # only search if text is not empty
             matched_publishers = await UserModel.find(
-                {
+                {   
+                    "is_deleted": False,
                     "$or": [
                         {"username": {"$regex": text, "$options": "i"}},
                         {"first_name": {"$regex": text, "$options": "i"}},
@@ -302,7 +303,7 @@ async def search_multi_section(search: ArticleSearchSchema):
             ).to_list()
 
             for p in matched_publishers:
-                article_count = await ArticleModel.find({"publisher_id": p.id}).count()
+                article_count = await ArticleModel.find({"publisher_id": p.id, "is_deleted": False}).count()
                 publisher_results.append(
                     {
                         "id": str(p.id),
@@ -320,10 +321,12 @@ async def search_multi_section(search: ArticleSearchSchema):
         firm_results = []
         if text:  # only search if text is not empty
             matched_firms = await FirmModel.find(
-                {"firm_name": {"$regex": text, "$options": "i"}}
+                {"firm_name": {"$regex": text, "$options": "i"},
+                  "is_deleted": False
+                }
             ).to_list()
             for f in matched_firms:
-                article_count = await ArticleModel.find({"firm_id": f.id}).count()
+                article_count = await ArticleModel.find({"firm_id": f.id , "is_deleted": False}).count()
                 firm_results.append(
                     {
                         "id": str(f.id),
@@ -334,7 +337,7 @@ async def search_multi_section(search: ArticleSearchSchema):
                     }
                 )
 
-        article_filters = {}
+        article_filters = {"is_deleted": False}
 
         # Text search (title, summary, content)
         if search.search_text:
@@ -362,15 +365,19 @@ async def search_multi_section(search: ArticleSearchSchema):
         # Hot topic filter
         if search.hot_topic is not None:
             article_filters["hot_topic"] = True
+            # article_filters["is_deleted"] = False
 
         if search.start_date and search.end_date:
             article_filters["published_at"] = {
                 "$gte": datetime.combine(search.start_date, datetime.min.time()),
                 "$lte": datetime.combine(search.end_date, datetime.max.time())
             }
+            # article_filters["is_deleted"] = False
         elif search.start_date:
+            # article_filters["is_deleted"] = False
             article_filters["published_at"] = {"$gte": datetime.combine(search.start_date, datetime.min.time())}
         elif search.end_date:
+            # article_filters["is_deleted"] = False
             article_filters["published_at"] = {"$lte": datetime.combine(search.end_date, datetime.max.time())}
 
         
@@ -396,7 +403,7 @@ async def search_multi_section(search: ArticleSearchSchema):
                 "last_name": publisher.last_name,
                 "profile_picture_url": publisher.profile_picture_url,
                 "articles_count": await ArticleModel.find(
-                    {"publisher_id": publisher.id}
+                    {"publisher_id": publisher.id, "is_deleted": False}
                 ).count(),
             }
 
@@ -405,7 +412,7 @@ async def search_multi_section(search: ArticleSearchSchema):
                 "firm_name": firm.firm_name,
                 "firm_username": firm.firm_username,
                 "bio": firm.bio,
-                "articles_count": await ArticleModel.find({"firm_id": firm.id}).count(),
+                "articles_count": await ArticleModel.find({"firm_id": firm.id,"is_deleted": False}).count(),
             }
 
             # QuickTake = summary

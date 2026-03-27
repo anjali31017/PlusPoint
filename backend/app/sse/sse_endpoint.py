@@ -185,7 +185,7 @@ async def sse_feed(request: Request, token: str = Query(...)):
     if recent_articles.empty():
         quicktake_feed = await get_quicktake(
             page=1,
-            page_size=10,
+            page_size=70,
             user_id=user_id
         )
 

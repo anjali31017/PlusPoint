@@ -47,7 +47,8 @@ async def create_firm_api(
             )
 
         kyc = await KYCModel.find_one(
-            KYCModel.user_id.id == ObjectId(current_user["user_id"])
+            KYCModel.user_id.id == ObjectId(current_user["user_id"]),
+            KYCModel.is_deleted == False,
         )
         if not kyc or kyc.kyc_status != "VERIFIED":
             raise HTTPException(
